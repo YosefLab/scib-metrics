@@ -1,9 +1,12 @@
+import scib_metrics
 import jax.numpy as jnp
 import numpy as np
 from scipy.spatial.distance import cdist as sp_cdist
 from sklearn.metrics import silhouette_samples as sk_silhouette_samples
+from sklearn.neighbors import NearestNeighbors
 
-import scib_metrics
+import sys
+sys.path.append("../src/")
 
 
 def dummy_x_labels():
@@ -47,15 +50,10 @@ def test_silhouette_batch():
     scib_metrics.silhouette_batch(X, labels, batch)
 
 
-def test_nmi_ari_cluster_labels():
+def test_lisi_label():
     X, labels = dummy_x_labels()
-    nmi, ari = scib_metrics.nmi_ari_cluster_labels(X, labels)
-    assert isinstance(nmi, float)
-    assert isinstance(ari, float)
-
-
-def test_kmeans():
-    X, _ = dummy_x_labels()
-    kmeans = scib_metrics.utils.KMeansJax(2)
-    kmeans.fit(X)
-    assert kmeans.labels_.shape == (X.shape[0],)
+    D = scib_metrics.utils.cdist(X, X)
+    nbrs = NearestNeighbors(n_neighbors=2, algorithm="ball_tree").fit(X)
+    D, knn_idx = nbrs.kneighbors(X)
+    scib_metrics.utils.compute_simpson_index(jnp.array(D), jnp.array(
+        knn_idx), jnp.array(labels), len(np.unique(labels)))

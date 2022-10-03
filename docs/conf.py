@@ -51,6 +51,7 @@ extensions = [
     "sphinxcontrib.bibtex",
     "sphinx_autodoc_typehints",
     "scanpydoc.definition_list_typed_field",
+    "scanpydoc.elegant_typehints",
     "nbsphinx",
     "sphinx.ext.mathjax",
     *[p.stem for p in (HERE / "extensions").glob("*.py")],
@@ -97,7 +98,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 html_theme = "furo"
 html_static_path = ["_static"]
 
-pygments_style = "sphinx"
+pygments_style = "default"
+pygments_dark_style = "native"
 
 nitpick_ignore = [
     # If building the documentation fails because of a missing link that is outside your control,

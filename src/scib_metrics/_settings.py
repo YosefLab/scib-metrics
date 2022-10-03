@@ -27,23 +27,12 @@ class ScibConfig:
         self,
         verbosity: int = logging.INFO,
         progress_bar_style: Literal["rich", "tqdm"] = "tqdm",
-        batch_size: int = 128,
-        seed: int = 0,
-        logging_dir: str = "./scvi_log/",
-        dl_num_workers: int = 0,
-        dl_pin_memory_gpu_training: bool = False,
         jax_preallocate_gpu_memory: bool = False,
     ):
 
-        self.seed = seed
-        self.batch_size = batch_size
         if progress_bar_style not in ["rich", "tqdm"]:
             raise ValueError("Progress bar style must be in ['rich', 'tqdm']")
         self.progress_bar_style = progress_bar_style
-        self.logging_dir = logging_dir
-        self.dl_num_workers = dl_num_workers
-        self.dl_pin_memory_gpu_training = dl_pin_memory_gpu_training
-        self._num_threads = None
         self.jax_preallocate_gpu_memory = jax_preallocate_gpu_memory
         self.verbosity = verbosity
 

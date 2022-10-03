@@ -6,6 +6,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from ._dist import cdist
+
 NdArray = Union[np.ndarray, jnp.ndarray]
 
 
@@ -84,33 +86,6 @@ def _nearest_cluster_distance_block(inter_dist: jnp.ndarray, input: _InterCluste
     inter_dist = inter_dist.at[label_mask_a].set(jnp.minimum(dist_a, inter_dist[label_mask_a]))
     inter_dist = inter_dist.at[label_mask_b].set(jnp.minimum(dist_b, inter_dist[label_mask_b]))
     return inter_dist
-
-
-@jax.jit
-def _euclidean_distance(x: np.array, y: np.array) -> float:
-    dist = jnp.sqrt(jnp.sum((x - y) ** 2))
-    return dist
-
-
-@jax.jit
-def cdist(x: np.ndarray, y: np.ndarray) -> jnp.ndarray:
-    """Jax implementation of :func:`scipy.spatial.distance.cdist`.
-
-    Uses euclidean distance.
-
-    Parameters
-    ----------
-    x
-        Array of shape (n_samples_a, n_features)
-    y
-        Array of shape (n_samples_b, n_features)
-
-    Returns
-    -------
-    dist: jnp.ndarray
-        Array of shape (n_samples_a, n_samples_b)
-    """
-    return jax.vmap(lambda x1: jax.vmap(lambda y1: _euclidean_distance(x1, y1))(y))(x)
 
 
 def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:

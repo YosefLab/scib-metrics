@@ -45,3 +45,10 @@ def test_silhouette_batch():
     score = scib_metrics.silhouette_batch(X, labels, batch)
     assert score > 0
     scib_metrics.silhouette_batch(X, labels, batch)
+
+
+def test_kmeans():
+    X, _ = dummy_x_labels()
+    kmeans = scib_metrics.utils.KMeansJax(2)
+    kmeans.fit(X)
+    assert kmeans.labels_.shape == (X.shape[0],)

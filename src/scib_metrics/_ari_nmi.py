@@ -26,7 +26,10 @@ def nmi_ari_cluster_labels(X: np.ndarray, labels: np.ndarray) -> float:
 
     Returns
     -------
-    Normalized mutual information, adjusted rand index
+    nmi: float
+        Normalized mutual information score
+    ari: float
+        Adjusted rand index score
     """
     n_clusters = len(np.unique(labels))
     labels_pred = _compute_clustering(X, n_clusters)

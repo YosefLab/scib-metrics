@@ -107,7 +107,7 @@ def cdist(x: np.ndarray, y: np.ndarray) -> jnp.ndarray:
 
     Returns
     -------
-    dist
+    dist: jnp.ndarray
         Array of shape (n_samples_a, n_samples_b)
     """
     return jax.vmap(lambda x1: jax.vmap(lambda y1: _euclidean_distance(x1, y1))(y))(x)
@@ -130,7 +130,7 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    silhouette
+    silhouette: np.ndarray
         Array of shape (n_samples,)
         Silhouette Coefficients for each sample.
     """

@@ -48,7 +48,12 @@ class ScibConfig:
 
     @property
     def verbosity(self) -> int:
-        """Verbosity level (default `logging.INFO`)."""
+        """Verbosity level (default `logging.INFO`).
+
+        Returns
+        -------
+        verbosity: int
+        """
         return self._verbosity
 
     @verbosity.setter
@@ -78,10 +83,14 @@ class ScibConfig:
         else:
             scib_logger.setLevel(level)
 
-    def reset_logging_handler(self):
+    def reset_logging_handler(self) -> None:
         """Reset "scib_metrics" log handler to a basic RichHandler().
 
         This is useful if piping outputs to a file.
+
+        Returns
+        -------
+        None
         """
         scib_logger.removeHandler(scib_logger.handlers[0])
         ch = RichHandler(level=self._verbosity, show_path=False, show_time=False)
@@ -96,6 +105,10 @@ class ScibConfig:
         If False, Jax will ony preallocate GPU memory it needs.
         If float in (0, 1), Jax will preallocate GPU memory to that
         fraction of the GPU memory.
+
+        Returns
+        -------
+        jax_preallocate_gpu_memory: bool or float
         """
         return self._jax_gpu
 

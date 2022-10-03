@@ -1,7 +1,7 @@
 from importlib.metadata import version
 
-from . import pl, pp, tl
+from .silhouette import silhouette_samples
 
-__all__ = ["pl", "pp", "tl"]
+__all__ = ["silhouette_samples"]
 
 __version__ = version("scib-metrics")

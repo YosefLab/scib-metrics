@@ -28,6 +28,7 @@ dependencies = [
     "scipy",
     "scikit-learn",
     "scanpy",
+    "rich",
 ]
 
 [project.optional-dependencies]

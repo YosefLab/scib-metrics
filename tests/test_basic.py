@@ -13,10 +13,10 @@ def test_package_has_version():
 def test_cdist():
     x = jnp.array([[1, 2], [3, 4]])
     y = jnp.array([[5, 6], [7, 8]])
-    assert np.allclose(scib_metrics.silhouette.cdist(x, y), sp_cdist(x, y))
+    assert np.allclose(scib_metrics.utils.cdist(x, y), sp_cdist(x, y))
 
 
 def test_silhouette_samples():
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     labels = np.array([0, 0, 1, 1])
-    assert np.allclose(scib_metrics.silhouette.silhouette_samples(X, labels), sk_silhouette_samples(X, labels))
+    assert np.allclose(scib_metrics.utils.silhouette_samples(X, labels), sk_silhouette_samples(X, labels))

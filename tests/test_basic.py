@@ -47,6 +47,13 @@ def test_silhouette_batch():
     scib_metrics.silhouette_batch(X, labels, batch)
 
 
+def test_nmi_ari_cluster_labels():
+    X, labels = dummy_x_labels()
+    nmi, ari = scib_metrics.nmi_ari_cluster_labels(X, labels)
+    assert isinstance(nmi, float)
+    assert isinstance(ari, float)
+
+
 def test_kmeans():
     X, _ = dummy_x_labels()
     kmeans = scib_metrics.utils.KMeansJax(2)

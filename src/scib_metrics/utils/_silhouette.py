@@ -106,14 +106,17 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_a, n_features) representing an
+    X
+        Array of shape (n_samples_a, n_features) representing an
         array of pairwise distances between samples, or a feature array.
-    labels : array-like of shape (n_samples,) representing label values
+    labels
+        Array of shape (n_samples,) representing label values
         for each observation.
 
     Returns
     -------
-    silhouette : array-like of shape (n_samples,)
+    silhouette
+        Array of shape (n_samples,)
         Silhouette Coefficients for each sample.
     """
     if X.shape[0] != labels.shape[0]:

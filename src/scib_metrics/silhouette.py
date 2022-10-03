@@ -66,9 +66,9 @@ def _nearest_cluster_distance_block(inter_dist: jnp.ndarray, input: _InterCluste
     subset_a = input.data[label_mask_a]
     subset_b = input.data[label_mask_b]
     dist = cdist(subset_a, subset_b)
-    inter_dist = input.inter_dist
     dist_a = dist.mean(axis=1)
     dist_b = dist.mean(axis=0)
+    inter_dist = input.inter_dist
     inter_dist = inter_dist.at[label_mask_a].set(jnp.minimum(dist_a, inter_dist[label_mask_a]))
     inter_dist = inter_dist.at[label_mask_b].set(jnp.minimum(dist_b, inter_dist[label_mask_b]))
     return inter_dist

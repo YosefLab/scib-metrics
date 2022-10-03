@@ -19,7 +19,16 @@ maintainers = [
 urls.Documentation = "https://scib-metrics.readthedocs.io/"
 urls.Source = "https://github.com/yoseflab/scib-metrics"
 urls.Home-page = "https://github.com/yoseflab/scib-metrics"
-dependencies = ["anndata"]
+dependencies = [
+    "anndata",
+    "jax",
+    "jaxlib",
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-learn",
+    "scanpy",
+]
 
 [project.optional-dependencies]
 dev = [

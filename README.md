@@ -30,7 +30,13 @@ pip install scib-metrics
 ```
 -->
 
-1. Install the latest development version:
+1. Install the latest release on PyPI:
+
+```bash
+pip install scib-metrics
+```
+
+2. Install the latest development version:
 
 ```bash
 pip install git+https://github.com/yoseflab/scib-metrics.git@main

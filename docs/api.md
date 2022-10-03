@@ -1,5 +1,18 @@
 # API
 
+## Metrics
+
+```{eval-rst}
+.. module:: scib_metrics
+.. currentmodule:: scib_metrics
+
+.. autosummary::
+    :toctree: generated
+
+    silhouette_label
+    silhouette_batch
+```
+
 ## Utils
 
 ```{eval-rst}

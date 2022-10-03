@@ -3,7 +3,7 @@
 [![Tests][badge-tests]][link-tests]
 [![Documentation][badge-docs]][link-docs]
 
-[badge-tests]: https://img.shields.io/github/workflow/status/adamgayoso/scib-metrics/Test/main
+[badge-tests]: https://img.shields.io/github/workflow/status/yoseflab/scib-metrics/Test/main
 [link-tests]: https://github.com/yoseflab/scib-metrics/actions/workflows/test.yml
 [badge-docs]: https://img.shields.io/readthedocs/scib-metrics
 

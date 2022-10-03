@@ -94,7 +94,7 @@ def _euclidean_distance(x: np.array, y: np.array) -> float:
 
 @jax.jit
 def cdist(x: np.ndarray, y: np.ndarray) -> jnp.ndarray:
-    """Jax implementation of scipy.spatial.distance.cdist.
+    """Jax implementation of :func:`scipy.spatial.distance.cdist`.
 
     Uses euclidean distance.
 
@@ -113,7 +113,7 @@ def cdist(x: np.ndarray, y: np.ndarray) -> jnp.ndarray:
     return jax.vmap(lambda x1: jax.vmap(lambda y1: _euclidean_distance(x1, y1))(y))(x)
 
 
-def silhouette_samples(X: np.ndarray, labels: np.ndarray):
+def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
     """Compute the Silhouette Coefficient for each observation.
 
     Code inspired by:
@@ -122,8 +122,8 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray):
     Parameters
     ----------
     X
-        Array of shape (n_samples_a, n_features) representing an
-        array of pairwise distances between samples, or a feature array.
+        Array of shape (n_samples, n_features) representing a
+        feature array.
     labels
         Array of shape (n_samples,) representing label values
         for each observation.

@@ -54,6 +54,11 @@ def test_nmi_ari_cluster_labels():
     assert isinstance(ari, float)
 
 
+def test_isolated_labels():
+    X, labels, batch = dummy_x_labels_batch()
+    scib_metrics.isolated_labels(X, labels, batch)
+
+
 def test_kmeans():
     X, _ = dummy_x_labels()
     kmeans = scib_metrics.utils.KMeansJax(2)

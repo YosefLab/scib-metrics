@@ -15,12 +15,12 @@ class ScibConfig:
     --------
     To set the progress bar style, choose one of "rich", "tqdm"
 
-    >>> scvi.settings.progress_bar_style = "rich"
+    >>> scib_metrics.settings.progress_bar_style = "rich"
 
     To set the verbosity
 
     >>> import logging
-    >>> scvi.settings.verbosity = logging.INFO
+    >>> scib_metrics.settings.verbosity = logging.INFO
     """
 
     def __init__(

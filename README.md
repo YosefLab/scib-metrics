@@ -11,9 +11,7 @@ Accelerated and Python-only scIB metrics
 
 ## Getting started
 
-Please refer to the [documentation][link-docs]. In particular, the
-
--   [API documentation][link-api].
+Please refer to the [documentation][link-docs].
 
 ## Installation
 

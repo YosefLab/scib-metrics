@@ -11,6 +11,7 @@
 
     silhouette_label
     silhouette_batch
+    nmi_ari_cluster_labels
 ```
 
 ## Utils

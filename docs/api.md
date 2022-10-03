@@ -9,9 +9,10 @@
 .. autosummary::
     :toctree: generated
 
+    isolated_labels
+    nmi_ari_cluster_labels
     silhouette_label
     silhouette_batch
-    nmi_ari_cluster_labels
 ```
 
 ## Utils

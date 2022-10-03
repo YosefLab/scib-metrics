@@ -38,7 +38,7 @@ def isolated_labels(
     isolated_label_score: float
     """
     scores = {}
-    isolated_labels = _get_isolated_labels(X, labels, batch, iso_threshold)
+    isolated_labels = _get_isolated_labels(labels, batch, iso_threshold)
 
     for label in isolated_labels:
         score = _score_isolated_label(X, labels, label)
@@ -55,8 +55,7 @@ def _score_isolated_label(
 ):
     """Compute label score for a single label."""
     mask = labels == isolated_label
-    X_subset = X[mask]
-    score = silhouette_label(X_subset, mask.astype(np.float32))
+    score = silhouette_label(X, mask.astype(np.float32))
     logging.info(f"{isolated_label}: {score}")
 
     return score

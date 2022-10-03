@@ -37,11 +37,17 @@ def _intra_cluster_distances(X: np.ndarray, labels: np.ndarray):
     return intra_dist
 
 
+@jax.jit
+def _intra_value(subset: np.ndarray) -> jnp.ndarray:
+    distances = cdist(subset, subset)
+    values = distances.sum(axis=1) / (distances.shape[0] - 1)
+    return values
+
+
 def _intra_cluster_distances_block(i: int, input: _IntraClusterData) -> jnp.ndarray:
     labels_inds = input.labels == input.unique_labels[i]
     subset = input.data[labels_inds]
-    distances = cdist(subset, subset)
-    values = distances.sum(axis=1) / (distances.shape[0] - 1)
+    values = _intra_value(subset)
     intra_dist = input.intra_dist
     intra_dist = intra_dist.at[labels_inds].set(values)
     return intra_dist
@@ -58,6 +64,14 @@ def _nearest_cluster_distances(X: np.ndarray, labels: np.ndarray):
     return inter_dist
 
 
+@jax.jit
+def _inter_values(subset_a: np.ndarray, subset_b: np.ndarray) -> Union[jnp.ndarray, jnp.ndarray]:
+    distances = cdist(subset_a, subset_b)
+    values_a = distances.mean(axis=1)
+    values_b = distances.mean(axis=0)
+    return values_a, values_b
+
+
 def _nearest_cluster_distance_block(inter_dist: jnp.ndarray, input: _InterClusterData) -> jnp.ndarray:
     label_a = input.label_combos[inter_dist, 0]
     label_b = input.label_combos[inter_dist, 1]
@@ -65,9 +79,7 @@ def _nearest_cluster_distance_block(inter_dist: jnp.ndarray, input: _InterCluste
     label_mask_b = input.labels == label_b
     subset_a = input.data[label_mask_a]
     subset_b = input.data[label_mask_b]
-    dist = cdist(subset_a, subset_b)
-    dist_a = dist.mean(axis=1)
-    dist_b = dist.mean(axis=0)
+    dist_a, dist_b = _inter_values(subset_a, subset_b)
     inter_dist = input.inter_dist
     inter_dist = inter_dist.at[label_mask_a].set(jnp.minimum(dist_a, inter_dist[label_mask_a]))
     inter_dist = inter_dist.at[label_mask_b].set(jnp.minimum(dist_b, inter_dist[label_mask_b]))

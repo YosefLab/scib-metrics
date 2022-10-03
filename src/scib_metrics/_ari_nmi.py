@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy as np
 from sklearn.metrics.cluster import adjusted_rand_score, normalized_mutual_info_score
 
@@ -10,7 +12,7 @@ def _compute_clustering(X: np.ndarray, n_clusters: int) -> np.ndarray:
     return kmeans.labels_
 
 
-def nmi_ari_cluster_labels(X: np.ndarray, labels: np.ndarray) -> float:
+def nmi_ari_cluster_labels(X: np.ndarray, labels: np.ndarray) -> Tuple[float, float]:
     """Compute nmi and ari between k-means clusters and labels.
 
     This deviates from the original implementation in scib by using k-means

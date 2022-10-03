@@ -1,5 +1,5 @@
 import logging
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ def isolated_labels(
     X: np.ndarray,
     labels: np.ndarray,
     batch: np.ndarray,
-    iso_threshold=None,
+    iso_threshold: Optional[int] = None,
 ) -> float:
     """Isolated label score.
 
@@ -28,6 +28,10 @@ def isolated_labels(
         Array of shape (n_samples,) representing label values
     batch
         Array of shape (n_samples,) representing batch values
+    iso_threshold
+        Max number of batches per label for label to be considered as
+        isolated, if integer. If `None`, considers minimum number of
+        batches that labels are present in
 
     Returns
     -------

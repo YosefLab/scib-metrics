@@ -6,6 +6,18 @@ from sklearn.metrics import silhouette_samples as sk_silhouette_samples
 import scib_metrics
 
 
+def dummy_x_labels():
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
+    labels = np.array([0, 0, 1, 1, 0, 1])
+    return X, labels
+
+
+def dummy_x_labels_batch():
+    X, labels = dummy_x_labels()
+    batch = np.array([0, 1, 0, 1, 0, 1])
+    return X, labels, batch
+
+
 def test_package_has_version():
     scib_metrics.__version__
 
@@ -17,6 +29,19 @@ def test_cdist():
 
 
 def test_silhouette_samples():
-    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    labels = np.array([0, 0, 1, 1])
+    X, labels = dummy_x_labels()
     assert np.allclose(scib_metrics.utils.silhouette_samples(X, labels), sk_silhouette_samples(X, labels))
+
+
+def test_silhouette_label():
+    X, labels = dummy_x_labels()
+    score = scib_metrics.silhouette_label(X, labels)
+    assert score > 0
+    scib_metrics.silhouette_label(X, labels, rescale=False)
+
+
+def test_silhouette_batch():
+    X, labels, batch = dummy_x_labels_batch()
+    score = scib_metrics.silhouette_batch(X, labels, batch)
+    assert score > 0
+    scib_metrics.silhouette_batch(X, labels, batch)

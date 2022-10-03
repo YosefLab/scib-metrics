@@ -20,6 +20,9 @@ def isolated_labels(
     Score how well labels of isolated labels are distiguished in the dataset by
     average-width silhouette score (ASW) on isolated label vs all other labels.
 
+    The default of the original scib package is to use a cluster-based F1 scoring
+    procedure, but here we use the ASW for speed and simplicity.
+
     Parameters
     ----------
     X

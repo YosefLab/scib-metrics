@@ -3,7 +3,7 @@
 [![Tests][badge-tests]][link-tests]
 [![Documentation][badge-docs]][link-docs]
 
-[badge-tests]: https://img.shields.io/github/workflow/status/adamgayoso/scib-metrics/Test/main
+[badge-tests]: https://img.shields.io/github/workflow/status/yoseflab/scib-metrics/Test/main
 [link-tests]: https://github.com/yoseflab/scib-metrics/actions/workflows/test.yml
 [badge-docs]: https://img.shields.io/readthedocs/scib-metrics
 
@@ -11,9 +11,7 @@ Accelerated and Python-only scIB metrics
 
 ## Getting started
 
-Please refer to the [documentation][link-docs]. In particular, the
-
--   [API documentation][link-api].
+Please refer to the [documentation][link-docs].
 
 ## Installation
 
@@ -30,7 +28,13 @@ pip install scib-metrics
 ```
 -->
 
-1. Install the latest development version:
+1. Install the latest release on PyPI:
+
+```bash
+pip install scib-metrics
+```
+
+2. Install the latest development version:
 
 ```bash
 pip install git+https://github.com/yoseflab/scib-metrics.git@main

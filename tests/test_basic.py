@@ -59,10 +59,22 @@ def test_compute_simpson_index():
     scib_metrics.utils.compute_simpson_index(jnp.array(D), jnp.array(
         knn_idx), jnp.array(labels), len(np.unique(labels)))
 
-
 def test_lisi_knn():
     X, labels = dummy_x_labels()
     dist_mat = csr_matrix(scib_metrics.utils.cdist(X, X))
     nbrs = NearestNeighbors(n_neighbors=2, algorithm="ball_tree").fit(X)
     knn_graph = nbrs.kneighbors_graph(X)
     scib_metrics.lisi_knn(dist_mat, knn_graph, labels)
+
+
+def test_isolated_labels():
+    X, labels, batch = dummy_x_labels_batch()
+    scib_metrics.isolated_labels(X, labels, batch)
+
+
+def test_kmeans():
+    X, _ = dummy_x_labels()
+    kmeans = scib_metrics.utils.KMeansJax(2)
+    kmeans.fit(X)
+    assert kmeans.labels_.shape == (X.shape[0],)
+

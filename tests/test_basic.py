@@ -2,6 +2,7 @@ import scib_metrics
 import jax.numpy as jnp
 import numpy as np
 from scipy.spatial.distance import cdist as sp_cdist
+from scipy.sparse import csr_matrix
 from sklearn.metrics import silhouette_samples as sk_silhouette_samples
 from sklearn.neighbors import NearestNeighbors
 
@@ -50,10 +51,18 @@ def test_silhouette_batch():
     scib_metrics.silhouette_batch(X, labels, batch)
 
 
-def test_lisi_label():
+def test_compute_simpson_index():
     X, labels = dummy_x_labels()
     D = scib_metrics.utils.cdist(X, X)
     nbrs = NearestNeighbors(n_neighbors=2, algorithm="ball_tree").fit(X)
     D, knn_idx = nbrs.kneighbors(X)
     scib_metrics.utils.compute_simpson_index(jnp.array(D), jnp.array(
         knn_idx), jnp.array(labels), len(np.unique(labels)))
+
+
+def test_lisi_knn():
+    X, labels = dummy_x_labels()
+    dist_mat = csr_matrix(scib_metrics.utils.cdist(X, X))
+    nbrs = NearestNeighbors(n_neighbors=2, algorithm="ball_tree").fit(X)
+    knn_graph = nbrs.kneighbors_graph(X)
+    scib_metrics.lisi_knn(dist_mat, knn_graph, labels)

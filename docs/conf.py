@@ -50,7 +50,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinxcontrib.bibtex",
     "sphinx_autodoc_typehints",
-    "scanpydoc.definition_list_typed_field",
     "scanpydoc.elegant_typehints",
     "nbsphinx",
     "sphinx.ext.mathjax",
@@ -105,8 +104,6 @@ pygments_dark_style = "native"
 nitpick_ignore = [
     # If building the documentation fails because of a missing link that is outside your control,
     # you can add an exception to this list.
-    ("py:class", "np.ndarray"),
-    ("py:class", "jnp.ndarray"),
 ]
 
 

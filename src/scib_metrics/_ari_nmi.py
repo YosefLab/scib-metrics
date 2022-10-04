@@ -28,9 +28,9 @@ def nmi_ari_cluster_labels(X: np.ndarray, labels: np.ndarray) -> Tuple[float, fl
 
     Returns
     -------
-    nmi: float
+    nmi
         Normalized mutual information score
-    ari: float
+    ari
         Adjusted rand index score
     """
     n_clusters = len(np.unique(labels))

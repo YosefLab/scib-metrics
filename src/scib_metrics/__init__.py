@@ -11,8 +11,7 @@ from ._silhouette import silhouette_batch, silhouette_label
 __all__ = [
     "utils",
     "isolated_labels",
-    "pcr"
-    "silhouette_label",
+    "pcr" "silhouette_label",
     "silhouette_batch",
     "nmi_ari_cluster_labels",
 ]

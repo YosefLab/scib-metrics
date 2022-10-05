@@ -130,9 +130,9 @@ def _pca(
     variance_ratio: NdArray
         Array of shape (K,) containing the explained variance ratio of each PC.
     """
-    X_ = X - jnp.mean(X, axis=0) # center data
-    u, s, v = jnp.linalg.svd(X_, full_matrices=False) # (M, K), (K,), (K, N)
-    u, v = _svd_flip(u, v) # make deterministic
+    X_ = X - jnp.mean(X, axis=0)  # center data
+    u, s, v = jnp.linalg.svd(X_, full_matrices=False)  # (M, K), (K,), (K, N)
+    u, v = _svd_flip(u, v)  # make deterministic
 
     variance = (s**2) / (X.shape[0] - 1)
     total_variance = jnp.sum(variance)

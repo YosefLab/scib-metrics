@@ -7,7 +7,7 @@
 [link-tests]: https://github.com/yoseflab/scib-metrics/actions/workflows/test.yml
 [badge-docs]: https://img.shields.io/readthedocs/scib-metrics
 
-Accelerated and Python-only scIB metrics.
+Accelerated and Python-only metrics for benchmarking single-cell integration outputs.
 
 This package contains implementations of metrics for evaluating the performance of single-cell omics data integration methods. The implementations of these metrics use [jax](https://jax.readthedocs.io/en/latest/) when possible for jit-compilation and hardware acceleration. All implementations are in Python.
 

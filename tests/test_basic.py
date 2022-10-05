@@ -1,3 +1,4 @@
+import time
 from harmonypy import compute_lisi as harmonypy_lisi
 import scib_metrics
 import jax.numpy as jnp
@@ -73,7 +74,6 @@ def test_lisi_knn():
     harmonypy_lisi_res = harmonypy_lisi(X, pd.DataFrame(
         labels, columns=["labels"]), label_colnames=["labels"], perplexity=10)[:, 0]
     assert np.allclose(lisi_res, harmonypy_lisi_res)
-
 
 def test_isolated_labels():
     X, labels, batch = dummy_x_labels_batch()

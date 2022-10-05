@@ -20,7 +20,9 @@ def Hbeta(knn_dists_row: jnp.ndarray, beta: float) -> Tuple[jnp.ndarray, jnp.nda
 
 
 @jax.jit
-def _get_neighbor_probability(knn_dists_row: jnp.ndarray, perplexity: float, tol: float) -> Tuple[jnp.ndarray, jnp.ndarray]:
+def _get_neighbor_probability(
+    knn_dists_row: jnp.ndarray, perplexity: float, tol: float
+) -> Tuple[jnp.ndarray, jnp.ndarray]:
     beta = 1
     betamin = -jnp.inf
     betamax = jnp.inf
@@ -31,8 +33,11 @@ def _get_neighbor_probability(knn_dists_row: jnp.ndarray, perplexity: float, tol
         _, _, Hdiff, beta, betamin, betamax, tries = state
         new_betamin = jnp.where(Hdiff > 0, beta, betamin)
         new_betamax = jnp.where(Hdiff > 0, betamax, beta)
-        new_beta = jnp.where(Hdiff > 0, jnp.where(betamax == jnp.inf, beta * 2, (beta + betamax) / 2),
-                             jnp.where(betamin == -jnp.inf, beta / 2, (beta + betamin) / 2))
+        new_beta = jnp.where(
+            Hdiff > 0,
+            jnp.where(betamax == jnp.inf, beta * 2, (beta + betamax) / 2),
+            jnp.where(betamin == -jnp.inf, beta / 2, (beta + betamin) / 2),
+        )
         new_H, new_P = Hbeta(knn_dists_row, new_beta)
         new_Hdiff = new_H - jnp.log(perplexity)
         return new_H, new_P, new_Hdiff, new_beta, new_betamin, new_betamax, tries + 1
@@ -73,6 +78,8 @@ def compute_simpson_index(
     knn_idx = jnp.array(knn_idx)
     labels = jnp.array(labels)
     n = knn_dists.shape[0]
-    return jax.device_get(jax.vmap(
-        lambda i: _compute_simpson_index_cell(knn_dists[i, :], knn_idx[i, :], labels, n_labels, perplexity, tol)
-    )(jnp.arange(n)))
+    return jax.device_get(
+        jax.vmap(
+            lambda i: _compute_simpson_index_cell(knn_dists[i, :], knn_idx[i, :], labels, n_labels, perplexity, tol)
+        )(jnp.arange(n))
+    )

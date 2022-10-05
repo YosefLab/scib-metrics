@@ -1,15 +1,16 @@
-import time
-from harmonypy import compute_lisi as harmonypy_lisi
-import scib_metrics
+import sys
+
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import cdist as sp_cdist
+from harmonypy import compute_lisi as harmonypy_lisi
 from scipy.sparse import csr_matrix
+from scipy.spatial.distance import cdist as sp_cdist
 from sklearn.metrics import silhouette_samples as sk_silhouette_samples
 from sklearn.neighbors import NearestNeighbors
 
-import sys
+import scib_metrics
+
 sys.path.append("../src/")
 
 
@@ -60,8 +61,9 @@ def test_compute_simpson_index():
     D = scib_metrics.utils.cdist(X, X)
     nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
     D, knn_idx = nbrs.kneighbors(X)
-    scib_metrics.utils.compute_simpson_index(jnp.array(D), jnp.array(
-        knn_idx), jnp.array(labels), len(np.unique(labels)))
+    scib_metrics.utils.compute_simpson_index(
+        jnp.array(D), jnp.array(knn_idx), jnp.array(labels), len(np.unique(labels))
+    )
 
 
 def test_lisi_knn():
@@ -71,8 +73,9 @@ def test_lisi_knn():
     knn_graph = nbrs.kneighbors_graph(X)
     knn_graph = knn_graph.multiply(dist_mat)
     lisi_res = scib_metrics.lisi_knn(knn_graph, labels, perplexity=10)
-    harmonypy_lisi_res = harmonypy_lisi(X, pd.DataFrame(
-        labels, columns=["labels"]), label_colnames=["labels"], perplexity=10)[:, 0]
+    harmonypy_lisi_res = harmonypy_lisi(
+        X, pd.DataFrame(labels, columns=["labels"]), label_colnames=["labels"], perplexity=10
+    )[:, 0]
     assert np.allclose(lisi_res, harmonypy_lisi_res)
 
 

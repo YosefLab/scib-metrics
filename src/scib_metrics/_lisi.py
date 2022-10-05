@@ -1,7 +1,8 @@
 from typing import Tuple
+
 import numpy as np
-from sklearn.utils import check_array
 from scipy.sparse import csr_matrix
+from sklearn.utils import check_array
 
 from scib_metrics.utils import compute_simpson_index
 

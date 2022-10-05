@@ -64,3 +64,11 @@ def test_kmeans():
     kmeans = scib_metrics.utils.KMeansJax(2)
     kmeans.fit(X)
     assert kmeans.labels_.shape == (X.shape[0],)
+
+
+def test_pca_basic():
+    X, _ = dummy_x_labels()
+    
+
+def test_pcr_basic():
+    pass

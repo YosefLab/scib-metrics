@@ -75,16 +75,11 @@ def _pcr(
     var
         Array of shape (n_components,) containing the explained variance of each PC.
     """
-    def get_r2(pc, batch):
-        rss = jnp.linalg.lstsq(batch, pc)[1]
-        tss = jnp.sum((pc - jnp.mean(pc)) ** 2)
-        return jnp.maximum(0, 1 - rss / tss)
+    def r2(pc, batch):
+        residual_sum = jnp.linalg.lstsq(batch, pc)[1]
+        total_sum = jnp.sum((pc - jnp.mean(pc)) ** 2)
+        return jnp.maximum(0, 1 - residual_sum / total_sum)
 
     # Index PCs on axis = 1, don't index batch
-    get_r2 = jax.vmap(get_r2, in_axes=(1, None))
-    r2 = jnp.ravel(get_r2(X_pca, batch))
-
-    var = var / jnp.sum(var) * 100
-    r2var = jnp.sum(r2 * var) / 100
-
-    return r2var
+    r2 = jax.vmap(r2, in_axes=(1, None))(X_pca, batch)
+    return jnp.dot(jnp.ravel(r2), var) / jnp.sum(var)

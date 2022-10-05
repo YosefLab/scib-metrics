@@ -1,3 +1,5 @@
+from itertools import product
+
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -7,10 +9,12 @@ import scib_metrics
 
 from .sampling import poisson_sample
 
+PCA_PARAMS = list(product([10, 100, 1000], [10, 100, 1000]))
 
-@pytest.mark.parametrize("n_obs, n_vars", [(1000, 1000), (1000, 500), (500, 1000)])
-def test_pca(n_obs, n_vars):
-    def _test_pca(n_obs, n_vars, n_components, eps=1e-4):
+
+@pytest.mark.parametrize("n_obs, n_vars", PCA_PARAMS)
+def test_pca(n_obs: int, n_vars: int):
+    def _test_pca(n_obs: int, n_vars: int, n_components: int, eps: float = 1e-4):
         X = poisson_sample(n_obs, n_vars)
         max_components = min(X.shape)
         pca = scib_metrics.utils.pca(X, n_components=n_components, return_svd=True)

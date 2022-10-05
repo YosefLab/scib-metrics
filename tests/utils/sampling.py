@@ -18,8 +18,13 @@ def categorical_sample(
     return jax.random.categorical(_validate_seed(seed), jnp.ones(n_cats), shape=(n_obs,))
 
 
-def uniform_sample(n_obs: int, n_vars: int, seed: IntOrKey) -> None:
-    pass
+def normal_sample(
+    n_obs: int,
+    mean: float = 0.0,
+    var: float = 1.0,
+    seed: IntOrKey = 0,
+) -> jnp.ndarray:
+    return jax.random.multivariate_normal(_validate_seed(seed), jnp.ones(n_obs) * mean, jnp.eye(n_obs) * var)
 
 
 def poisson_sample(

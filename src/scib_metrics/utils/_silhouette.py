@@ -7,6 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from ._dist import cdist
+from ._utils import get_ndarray
 
 NdArray = Union[np.ndarray, jnp.ndarray]
 
@@ -114,4 +115,4 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
 
     intra_dist = _intra_cluster_distances(X, labels)
     inter_dist = _nearest_cluster_distances(X, labels)
-    return jax.device_get((inter_dist - intra_dist) / jnp.maximum(intra_dist, inter_dist))
+    return get_ndarray((inter_dist - intra_dist) / jnp.maximum(intra_dist, inter_dist))

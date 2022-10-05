@@ -9,7 +9,7 @@ from .._types import NdArray
 
 def get_ndarray(x: jnp.ndarray) -> np.ndarray:
     """Convert Jax device array to Numpy."""
-    return np.asarray(jax.device_get(x))
+    return np.array(jax.device_get(x))
 
 
 def one_hot(y: NdArray, n_classes: Optional[int] = None) -> NdArray:

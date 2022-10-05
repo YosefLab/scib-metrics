@@ -22,7 +22,6 @@ urls.Home-page = "https://github.com/yoseflab/scib-metrics"
 dependencies = [
     "anndata",
     "flax",
-    "harmonypy",
     "jax",
     "jaxlib",
     "numpy",
@@ -52,6 +51,7 @@ doc = [
 test = [
     "pytest",
     "pytest-cov",
+    "harmonypy",
 ]
 
 [tool.coverage.run]

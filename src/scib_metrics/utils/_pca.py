@@ -8,7 +8,25 @@ from .._types import NdArray
 
 
 @dataclass
-class _PCAData:
+class _SVD:
+    """SVD data.
+
+    Attributes
+    ----------
+    u
+        Array of shape (n_samples, n_components) containing the left singular vectors.
+    s
+        Array of shape (n_components,) containing the singular values.
+    v
+        Array of shape (n_components, n_features) containing the right singular vectors.
+    """
+
+    u: NdArray
+    s: NdArray
+    v: NdArray
+
+@dataclass
+class _PCA:
     """PCA data.
 
     Attributes
@@ -22,14 +40,14 @@ class _PCAData:
     variance_ratio
         Array of shape (n_components,) containing the explained variance ratio of each PC.
     svd
-        Tuple of NdArray containing the results from truncated SVD.
+        Dataclass containing the SVD data.
     """
 
     coordinates: NdArray
     components: NdArray
     variance: NdArray
     variance_ratio: NdArray
-    svd: Optional[Tuple[NdArray, NdArray, NdArray]] = None
+    svd: Optional[_SVD] = None
 
 
 def _svd_flip(
@@ -67,7 +85,7 @@ def pca(
     X: NdArray,
     n_components: Optional[int] = None,
     return_svd: bool = False,
-) -> _PCAData:
+) -> _PCA:
     """Principal component analysis (PCA).
 
     Parameters
@@ -96,12 +114,12 @@ def pca(
     variance_ = variance[:n_components]
     variance_ratio_ = variance_ratio[:n_components]
 
-    results = _PCAData(
+    results = _PCA(
         coordinates,
         components,
         variance_,
         variance_ratio_,
-        svd=(u, s, v) if return_svd else None,
+        svd=_SVD(u, s, v) if return_svd else None
     )
     return results
 

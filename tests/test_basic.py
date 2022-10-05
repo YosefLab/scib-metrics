@@ -66,9 +66,27 @@ def test_kmeans():
     assert kmeans.labels_.shape == (X.shape[0],)
 
 
-def test_pca_basic():
+def test_pca():
     X, _ = dummy_x_labels()
-    
+    max_components = min(X.shape)
+    n_components = max_components - 1
+    pca = scib_metrics.utils.pca(X, n_components=n_components, return_svd=True)
 
-def test_pcr_basic():
-    pass
+    assert pca.coordinates.shape == (X.shape[0], n_components)
+    assert pca.variance.shape == (n_components,)
+    assert pca.variance_ratio.shape == (n_components,)
+
+    # SVD results should not be truncated to n_components
+    assert pca.svd is not None
+    assert pca.svd.u.shape == (X.shape[0], max_components)
+    assert pca.svd.s.shape == (max_components,)
+    assert pca.svd.v.shape == (max_components, X.shape[1])
+
+
+def test_pcr():
+    X, _, batch = dummy_x_labels_batch()
+    max_components = min(X.shape)
+    n_components = max_components - 1
+
+    _ = scib_metrics.pcr(X, batch, categorical=True, n_components=n_components)
+    _ = scib_metrics.pcr(X, batch, categorical=False, n_components=n_components)

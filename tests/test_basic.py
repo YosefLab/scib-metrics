@@ -38,7 +38,7 @@ def test_cdist():
 
 def test_silhouette_samples():
     X, labels = dummy_x_labels()
-    assert np.allclose(scib_metrics.utils.silhouette_samples(X, labels), sk_silhouette_samples(X, labels))
+    assert np.allclose(scib_metrics.utils.silhouette_samples(X, labels), sk_silhouette_samples(X, labels), atol=1e-5)
 
 
 def test_silhouette_label():

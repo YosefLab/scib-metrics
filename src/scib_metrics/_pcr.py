@@ -41,24 +41,13 @@ def principal_component_regression(
     if X.shape[0] != covariate.shape[0]:
         raise ValueError("Dimension mismatch: X and batch must have the same number of samples.")
 
-    # Batch must be 2D
-    if categorical:
-        covariate = one_hot(jnp.resize(covariate, (covariate.shape[0])))
-    else:
-        covariate = jnp.resize(covariate, (covariate.shape[0], 1))
+    covariate = one_hot(covariate) if categorical else covariate.reshape((covariate.shape[0], 1))
 
     pca_results = pca(X, n_components=n_components)
-    X_pca = pca_results.coordinates
-    var = pca_results.variance
 
-    # Standardize inputs - needed since no intercept in :func:`jax.numpy.linalg.lstsq`
-    # X_pca = (X_pca - jnp.mean(X_pca, axis=1, keepdims=True)) / jnp.std(X_pca, axis=1, keepdims=True)
-    if categorical:
-        covariate = covariate - jnp.mean(covariate, axis=0)
-    else:
-        X_pca = (X_pca - jnp.mean(X_pca, axis=0)) / jnp.std(X_pca, axis=0)
-        covariate = (covariate - covariate.mean(axis=0)) / covariate.std(axis=0)
-    pcr = _pcr(X_pca, covariate, var)
+    # Center inputs for no intercept
+    covariate = covariate - jnp.mean(covariate, axis=0)
+    pcr = _pcr(pca_results.coordinates, covariate, pca_results.variance)
     return float(pcr)
 
 

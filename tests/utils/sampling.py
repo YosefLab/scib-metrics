@@ -6,7 +6,7 @@ import jax.numpy as jnp
 IntOrKey = Union[int, jax.random.KeyArray]
 
 
-def _validate_seed(seed: IntOrKey) -> jax.random.jax.random.KeyArray:
+def _validate_seed(seed: IntOrKey) -> jax.random.KeyArray:
     return jax.random.PRNGKey(seed) if isinstance(seed, int) else seed
 
 

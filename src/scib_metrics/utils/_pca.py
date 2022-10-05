@@ -72,13 +72,11 @@ def _svd_flip(
     if u_based_decision:
         max_abs_cols = jnp.argmax(jnp.abs(u), axis=0)
         signs = jnp.sign(u[max_abs_cols, jnp.arange(u.shape[1])])
-        u_ = u * signs
-        v_ = v * signs[:, None]
     else:
         max_abs_rows = jnp.argmax(jnp.abs(v), axis=1)
         signs = jnp.sign(v[jnp.arange(v.shape[0]), max_abs_rows])
-        u_ = u * signs
-        v_ = v * signs[:, None]
+    u_ = u * signs
+    v_ = v * signs[:, None]
     return u_, v_
 
 
@@ -111,7 +109,7 @@ def pca(
 
     # Select n_components
     coordinates = u[:, :n_components] * s[:n_components]
-    components = v[:n_components, :]
+    components = v[:n_components]
     variance_ = variance[:n_components]
     variance_ratio_ = variance_ratio[:n_components]
 

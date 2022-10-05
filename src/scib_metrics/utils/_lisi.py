@@ -8,10 +8,7 @@ NdArray = Union[np.ndarray, jnp.ndarray]
 
 
 @jax.jit
-def Hbeta(knn_dists_row: jnp.ndarray, beta: float) -> Tuple[jnp.ndarray, jnp.ndarray]:
-    """
-    Helper function for simpson index computation
-    """
+def _Hbeta(knn_dists_row: jnp.ndarray, beta: float) -> Tuple[jnp.ndarray, jnp.ndarray]:
     P = jnp.exp(-knn_dists_row * beta)
     sumP = jnp.nansum(P)
     H = jnp.where(sumP == 0, 0, jnp.log(sumP) + beta * jnp.nansum(knn_dists_row * P) / sumP)
@@ -26,7 +23,7 @@ def _get_neighbor_probability(
     beta = 1
     betamin = -jnp.inf
     betamax = jnp.inf
-    H, P = Hbeta(knn_dists_row, beta)
+    H, P = _Hbeta(knn_dists_row, beta)
     Hdiff = H - jnp.log(perplexity)
 
     def _get_neighbor_probability_step(state):
@@ -38,7 +35,7 @@ def _get_neighbor_probability(
             jnp.where(betamax == jnp.inf, beta * 2, (beta + betamax) / 2),
             jnp.where(betamin == -jnp.inf, beta / 2, (beta + betamin) / 2),
         )
-        new_H, new_P = Hbeta(knn_dists_row, new_beta)
+        new_H, new_P = _Hbeta(knn_dists_row, new_beta)
         new_Hdiff = new_H - jnp.log(perplexity)
         return new_H, new_P, new_Hdiff, new_beta, new_betamin, new_betamax, tries + 1
 
@@ -74,6 +71,23 @@ def compute_simpson_index(
     perplexity: float = 30,
     tol: float = 1e-5,
 ) -> np.ndarray:
+    """Compute the Simpson index for each cell.
+
+    Parameters
+    ----------
+    knn_dists
+        KNN distances of size (n_cells, n_neighbors).
+    knn_idx
+        KNN indices of size (n_cells, n_neighbors) corresponding to distances.
+    labels
+        Cell labels of size (n_cells,).
+    n_labels
+        Number of labels.
+    perplexity
+        Measure of the effective number of neighbors.
+    tol
+        Tolerance for binary search.
+    """
     knn_dists = jnp.array(knn_dists)
     knn_idx = jnp.array(knn_idx)
     labels = jnp.array(labels)

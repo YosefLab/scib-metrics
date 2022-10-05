@@ -39,12 +39,11 @@ dev = [
 ]
 doc = [
     "sphinx>=4",
-    "furo",
-    "myst-parser",
+    "sphinx-book-theme",
+    "myst-nb",
     "sphinxcontrib-bibtex>=1.0.0",
     "scanpydoc[typehints]>=0.7.4",
     # For notebooks
-    "nbsphinx",
     "ipykernel"
 ]
 test = [

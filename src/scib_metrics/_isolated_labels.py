@@ -38,7 +38,7 @@ def isolated_labels(
 
     Returns
     -------
-    isolated_label_score: float
+    isolated_label_score
     """
     scores = {}
     isolated_labels = _get_isolated_labels(labels, batch, iso_threshold)

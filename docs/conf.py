@@ -43,16 +43,14 @@ html_context = {
 # Add any Sphinx extension module names here, as strings.
 # They can be extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "myst_parser",
+    "myst_nb",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinxcontrib.bibtex",
     "sphinx_autodoc_typehints",
-    "scanpydoc.definition_list_typed_field",
     "scanpydoc.elegant_typehints",
-    "nbsphinx",
     "sphinx.ext.mathjax",
     *[p.stem for p in (HERE / "extensions").glob("*.py")],
 ]
@@ -66,7 +64,24 @@ napoleon_include_init_with_doc = False
 napoleon_use_rtype = True  # having a separate entry generally helps readability
 napoleon_use_param = True
 myst_heading_anchors = 3  # create anchors for h1-h3
+myst_enable_extensions = [
+    "amsmath",
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "html_image",
+    "html_admonition",
+]
+myst_url_schemes = ("http", "https", "mailto")
+nb_output_stderr = "remove"
+nb_execution_mode = "off"
+nb_merge_streams = True
 
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".ipynb": "myst-nb",
+    ".myst": "myst-nb",
+}
 
 intersphinx_mapping = {
     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
@@ -81,9 +96,6 @@ intersphinx_mapping = {
     "jax": ("https://jax.readthedocs.io/en/latest/", None),
 }
 
-
-nbsphinx_execute = "never"
-
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
@@ -95,8 +107,14 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "furo"
+html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
+html_title = "scib-metrics"
+
+html_theme_options = {
+    "repository_url": "https://github.com/yoseflab/scib-metrics",
+    "use_repository_button": True,
+}
 
 pygments_style = "default"
 pygments_dark_style = "native"
@@ -104,8 +122,6 @@ pygments_dark_style = "native"
 nitpick_ignore = [
     # If building the documentation fails because of a missing link that is outside your control,
     # you can add an exception to this list.
-    ("py:class", "np.ndarray"),
-    ("py:class", "jnp.ndarray"),
 ]
 
 

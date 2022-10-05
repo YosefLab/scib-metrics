@@ -4,12 +4,13 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from scib_metrics.utils import one_hot, pca
+
 from ._types import NdArray
-from scib_metrics.utils import pca, one_hot
 
 
 def pc_regression(
-    X: NdArray, 
+    X: NdArray,
     batch: NdArray,
     categorical: Optional[bool] = False,
     n_components: Optional[int] = None,
@@ -81,7 +82,7 @@ def _pcr(
         return jnp.maximum(0, 1 - rss / tss)
 
     # Index PCs on axis = 1, don't index batch
-    get_r2 = jax.vmap(get_r2, in_axes=(1, None)) 
+    get_r2 = jax.vmap(get_r2, in_axes=(1, None))
     r2 = jnp.ravel(get_r2(X_pca, batch))
 
     var = var / jnp.sum(var) * 100

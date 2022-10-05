@@ -2,7 +2,6 @@ from typing import Optional
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 from scib_metrics.utils import one_hot, pca
 
@@ -71,14 +70,15 @@ def _pcr(
     X_pca
         Array of shape (n_samples, n_components) containing PCA coordinates. Must be standardized.
     batch
-        Array of shape (n_samples, 1) or (n_samples, n_classes) containing batch/covariate values. Must be standardized 
+        Array of shape (n_samples, 1) or (n_samples, n_classes) containing batch/covariate values. Must be standardized
         if not categorical (one-hot).
     var
         Array of shape (n_components,) containing the explained variance of each PC.
     """
+
     def get_r2(pc, batch):
         rss = jnp.linalg.lstsq(batch, pc)[1]
-        tss = jnp.sum((pc - jnp.mean(pc))**2)
+        tss = jnp.sum((pc - jnp.mean(pc)) ** 2)
         return jnp.maximum(0, 1 - rss / tss)
 
     # Index PCs on axis = 1, don't index batch

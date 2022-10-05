@@ -116,7 +116,7 @@ def _pca(
     ----------
     X
         Array of shape (n_samples, n_features).
-    
+
     Returns
     -------
     u: NdArray

@@ -1,7 +1,6 @@
 import jax.numpy as jnp
 import numpy as np
 from scipy.spatial.distance import cdist as sp_cdist
-from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_samples as sk_silhouette_samples
 
 import scib_metrics

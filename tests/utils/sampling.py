@@ -1,7 +1,7 @@
 from typing import Union
 
-import jax.numpy as jnp
 import jax
+import jax.numpy as jnp
 
 IntOrKey = Union[int, jax.random.KeyArray]
 
@@ -18,19 +18,14 @@ def categorical_sample(
     return jax.random.categorical(_validate_seed(seed), jnp.ones(n_cats), shape=(n_obs,))
 
 
-def uniform_sample(
-    n_obs: int,
-    n_vars: int,
-    seed: IntOrKey
-) -> None:
+def uniform_sample(n_obs: int, n_vars: int, seed: IntOrKey) -> None:
     pass
 
 
 def poisson_sample(
-    n_obs: int, 
+    n_obs: int,
     n_vars: int,
     rate: float = 1.0,
     seed: IntOrKey = 0,
 ) -> jnp.ndarray:
     return jax.random.poisson(_validate_seed(seed), rate, shape=(n_obs, n_vars))
-    

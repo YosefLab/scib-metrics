@@ -7,7 +7,6 @@ from .sampling import poisson_sample
 
 
 def test_pca():
-
     def _test_pca(n_obs, n_vars, n_components):
         X = poisson_sample(n_obs, n_vars)
         max_components = min(X.shape)
@@ -44,5 +43,5 @@ def test_pca():
         for n_vars in [10, 100, 1000]:
             max_components = min(n_obs, n_vars)
             _test_pca(n_obs, n_vars, n_components=max_components)
-            _test_pca(n_obs, n_vars, n_components=int(max_components/2))
+            _test_pca(n_obs, n_vars, n_components=int(max_components / 2))
             _test_pca(n_obs, n_vars, n_components=1)

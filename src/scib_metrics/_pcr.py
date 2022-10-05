@@ -75,6 +75,7 @@ def _pcr(
     var
         Array of shape (n_components,) containing the explained variance of each PC.
     """
+
     def get_r2(pc, batch):
         rss = jnp.linalg.lstsq(batch, pc)[1]
         tss = jnp.sum((pc - jnp.mean(pc)) ** 2)

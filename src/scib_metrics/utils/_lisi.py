@@ -2,8 +2,8 @@ from typing import Tuple, Union
 
 import jax
 import jax.numpy as jnp
-from flax import struct
 import numpy as np
+from flax import struct
 
 NdArray = Union[np.ndarray, jnp.ndarray]
 

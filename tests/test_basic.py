@@ -84,9 +84,11 @@ def test_pca():
 
 
 def test_pcr():
-    X, _, batch = dummy_x_labels_batch()
+    X, _, covariate = dummy_x_labels_batch()
     max_components = min(X.shape)
     n_components = max_components - 1
 
-    _ = scib_metrics.pcr(X, batch, categorical=True, n_components=n_components)
-    _ = scib_metrics.pcr(X, batch, categorical=False, n_components=n_components)
+    _ = scib_metrics.principal_component_regression(X, covariate, categorical=True, n_components=n_components)
+    _ = scib_metrics.principal_component_regression(X, covariate, categorical=False, n_components=n_components)
+
+    # TODO: Test results against scib (martinkim0)

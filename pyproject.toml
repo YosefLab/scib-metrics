@@ -49,6 +49,7 @@ doc = [
 test = [
     "pytest",
     "pytest-cov",
+    "scib",
 ]
 
 [tool.coverage.run]

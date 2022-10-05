@@ -8,9 +8,9 @@ from scib_metrics.utils import one_hot, pca
 from ._types import NdArray
 
 
-def pcr(
+def principal_component_regression(
     X: NdArray,
-    batch: NdArray,
+    covariate: NdArray,
     categorical: Optional[bool] = False,
     n_components: Optional[int] = None,
 ) -> float:
@@ -24,7 +24,7 @@ def pcr(
     ----------
     X
         Array of shape (n_samples, n_features).
-    batch
+    covariate
         Array of shape (n_samples,) or (n_samples, 1) representing batch/covariate values.
     categorical
         If True, batch will be treated as categorical and one-hot encoded.
@@ -38,15 +38,15 @@ def pcr(
     """
     if len(X.shape) != 2:
         raise ValueError("Dimension mismatch: X must be 2-dimensional.")
-    if X.shape[0] != batch.shape[0]:
+    if X.shape[0] != covariate.shape[0]:
         raise ValueError("Dimension mismatch: X and batch must have the same number of samples.")
 
     # Batch must be 2D
     if categorical:
-        # TODO: Compare this to :func:`~pandas.get_dummies`
-        batch = one_hot(jnp.resize(batch, (batch.shape[0])))
+        # TODO: Compare this to :func:`~pandas.get_dummies` (martinkim0)
+        covariate = one_hot(jnp.resize(covariate, (covariate.shape[0])))
     else:
-        batch = jnp.resize(batch, (batch.shape[0], 1))
+        covariate = jnp.resize(covariate, (covariate.shape[0], 1))
 
     pca_results = pca(X, n_components=n_components)
     X_pca = pca_results.coordinates
@@ -55,15 +55,15 @@ def pcr(
     # Standardize inputs - needed since no intercept in :func:`jax.numpy.linalg.lstsq`
     X_pca = (X_pca - jnp.mean(X_pca, axis=0)) / jnp.std(X_pca, axis=0)
     if not categorical:
-        batch = (batch - batch.mean()) / batch.std()
-    pcr = _pcr(X_pca, batch, var)
+        covariate = (covariate - covariate.mean()) / covariate.std()
+    pcr = _pcr(X_pca, covariate, var)
     return float(pcr)
 
 
 @jax.jit
 def _pcr(
     X_pca: NdArray,
-    batch: NdArray,
+    covariate: NdArray,
     var: NdArray,
 ) -> NdArray:
     """Principal component regression.
@@ -85,5 +85,5 @@ def _pcr(
         return jnp.maximum(0, 1 - residual_sum / total_sum)
 
     # Index PCs on axis = 1, don't index batch
-    r2 = jax.vmap(r2, in_axes=(1, None))(X_pca, batch)
+    r2 = jax.vmap(r2, in_axes=(1, None))(X_pca, covariate)
     return jnp.dot(jnp.ravel(r2), var) / jnp.sum(var)

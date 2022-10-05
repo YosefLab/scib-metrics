@@ -109,6 +109,26 @@ def pca(
 def _pca(
     X: NdArray,
 ) -> Tuple[NdArray, NdArray, NdArray, NdArray, NdArray]:
+    """Principal component analysis.
+
+    Parameters
+    ----------
+    X
+        Array of shape (n_samples, n_features).
+    
+    Returns
+    -------
+    u: NdArray
+        Left singular vectors of shape (M, K).
+    s: NdArray
+        Singular values of shape (K,).
+    v: NdArray
+        Right singular vectors of shape (K, N).
+    variance: NdArray
+        Array of shape (K,) containing the explained variance of each PC.
+    variance_ratio: NdArray
+        Array of shape (K,) containing the explained variance ratio of each PC.
+    """
     X_ = X - jnp.mean(X, axis=0) # center data
     u, s, v = jnp.linalg.svd(X_, full_matrices=False) # (M, K), (K,), (K, N)
     u, v = _svd_flip(u, v) # make deterministic

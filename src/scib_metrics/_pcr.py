@@ -2,6 +2,7 @@ from typing import Optional
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from ._types import NdArray
 from scib_metrics.utils import pca, one_hot
@@ -48,8 +49,12 @@ def pc_regression(
     X_pca = pca_results.coordinates
     var = pca_results.variance
 
+    # Standardize inputs
+    X_pca = (X_pca - jnp.mean(X_pca, axis=0)) / jnp.std(X_pca, axis=0)
+    if not categorical:
+        batch = (batch - batch.mean()) / batch.std()
     pcr = _pcr(X_pca, batch, var)
-    return pcr
+    return float(pcr)
 
 
 @jax.jit
@@ -57,12 +62,24 @@ def _pcr(
     X_pca: NdArray,
     batch: NdArray,
     var: NdArray,
-) -> float:
+) -> NdArray:
+    """Principal component regression.
+
+    Parameters
+    ----------
+    X_pca
+        Array of shape (n_samples, n_components) containing PCA coordinates. Must be standardized.
+    batch
+        Array of shape (n_samples, 1) or (n_samples, n_classes) containing batch/covariate values. Must be standardized 
+        if not categorical (one-hot).
+    var
+        Array of shape (n_components,) containing the explained variance of each PC.
+    """
     def get_r2(pc, batch):
         rss = jnp.linalg.lstsq(batch, pc)[1]
         tss = jnp.sum((pc - jnp.mean(pc))**2)
-        return 1 - rss / tss
-        
+        return jnp.maximum(0, 1 - rss / tss)
+
     # Index PCs on axis = 1, don't index batch
     get_r2 = jax.vmap(get_r2, in_axes=(1, None)) 
     r2 = jnp.ravel(get_r2(X_pca, batch))

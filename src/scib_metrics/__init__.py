@@ -4,12 +4,14 @@ from importlib.metadata import version
 from . import utils
 from ._ari_nmi import nmi_ari_cluster_labels
 from ._isolated_labels import isolated_labels
+from ._pcr import pc_regression
 from ._settings import settings
 from ._silhouette import silhouette_batch, silhouette_label
 
 __all__ = [
     "utils",
     "isolated_labels",
+    "pc_regression"
     "silhouette_label",
     "silhouette_batch",
     "nmi_ari_cluster_labels",

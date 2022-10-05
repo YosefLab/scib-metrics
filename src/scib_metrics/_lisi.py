@@ -2,6 +2,7 @@ from typing import Tuple
 
 import numpy as np
 from scipy.sparse import csr_matrix
+from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_array
 
 from scib_metrics.utils import compute_simpson_index
@@ -15,17 +16,9 @@ def _convert_knn_graph_to_idx(knn_graph: csr_matrix) -> Tuple[np.ndarray, np.nda
         raise ValueError("Each cell must have the same number of neighbors.")
 
     n_neighbors = int(np.unique(n_neighbors)[0])
-    n_cells = knn_graph.shape[0]
 
-    nn_idx = np.empty(shape=(n_cells, n_neighbors), dtype=np.int32)
-    nn_dists = np.empty(shape=(n_cells, n_neighbors), dtype=np.float32)
-    nn_dists[:] = np.NaN
-    for i in range(n_cells):
-        knn_graph_row = knn_graph.getrow(i)
-        sorted_dist_idxs = np.argsort(knn_graph_row.data)
-        nn_idx[i, :] = knn_graph_row.indices[sorted_dist_idxs]
-        nn_dists[i, :] = knn_graph_row.data[sorted_dist_idxs]
-    return nn_dists, nn_idx
+    nn_obj = NearestNeighbors(n_neighbors=n_neighbors, metric="precomputed").fit(knn_graph)
+    return nn_obj.kneighbors(knn_graph)
 
 
 def lisi_knn(knn_graph: csr_matrix, labels: np.ndarray, perplexity: float = None) -> np.ndarray:

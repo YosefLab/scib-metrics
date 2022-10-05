@@ -27,4 +27,4 @@ def one_hot(y: NdArray, n_classes: Optional[int] = None) -> NdArray:
         n_vals = n_classes
 
     one_hot = jnp.eye(n_vals)[y]
-    return one_hot
+    return one_hot.astype(jnp.uint8)

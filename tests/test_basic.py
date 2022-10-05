@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 import numpy as np
 from scipy.spatial.distance import cdist as sp_cdist
+from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_samples as sk_silhouette_samples
 
 import scib_metrics
@@ -64,23 +65,6 @@ def test_kmeans():
     kmeans = scib_metrics.utils.KMeansJax(2)
     kmeans.fit(X)
     assert kmeans.labels_.shape == (X.shape[0],)
-
-
-def test_pca():
-    X, _ = dummy_x_labels()
-    max_components = min(X.shape)
-    n_components = max_components - 1
-    pca = scib_metrics.utils.pca(X, n_components=n_components, return_svd=True)
-
-    assert pca.coordinates.shape == (X.shape[0], n_components)
-    assert pca.variance.shape == (n_components,)
-    assert pca.variance_ratio.shape == (n_components,)
-
-    # SVD results should not be truncated to n_components
-    assert pca.svd is not None
-    assert pca.svd.u.shape == (X.shape[0], max_components)
-    assert pca.svd.s.shape == (max_components,)
-    assert pca.svd.v.shape == (max_components, X.shape[1])
 
 
 def test_pcr():

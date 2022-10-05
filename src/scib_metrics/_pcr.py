@@ -43,7 +43,6 @@ def principal_component_regression(
 
     # Batch must be 2D
     if categorical:
-        # TODO: Compare this to :func:`~pandas.get_dummies` (martinkim0)
         covariate = one_hot(jnp.resize(covariate, (covariate.shape[0])))
     else:
         covariate = jnp.resize(covariate, (covariate.shape[0], 1))
@@ -53,9 +52,12 @@ def principal_component_regression(
     var = pca_results.variance
 
     # Standardize inputs - needed since no intercept in :func:`jax.numpy.linalg.lstsq`
-    X_pca = (X_pca - jnp.mean(X_pca, axis=0)) / jnp.std(X_pca, axis=0)
-    if not categorical:
-        covariate = (covariate - covariate.mean()) / covariate.std()
+    # X_pca = (X_pca - jnp.mean(X_pca, axis=1, keepdims=True)) / jnp.std(X_pca, axis=1, keepdims=True)
+    if categorical:
+        covariate = covariate - jnp.mean(covariate, axis=0)
+    else:
+        X_pca = (X_pca - jnp.mean(X_pca, axis=0)) / jnp.std(X_pca, axis=0)
+        covariate = (covariate - covariate.mean(axis=0)) / covariate.std(axis=0)
     pcr = _pcr(X_pca, covariate, var)
     return float(pcr)
 

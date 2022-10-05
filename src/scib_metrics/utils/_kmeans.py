@@ -34,6 +34,13 @@ class KMeansJax:
     ----------
     n_clusters
         Number of clusters.
+    init
+        Cluster centroid initialization method. One of the following:
+
+        * ``'k-means++'``: Sample initial cluster centroids based on an
+            empirical distribution of the points' constributions to the
+            overall inertia.
+        * ``'random'``: Uniformly sample observations as initial centroids
     n_init
         Number of times the k-means algorithm will be initialized.
     max_iter
@@ -54,11 +61,14 @@ class KMeansJax:
         seed: int = 0,
     ):
         self.n_clusters = n_clusters
-        self.init = init
         self.n_init = n_init
         self.max_iter = max_iter
         self.tol = tol
         self.seed = seed
+
+        if init not in ["k-means++", "random"]:
+            raise ValueError("Invalid init method, must be one of ['k-means++' or 'random'].")
+        self.init = init
 
     def fit(self, X: np.ndarray):
         """Fit the model to the data."""

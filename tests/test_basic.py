@@ -1,6 +1,8 @@
+from harmonypy import compute_lisi as harmonypy_lisi
 import scib_metrics
 import jax.numpy as jnp
 import numpy as np
+import pandas as pd
 from scipy.spatial.distance import cdist as sp_cdist
 from scipy.sparse import csr_matrix
 from sklearn.metrics import silhouette_samples as sk_silhouette_samples
@@ -11,14 +13,15 @@ sys.path.append("../src/")
 
 
 def dummy_x_labels():
-    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
-    labels = np.array([0, 0, 1, 1, 0, 1])
+    np.random.seed(1)
+    X = np.random.normal(size=(100, 10))
+    labels = np.random.randint(0, 2, size=(100,))
     return X, labels
 
 
 def dummy_x_labels_batch():
     X, labels = dummy_x_labels()
-    batch = np.array([0, 1, 0, 1, 0, 1])
+    batch = np.random.randint(0, 2, size=(100,))
     return X, labels, batch
 
 
@@ -54,17 +57,22 @@ def test_silhouette_batch():
 def test_compute_simpson_index():
     X, labels = dummy_x_labels()
     D = scib_metrics.utils.cdist(X, X)
-    nbrs = NearestNeighbors(n_neighbors=2, algorithm="ball_tree").fit(X)
+    nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
     D, knn_idx = nbrs.kneighbors(X)
     scib_metrics.utils.compute_simpson_index(jnp.array(D), jnp.array(
         knn_idx), jnp.array(labels), len(np.unique(labels)))
 
+
 def test_lisi_knn():
     X, labels = dummy_x_labels()
     dist_mat = csr_matrix(scib_metrics.utils.cdist(X, X))
-    nbrs = NearestNeighbors(n_neighbors=2, algorithm="ball_tree").fit(X)
+    nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
     knn_graph = nbrs.kneighbors_graph(X)
-    scib_metrics.lisi_knn(dist_mat, knn_graph, labels)
+    knn_graph = knn_graph.multiply(dist_mat)
+    lisi_res = scib_metrics.lisi_knn(knn_graph, labels, perplexity=10)
+    harmonypy_lisi_res = harmonypy_lisi(X, pd.DataFrame(
+        labels, columns=["labels"]), label_colnames=["labels"], perplexity=10)[:, 0]
+    assert np.allclose(lisi_res, harmonypy_lisi_res)
 
 
 def test_isolated_labels():
@@ -77,4 +85,3 @@ def test_kmeans():
     kmeans = scib_metrics.utils.KMeansJax(2)
     kmeans.fit(X)
     assert kmeans.labels_.shape == (X.shape[0],)
-

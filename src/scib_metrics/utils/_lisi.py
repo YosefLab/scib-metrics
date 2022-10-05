@@ -1,5 +1,3 @@
-import itertools
-from dataclasses import dataclass
 from typing import Tuple, Union
 
 import jax
@@ -35,7 +33,7 @@ def _get_neighbor_probability(knn_dists_row: jnp.ndarray, perplexity: float, tol
         new_betamax = jnp.where(Hdiff > 0, betamax, beta)
         new_beta = jnp.where(Hdiff > 0, jnp.where(betamax == jnp.inf, beta * 2, (beta + betamax) / 2),
                              jnp.where(betamin == -jnp.inf, beta / 2, (beta + betamin) / 2))
-        new_H, new_P = Hbeta(knn_dists_row, beta)
+        new_H, new_P = Hbeta(knn_dists_row, new_beta)
         new_Hdiff = new_H - jnp.log(perplexity)
         return new_H, new_P, new_Hdiff, new_beta, new_betamin, new_betamax, tries + 1
 

@@ -14,7 +14,7 @@ def pcr(
     categorical: Optional[bool] = False,
     n_components: Optional[int] = None,
 ) -> float:
-    """Principal component regression (PCR) [Buttner18_].
+    """Principal component regression (PCR).
 
     Computes the overall variance contribution given a covariate according to the following formula:
 

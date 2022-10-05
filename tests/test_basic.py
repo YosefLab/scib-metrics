@@ -64,14 +64,3 @@ def test_kmeans():
     kmeans = scib_metrics.utils.KMeansJax(2)
     kmeans.fit(X)
     assert kmeans.labels_.shape == (X.shape[0],)
-
-
-def test_pcr():
-    X, _, covariate = dummy_x_labels_batch()
-    max_components = min(X.shape)
-    n_components = max_components - 1
-
-    _ = scib_metrics.principal_component_regression(X, covariate, categorical=True, n_components=n_components)
-    _ = scib_metrics.principal_component_regression(X, covariate, categorical=False, n_components=n_components)
-
-    # TODO: Test results against scib (martinkim0)

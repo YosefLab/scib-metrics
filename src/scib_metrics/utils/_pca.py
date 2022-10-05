@@ -5,6 +5,7 @@ import jax
 import jax.numpy as jnp
 
 from .._types import NdArray
+from ._utils import get_ndarray
 
 
 @dataclass
@@ -113,7 +114,13 @@ def pca(
     variance_ = variance[:n_components]
     variance_ratio_ = variance_ratio[:n_components]
 
-    results = _PCA(coordinates, components, variance_, variance_ratio_, svd=_SVD(u, s, v) if return_svd else None)
+    results = _PCA(
+        get_ndarray(coordinates),
+        get_ndarray(components),
+        get_ndarray(variance_),
+        get_ndarray(variance_ratio_),
+        svd=_SVD(get_ndarray(u), get_ndarray(s), get_ndarray(v)) if return_svd else None,
+    )
     return results
 
 

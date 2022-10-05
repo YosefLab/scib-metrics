@@ -1,4 +1,5 @@
 import jax.numpy as jnp
+import numpy as np
 import pytest
 from sklearn.decomposition import PCA
 
@@ -29,11 +30,11 @@ def test_pca(n_obs, n_vars):
         # TODO: Currently not checking coordinates and components, implementations
         # TODO: differ very slightly and not sure why (martinkim0).
         pca_true = PCA(n_components=n_components, svd_solver="full").fit(X)
-        # assert jnp.allclose(pca_true.transform(X), pca.coordinates, atol=eps)
-        # assert jnp.allclose(pca_true.components_, pca.components, atol=eps)
-        assert jnp.allclose(pca_true.singular_values_, pca.svd.s[:n_components], atol=eps)
-        assert jnp.allclose(pca_true.explained_variance_, pca.variance, atol=eps)
-        assert jnp.allclose(pca_true.explained_variance_ratio_, pca.variance_ratio, atol=eps)
+        # assert np.allclose(pca_true.transform(X), pca.coordinates, atol=eps)
+        # assert np.allclose(pca_true.components_, pca.components, atol=eps)
+        assert np.allclose(pca_true.singular_values_, pca.svd.s[:n_components], atol=eps)
+        assert np.allclose(pca_true.explained_variance_, pca.variance, atol=eps)
+        assert np.allclose(pca_true.explained_variance_ratio_, pca.variance_ratio, atol=eps)
         # Use arpack iff n_components < max_components
         if n_components < max_components:
             pca_true = PCA(n_components=n_components, svd_solver="arpack").fit(X)

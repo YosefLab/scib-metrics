@@ -9,7 +9,7 @@ from scib_metrics.utils import one_hot, pca
 from ._types import NdArray
 
 
-def pc_regression(
+def pcr(
     X: NdArray,
     batch: NdArray,
     categorical: Optional[bool] = False,

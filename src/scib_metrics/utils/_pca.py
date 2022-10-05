@@ -110,7 +110,6 @@ def pca(
 def _pca(
     X: NdArray,
 ) -> Tuple[NdArray, NdArray, NdArray, NdArray, NdArray]:
-<<<<<<< HEAD
     """Principal component analysis.
 
     Parameters
@@ -134,11 +133,6 @@ def _pca(
     X_ = X - jnp.mean(X, axis=0) # center data
     u, s, v = jnp.linalg.svd(X_, full_matrices=False) # (M, K), (K,), (K, N)
     u, v = _svd_flip(u, v) # make deterministic
-=======
-    X_ = X - jnp.mean(X, axis=0)  # center data
-    u, s, v = jnp.linalg.svd(X_, full_matrices=False)  # (M, K), (K,), (K, N)
-    u, v = _svd_flip(u, v)  # make deterministic
->>>>>>> 802911b4b3596a9127578dabed70e927ecd3faff
 
     variance = (s**2) / (X.shape[0] - 1)
     total_variance = jnp.sum(variance)

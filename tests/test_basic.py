@@ -75,6 +75,7 @@ def test_lisi_knn():
         labels, columns=["labels"]), label_colnames=["labels"], perplexity=10)[:, 0]
     assert np.allclose(lisi_res, harmonypy_lisi_res)
 
+
 def test_isolated_labels():
     X, labels, batch = dummy_x_labels_batch()
     scib_metrics.isolated_labels(X, labels, batch)

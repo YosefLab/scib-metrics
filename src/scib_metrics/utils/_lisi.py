@@ -2,9 +2,21 @@ from typing import Tuple, Union
 
 import jax
 import jax.numpy as jnp
+from flax import struct
 import numpy as np
 
 NdArray = Union[np.ndarray, jnp.ndarray]
+
+
+@struct.dataclass
+class _NeighborProbabilityState:
+    H: float
+    P: jnp.ndarray
+    Hdiff: float
+    beta: float
+    betamin: float
+    betamax: float
+    tries: int
 
 
 @jax.jit
@@ -27,7 +39,12 @@ def _get_neighbor_probability(
     Hdiff = H - jnp.log(perplexity)
 
     def _get_neighbor_probability_step(state):
-        _, _, Hdiff, beta, betamin, betamax, tries = state
+        Hdiff = state.Hdiff
+        beta = state.beta
+        betamin = state.betamin
+        betamax = state.betamax
+        tries = state.tries
+
         new_betamin = jnp.where(Hdiff > 0, beta, betamin)
         new_betamax = jnp.where(Hdiff > 0, betamax, beta)
         new_beta = jnp.where(
@@ -37,16 +54,15 @@ def _get_neighbor_probability(
         )
         new_H, new_P = _Hbeta(knn_dists_row, new_beta)
         new_Hdiff = new_H - jnp.log(perplexity)
-        return new_H, new_P, new_Hdiff, new_beta, new_betamin, new_betamax, tries + 1
+        return _NeighborProbabilityState(new_H, new_P, new_Hdiff, new_beta, new_betamin, new_betamax, tries + 1)
 
     def _get_neighbor_probability_convergence(state):
-        _, _, Hdiff, _, _, _, tries = state
+        Hdiff, tries = state.Hdiff, state.tries
         return jnp.logical_and(jnp.abs(Hdiff) > tol, tries < 50)
 
-    init_state = (H, P, Hdiff, beta, betamin, betamax, 0)
+    init_state = _NeighborProbabilityState(H, P, Hdiff, beta, betamin, betamax, 0)
     final_state = jax.lax.while_loop(_get_neighbor_probability_convergence, _get_neighbor_probability_step, init_state)
-    H, P, _, _, _, _, _ = final_state
-    return H, P
+    return final_state.H, final_state.P
 
 
 def _compute_simpson_index_cell(

@@ -18,6 +18,8 @@ def pcr(
 
     Computes the overall variance contribution given a covariate according to the following formula:
 
+    # TODO: Add formula
+
     Parameters
     ----------
     X
@@ -41,6 +43,7 @@ def pcr(
 
     # Batch must be 2D
     if categorical:
+        # TODO: Compare this to :func:`~pandas.get_dummies`
         batch = one_hot(jnp.resize(batch, (batch.shape[0])))
     else:
         batch = jnp.resize(batch, (batch.shape[0], 1))

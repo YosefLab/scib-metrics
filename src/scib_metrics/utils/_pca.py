@@ -25,6 +25,7 @@ class _SVD:
     s: NdArray
     v: NdArray
 
+
 @dataclass
 class _PCA:
     """PCA data.
@@ -114,13 +115,7 @@ def pca(
     variance_ = variance[:n_components]
     variance_ratio_ = variance_ratio[:n_components]
 
-    results = _PCA(
-        coordinates,
-        components,
-        variance_,
-        variance_ratio_,
-        svd=_SVD(u, s, v) if return_svd else None
-    )
+    results = _PCA(coordinates, components, variance_, variance_ratio_, svd=_SVD(u, s, v) if return_svd else None)
     return results
 
 

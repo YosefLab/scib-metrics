@@ -75,6 +75,7 @@ def _pcr(
     var
         Array of shape (n_components,) containing the explained variance of each PC.
     """
+
     def r2(pc, batch):
         residual_sum = jnp.linalg.lstsq(batch, pc)[1]
         total_sum = jnp.sum((pc - jnp.mean(pc)) ** 2)

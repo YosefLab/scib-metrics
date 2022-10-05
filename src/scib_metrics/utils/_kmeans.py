@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Literal
 
 import jax
 import jax.numpy as jnp
@@ -43,8 +44,17 @@ class KMeansJax:
         Random seed.
     """
 
-    def __init__(self, n_clusters: int = 8, *, n_init: int = 10, max_iter: int = 300, tol: float = 1e-4, seed: int = 0):
+    def __init__(
+        self,
+        n_clusters: int = 8,
+        init: Literal["k-means++", "random"] = "random",
+        n_init: int = 10,
+        max_iter: int = 300,
+        tol: float = 1e-4,
+        seed: int = 0,
+    ):
         self.n_clusters = n_clusters
+        self.init = init
         self.n_init = n_init
         self.max_iter = max_iter
         self.tol = tol

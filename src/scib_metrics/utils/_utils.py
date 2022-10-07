@@ -9,12 +9,12 @@ from .._types import NdArray
 
 
 def get_ndarray(x: jnp.ndarray) -> np.ndarray:
-    """Convert Jax device array to Numpy."""
+    """Convert Jax device array to Numpy array."""
     return np.array(jax.device_get(x))
 
 
-def one_hot(y: NdArray, n_classes: Optional[int] = None) -> NdArray:
-    """One-hot encode an array. Wrapper around :func:`jax.nn.one_hot`.
+def one_hot(y: NdArray, n_classes: Optional[int] = None) -> jnp.ndarray:
+    """One-hot encode an array. Wrapper around :func:`~jax.nn.one_hot`.
 
     Parameters
     ----------

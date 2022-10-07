@@ -9,8 +9,8 @@ from ._utils import get_ndarray
 
 
 @dataclass
-class _SVD:
-    """SVD data.
+class _SVDResult:
+    """SVD result.
 
     Attributes
     ----------
@@ -28,8 +28,8 @@ class _SVD:
 
 
 @dataclass
-class _PCA:
-    """PCA data.
+class _PCAResult:
+    """PCA result.
 
     Attributes
     ----------
@@ -49,7 +49,7 @@ class _PCA:
     components: NdArray
     variance: NdArray
     variance_ratio: NdArray
-    svd: Optional[_SVD] = None
+    svd: Optional[_SVDResult] = None
 
 
 def _svd_flip(
@@ -85,7 +85,7 @@ def pca(
     X: NdArray,
     n_components: Optional[int] = None,
     return_svd: bool = False,
-) -> _PCA:
+) -> _PCAResult:
     """Principal component analysis (PCA).
 
     Parameters
@@ -114,12 +114,12 @@ def pca(
     variance_ = variance[:n_components]
     variance_ratio_ = variance_ratio[:n_components]
 
-    results = _PCA(
+    results = _PCAResult(
         get_ndarray(coordinates),
         get_ndarray(components),
         get_ndarray(variance_),
         get_ndarray(variance_ratio_),
-        svd=_SVD(get_ndarray(u), get_ndarray(s), get_ndarray(v)) if return_svd else None,
+        svd=_SVDResult(get_ndarray(u), get_ndarray(s), get_ndarray(v)) if return_svd else None,
     )
     return results
 

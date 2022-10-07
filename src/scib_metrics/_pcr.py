@@ -11,7 +11,7 @@ from ._types import NdArray
 def principal_component_regression(
     X: NdArray,
     covariate: NdArray,
-    categorical: Optional[bool] = False,
+    categorical: bool = False,
     n_components: Optional[int] = None,
 ) -> float:
     """Principal component regression (PCR).

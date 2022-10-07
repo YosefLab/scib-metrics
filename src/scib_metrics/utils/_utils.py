@@ -3,6 +3,7 @@ from typing import Optional
 import jax
 import jax.numpy as jnp
 import numpy as np
+from jax import nn
 
 from .._types import NdArray
 
@@ -13,7 +14,7 @@ def get_ndarray(x: jnp.ndarray) -> np.ndarray:
 
 
 def one_hot(y: NdArray, n_classes: Optional[int] = None) -> NdArray:
-    """One-hot encode an array.
+    """One-hot encode an array. Wrapper around :func:`jax.nn.one_hot`.
 
     Parameters
     ----------
@@ -27,11 +28,5 @@ def one_hot(y: NdArray, n_classes: Optional[int] = None) -> NdArray:
     one_hot: jnp.ndarray
         Array of shape (n_samples, n_classes).
     """
-    y = jnp.resize(y, (y.shape[0]))
-    n_vals = jnp.max(y) + 1
-    # Ignore n_classes if smaller than inferred
-    if n_classes and n_classes >= n_vals:
-        n_vals = n_classes
-
-    one_hot = jnp.eye(n_vals)[y]
-    return one_hot.astype(jnp.uint8)
+    n_classes = n_classes or jnp.max(y) + 1
+    return nn.one_hot(jnp.ravel(y), n_classes)

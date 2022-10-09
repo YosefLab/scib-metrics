@@ -6,8 +6,7 @@ import pytest
 
 import scib_metrics
 from scib_metrics.utils import get_ndarray
-
-from .utils.sampling import categorical_sample, normal_sample, poisson_sample
+from tests.utils.sampling import categorical_sample, normal_sample, poisson_sample
 
 PCR_PARAMS = list(product([10, 100, 1000], [10, 100, 1000], [True, False]))
 

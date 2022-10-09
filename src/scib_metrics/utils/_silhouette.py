@@ -105,7 +105,7 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    silhouette
+    silhouette: np.ndarray
         Array of shape (n_samples,)
         Silhouette Coefficients for each sample.
     """

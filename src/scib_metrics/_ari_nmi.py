@@ -1,18 +1,31 @@
+import logging
 from typing import Tuple
 
 import numpy as np
+import scanpy as sc
+from scipy.sparse import spmatrix
 from sklearn.metrics.cluster import adjusted_rand_score, normalized_mutual_info_score
+from sklearn.utils import check_array
 
 from .utils import KMeansJax
 
+logger = logging.getLogger(__name__)
 
-def _compute_clustering(X: np.ndarray, n_clusters: int) -> np.ndarray:
+
+def _compute_clustering_kmeans(X: np.ndarray, n_clusters: int) -> np.ndarray:
     kmeans = KMeansJax(n_clusters)
     kmeans.fit(X)
     return kmeans.labels_
 
 
-def nmi_ari_cluster_labels(X: np.ndarray, labels: np.ndarray) -> Tuple[float, float]:
+def _compute_clustering_leiden(connectivity_graph: spmatrix, resolution: float) -> np.ndarray:
+    g = sc._utils.get_igraph_from_adjacency(connectivity_graph)
+    clustering = g.community_leiden(objective_function="modularity", weights="weight", resolution_parameter=resolution)
+    clusters = clustering.membership
+    return np.asarray(clusters)
+
+
+def nmi_ari_cluster_labels_kmeans(X: np.ndarray, labels: np.ndarray) -> Tuple[float, float]:
     """Compute nmi and ari between k-means clusters and labels.
 
     This deviates from the original implementation in scib by using k-means
@@ -33,9 +46,72 @@ def nmi_ari_cluster_labels(X: np.ndarray, labels: np.ndarray) -> Tuple[float, fl
     ari
         Adjusted rand index score
     """
+    X = check_array(X, accept_sparse=False, ensure_2d=True)
+    labels = check_array(labels, accept_sparse=False, ensure_2d=False)
     n_clusters = len(np.unique(labels))
-    labels_pred = _compute_clustering(X, n_clusters)
+    labels_pred = _compute_clustering_kmeans(X, n_clusters)
     nmi = normalized_mutual_info_score(labels, labels_pred, average_method="arithmetic")
     ari = adjusted_rand_score(labels, labels_pred)
+
+    return nmi, ari
+
+
+def nmi_ari_cluster_labels_leiden(
+    X: spmatrix, labels: np.ndarray, optimize_resolution: bool = True, resolution: float = 1.0, n_jobs: int = 1
+) -> Tuple[float, float]:
+    """Compute nmi and ari between leiden clusters and labels.
+
+    This deviates from the original implementation in scib by using leiden instead of
+    louvain clustering. Installing joblib allows for parallelization of the leiden
+    resoution optimization.
+
+    Parameters
+    ----------
+    X
+        Array of shape (n_samples, n_samples) representing a connectivity graph.
+        Values should represent weights between pairs of neighbors, with a higher weight
+        indicating more connected.
+    labels
+        Array of shape (n_samples,) representing label values
+    optimize_resolution
+        Whether to optimize the resolution parameter of leiden clustering by searching over
+        10 values
+    resolution
+        Resolution parameter of leiden clustering. Only used if optimize_resolution is False.
+    n_jobs
+        Number of jobs for parallelizing resolution optimization via joblib. If -1, all CPUs
+        are used.
+
+    Returns
+    -------
+    nmi
+        Normalized mutual information score
+    ari
+        Adjusted rand index score
+    """
+    X = check_array(X, accept_sparse=False, ensure_2d=True)
+    if X.shape[0] != X.shape[1]:
+        raise ValueError("X should be a square matrix")
+    labels = check_array(labels, accept_sparse=False, ensure_2d=False)
+    if optimize_resolution:
+        n = 10
+        resolutions = np.array([2 * x / n for x in range(1, n + 1)])
+        try:
+            from joblib import Parallel, delayed
+
+            out = Parallel(n_jobs=n_jobs)(
+                delayed(nmi_ari_cluster_labels_leiden)(X, labels, False, r) for r in resolutions
+            )
+        except ImportError:
+            logger.info("Using for loop over resolutions. pip install joblib for parallelization.")
+            out = [nmi_ari_cluster_labels_leiden(X, labels, False, r) for r in resolutions]
+        nmi_ari = np.array(out)
+        nmi_ind = np.argmax(nmi_ari[:, 0])
+        nmi, ari = nmi_ari[nmi_ind, :]
+        return nmi, ari
+    else:
+        labels_pred = _compute_clustering_leiden(X, resolution)
+        nmi = normalized_mutual_info_score(labels, labels_pred, average_method="arithmetic")
+        ari = adjusted_rand_score(labels, labels_pred)
 
     return nmi, ari

@@ -4,7 +4,7 @@ requires = ["hatchling"]
 
 
 [project]
-name = "scib_metrics"
+name = "scib-metrics"
 version = "0.0.2"
 description = "Accelerated and Python-only scIB metrics"
 readme = "README.md"

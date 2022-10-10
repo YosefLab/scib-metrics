@@ -5,7 +5,7 @@ from scib_metrics.utils import silhouette_samples
 
 
 def silhouette_label(X: np.ndarray, labels: np.ndarray, rescale: bool = True) -> float:
-    """Average silhouette width (ASW).
+    """Average silhouette width (ASW) :cite:p:`luecken2022benchmarking`.
 
     Parameters
     ----------
@@ -27,7 +27,7 @@ def silhouette_label(X: np.ndarray, labels: np.ndarray, rescale: bool = True) ->
 
 
 def silhouette_batch(X: np.ndarray, labels: np.ndarray, batch: np.ndarray, rescale: bool = True) -> float:
-    """Average silhouette width (ASW) with respect to batch ids within each label.
+    """Average silhouette width (ASW) with respect to batch ids within each label :cite:p:`luecken2022benchmarking`.
 
     Parameters
     ----------

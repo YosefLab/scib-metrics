@@ -5,6 +5,12 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # -- Path setup --------------------------------------------------------------
+from typing import Any
+import subprocess
+import os
+import importlib
+import inspect
+import re
 import sys
 from datetime import datetime
 from importlib.metadata import metadata
@@ -45,12 +51,12 @@ html_context = {
 extensions = [
     "myst_nb",
     "sphinx.ext.autodoc",
+    "sphinx.ext.linkcode",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinxcontrib.bibtex",
     "sphinx_autodoc_typehints",
-    "scanpydoc.elegant_typehints",
     "sphinx.ext.mathjax",
     *[p.stem for p in (HERE / "extensions").glob("*.py")],
 ]
@@ -58,6 +64,7 @@ extensions = [
 autosummary_generate = True
 autodoc_member_order = "groupwise"
 default_role = "literal"
+bibtex_reference_style = "author_year"
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = False
@@ -76,6 +83,7 @@ myst_url_schemes = ("http", "https", "mailto")
 nb_output_stderr = "remove"
 nb_execution_mode = "off"
 nb_merge_streams = True
+typehints_defaults = "braces"
 
 source_suffix = {
     ".rst": "restructuredtext",
@@ -101,6 +109,58 @@ intersphinx_mapping = {
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
+# -- Linkcode settings -------------------------------------------------
+
+
+def git(*args):
+    """Run a git command and return the output."""
+    return subprocess.check_output(["git", *args]).strip().decode()
+
+
+# https://github.com/DisnakeDev/disnake/blob/7853da70b13fcd2978c39c0b7efa59b34d298186/docs/conf.py#L192
+# Current git reference. Uses branch/tag name if found, otherwise uses commit hash
+git_ref = None
+try:
+    git_ref = git("name-rev", "--name-only", "--no-undefined", "HEAD")
+    git_ref = re.sub(r"^(remotes/[^/]+|tags)/", "", git_ref)
+except Exception:  # noqa: B902
+    pass
+
+# (if no name found or relative ref, use commit hash instead)
+if not git_ref or re.search(r"[\^~]", git_ref):
+    try:
+        git_ref = git("rev-parse", "HEAD")
+    except Exception:  # noqa: B902
+        git_ref = "main"
+
+# https://github.com/DisnakeDev/disnake/blob/7853da70b13fcd2978c39c0b7efa59b34d298186/docs/conf.py#L192
+# If package name differs from the project name, set it here
+package_name = project
+_project_module_path = os.path.dirname(importlib.util.find_spec(package_name).origin)  # type: ignore
+
+
+def linkcode_resolve(domain, info):
+    """Resolve links for the linkcode extension."""
+    if domain != "py":
+        return None
+
+    try:
+        obj: Any = sys.modules[info["module"]]
+        for part in info["fullname"].split("."):
+            obj = getattr(obj, part)
+        obj = inspect.unwrap(obj)
+
+        if isinstance(obj, property):
+            obj = inspect.unwrap(obj.fget)  # type: ignore
+
+        path = os.path.relpath(inspect.getsourcefile(obj), start=_project_module_path)  # type: ignore
+        src, lineno = inspect.getsourcelines(obj)
+    except Exception:  # noqa: B902
+        return None
+
+    path = f"{path}#L{lineno}-L{lineno + len(src) - 1}"
+    return f"{project}/blob/{git_ref}/{package_name}/{path}"
+
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -117,7 +177,6 @@ html_theme_options = {
 }
 
 pygments_style = "default"
-pygments_dark_style = "native"
 
 nitpick_ignore = [
     # If building the documentation fails because of a missing link that is outside your control,

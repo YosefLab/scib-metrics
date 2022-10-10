@@ -46,6 +46,8 @@ rst-roles =
     class,
     func,
     ref,
+    cite:p,
+    cite:t,
 rst-directives =
     envvar,
     exception,

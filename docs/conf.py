@@ -136,7 +136,7 @@ if not git_ref or re.search(r"[\^~]", git_ref):
 
 # https://github.com/DisnakeDev/disnake/blob/7853da70b13fcd2978c39c0b7efa59b34d298186/docs/conf.py#L192
 github_repo = "https://github.com/" + html_context["github_user"] + "/" + package_name
-_project_module_path = os.path.dirname(importlib.util.find_spec(package_name).origin)  # type: ignore
+_project_module_path = os.path.dirname(importlib.util.find_spec(project).origin)  # type: ignore
 
 
 def linkcode_resolve(domain, info):
@@ -159,7 +159,7 @@ def linkcode_resolve(domain, info):
         return None
 
     path = f"{path}#L{lineno}-L{lineno + len(src) - 1}"
-    return f"{github_repo}/blob/{git_ref}/{package_name}/{path}"
+    return f"{github_repo}/blob/{git_ref}/{project}/{path}"
 
 
 # -- Options for HTML output -------------------------------------------------

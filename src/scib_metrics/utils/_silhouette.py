@@ -106,9 +106,7 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    silhouette
-        Array of shape (n_samples,)
-        Silhouette Coefficients for each sample.
+    silhouette scores array of shape (n_samples,)
     """
     if X.shape[0] != labels.shape[0]:
         raise ValueError("X and labels should have the same number of samples")

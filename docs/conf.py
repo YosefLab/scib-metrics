@@ -159,7 +159,7 @@ def linkcode_resolve(domain, info):
         return None
 
     path = f"{path}#L{lineno}-L{lineno + len(src) - 1}"
-    return f"{github_repo}/blob/{git_ref}/{project}/{path}"
+    return f"{github_repo}/blob/{git_ref}/src/{project}/{path}"
 
 
 # -- Options for HTML output -------------------------------------------------

@@ -31,8 +31,6 @@ def test_pcr(n_obs, n_vars, categorical):
             categorical=categorical,
             n_components=n_components,
         )
-        print(pcr_true)
-        print(pcr)
         assert np.allclose(pcr_true, pcr, atol=eps)
 
     max_components = min(n_obs, n_vars)

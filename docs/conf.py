@@ -24,7 +24,7 @@ sys.path.insert(0, str(HERE / "extensions"))
 
 project_name = "scib-metrics"
 info = metadata(project_name)
-package_name = info["Name"]  # scib_metrics
+package_name = "scib_metrics"
 author = info["Author"]
 copyright = f"{datetime.now():%Y}, {author}."
 version = info["Version"]

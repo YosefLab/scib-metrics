@@ -22,7 +22,7 @@ sys.path.insert(0, str(HERE / "extensions"))
 
 # -- Project information -----------------------------------------------------
 
-package_name = "scib_metrics"
+package_name = "scib-metrics"
 info = metadata(package_name)
 project = info["Name"]  # scib_metrics
 author = info["Author"]
@@ -135,9 +135,7 @@ if not git_ref or re.search(r"[\^~]", git_ref):
         git_ref = "main"
 
 # https://github.com/DisnakeDev/disnake/blob/7853da70b13fcd2978c39c0b7efa59b34d298186/docs/conf.py#L192
-# If package name differs from the project name, set it here
-package_name = project
-github_repo = "https://github.com/" + html_context["github_user"] + "/" + project
+github_repo = "https://github.com/" + html_context["github_user"] + "/" + package_name
 _project_module_path = os.path.dirname(importlib.util.find_spec(package_name).origin)  # type: ignore
 
 
@@ -174,7 +172,7 @@ html_static_path = ["_static"]
 html_title = "scib-metrics"
 
 html_theme_options = {
-    "repository_url": "https://github.com/yoseflab/scib-metrics",
+    "repository_url": github_repo,
     "use_repository_button": True,
 }
 

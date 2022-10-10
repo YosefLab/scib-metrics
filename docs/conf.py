@@ -22,9 +22,9 @@ sys.path.insert(0, str(HERE / "extensions"))
 
 # -- Project information -----------------------------------------------------
 
-package_name = "scib-metrics"
-info = metadata(package_name)
-project = info["Name"]  # scib_metrics
+project_name = "scib-metrics"
+info = metadata(project_name)
+package_name = info["Name"]  # scib_metrics
 author = info["Author"]
 copyright = f"{datetime.now():%Y}, {author}."
 version = info["Version"]
@@ -40,7 +40,7 @@ needs_sphinx = "4.0"
 html_context = {
     "display_github": True,  # Integrate GitHub
     "github_user": "yoseflab",  # Username
-    "github_repo": package_name,  # Repo name
+    "github_repo": project_name,  # Repo name
     "github_version": "main",  # Version
     "conf_py_path": "/docs/",  # Path in the checkout to the docs root
 }
@@ -135,8 +135,8 @@ if not git_ref or re.search(r"[\^~]", git_ref):
         git_ref = "main"
 
 # https://github.com/DisnakeDev/disnake/blob/7853da70b13fcd2978c39c0b7efa59b34d298186/docs/conf.py#L192
-github_repo = "https://github.com/" + html_context["github_user"] + "/" + package_name
-_project_module_path = os.path.dirname(importlib.util.find_spec(project).origin)  # type: ignore
+github_repo = "https://github.com/" + html_context["github_user"] + "/" + project_name
+_project_module_path = os.path.dirname(importlib.util.find_spec(package_name).origin)  # type: ignore
 
 
 def linkcode_resolve(domain, info):
@@ -159,7 +159,7 @@ def linkcode_resolve(domain, info):
         return None
 
     path = f"{path}#L{lineno}-L{lineno + len(src) - 1}"
-    return f"{github_repo}/blob/{git_ref}/src/{project}/{path}"
+    return f"{github_repo}/blob/{git_ref}/src/{package_name}/{path}"
 
 
 # -- Options for HTML output -------------------------------------------------

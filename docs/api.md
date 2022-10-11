@@ -28,6 +28,7 @@
 
     utils.cdist
     utils.silhouette_samples
+    utils.KMeansJax
 ```
 
 ## Settings

@@ -4,8 +4,8 @@ requires = ["hatchling"]
 
 
 [project]
-name = "scib_metrics"
-version = "0.0.2"
+name = "scib-metrics"
+version = "0.0.3"
 description = "Accelerated and Python-only scIB metrics"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -40,13 +40,13 @@ dev = [
 ]
 doc = [
     "sphinx>=4",
-    "furo",
-    "myst-parser",
+    "sphinx-book-theme",
+    "myst-nb",
     "sphinxcontrib-bibtex>=1.0.0",
     "scanpydoc[typehints]>=0.7.4",
     # For notebooks
-    "nbsphinx",
-    "ipykernel"
+    "ipykernel",
+    "sphinx-copybutton",
 ]
 test = [
     "pytest",

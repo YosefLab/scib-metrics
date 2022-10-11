@@ -5,7 +5,7 @@ from scib_metrics.utils import silhouette_samples
 
 
 def silhouette_label(X: np.ndarray, labels: np.ndarray, rescale: bool = True) -> float:
-    """Average silhouette width (ASW).
+    """Average silhouette width (ASW) :cite:p:`luecken2022benchmarking`.
 
     Parameters
     ----------
@@ -15,6 +15,10 @@ def silhouette_label(X: np.ndarray, labels: np.ndarray, rescale: bool = True) ->
         Array of shape (n_samples,) representing label values
     rescale
         Scale asw into the range [0, 1].
+
+    Returns
+    -------
+    silhouette score
     """
     asw = np.mean(silhouette_samples(X, labels))
     if rescale:
@@ -23,7 +27,7 @@ def silhouette_label(X: np.ndarray, labels: np.ndarray, rescale: bool = True) ->
 
 
 def silhouette_batch(X: np.ndarray, labels: np.ndarray, batch: np.ndarray, rescale: bool = True) -> float:
-    """Average silhouette width (ASW) with respect to batch ids within each label.
+    """Average silhouette width (ASW) with respect to batch ids within each label :cite:p:`luecken2022benchmarking`.
 
     Parameters
     ----------
@@ -35,6 +39,10 @@ def silhouette_batch(X: np.ndarray, labels: np.ndarray, batch: np.ndarray, resca
         Array of shape (n_samples,) representing batch values
     rescale
         Scale asw into the range [0, 1]. If True, higher values are better.
+
+    Returns
+    -------
+    silhouette score
     """
     sil_dfs = []
     unique_labels = np.unique(labels)

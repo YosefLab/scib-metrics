@@ -2,6 +2,7 @@ from typing import Optional
 
 import jax
 import jax.numpy as jnp
+from jax import jit
 
 from scib_metrics.utils import one_hot, pca
 
@@ -51,6 +52,7 @@ def principal_component_regression(
     return float(pcr)
 
 
+@jit
 def _pcr(
     X_pca: NdArray,
     covariate: NdArray,
@@ -75,5 +77,5 @@ def _pcr(
         return jnp.maximum(0, 1 - residual_sum / total_sum)
 
     # Index PCs on axis = 1, don't index batch
-    r2 = jax.vmap(r2, in_axes=(1, None))(X_pca, covariate)
-    return jnp.dot(jnp.ravel(r2), var) / jnp.sum(var)
+    r2_ = jax.vmap(r2, in_axes=(1, None))(X_pca, covariate)
+    return jnp.dot(jnp.ravel(r2_), var) / jnp.sum(var)

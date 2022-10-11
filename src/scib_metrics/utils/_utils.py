@@ -3,12 +3,13 @@ from typing import Optional
 import jax
 import jax.numpy as jnp
 import numpy as np
+from chex import ArrayDevice
 from jax import nn
 
 from .._types import NdArray
 
 
-def get_ndarray(x: jnp.ndarray) -> np.ndarray:
+def get_ndarray(x: ArrayDevice) -> np.ndarray:
     """Convert Jax device array to Numpy array."""
     return np.array(jax.device_get(x))
 

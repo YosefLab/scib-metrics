@@ -1,20 +1,31 @@
+import sys
+
 import jax.numpy as jnp
 import numpy as np
+import pandas as pd
+from harmonypy import compute_lisi as harmonypy_lisi
+from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist as sp_cdist
 from sklearn.metrics import silhouette_samples as sk_silhouette_samples
+from sklearn.neighbors import NearestNeighbors
 
 import scib_metrics
 
+sys.path.append("../src/")
 
-def dummy_x_labels():
-    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
-    labels = np.array([0, 0, 1, 1, 0, 1])
+
+def dummy_x_labels(return_symmetric_positive=False):
+    np.random.seed(1)
+    X = np.random.normal(size=(100, 10))
+    labels = np.random.randint(0, 2, size=(100,))
+    if return_symmetric_positive:
+        X = np.abs(X @ X.T)
     return X, labels
 
 
 def dummy_x_labels_batch():
     X, labels = dummy_x_labels()
-    batch = np.array([0, 1, 0, 1, 0, 1])
+    batch = np.random.randint(0, 2, size=(100,))
     return X, labels, batch
 
 
@@ -30,7 +41,7 @@ def test_cdist():
 
 def test_silhouette_samples():
     X, labels = dummy_x_labels()
-    assert np.allclose(scib_metrics.utils.silhouette_samples(X, labels), sk_silhouette_samples(X, labels))
+    assert np.allclose(scib_metrics.utils.silhouette_samples(X, labels), sk_silhouette_samples(X, labels), atol=1e-5)
 
 
 def test_silhouette_label():
@@ -47,9 +58,56 @@ def test_silhouette_batch():
     scib_metrics.silhouette_batch(X, labels, batch)
 
 
-def test_nmi_ari_cluster_labels():
+def test_compute_simpson_index():
     X, labels = dummy_x_labels()
-    nmi, ari = scib_metrics.nmi_ari_cluster_labels(X, labels)
+    D = scib_metrics.utils.cdist(X, X)
+    nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
+    D, knn_idx = nbrs.kneighbors(X)
+    scib_metrics.utils.compute_simpson_index(
+        jnp.array(D), jnp.array(knn_idx), jnp.array(labels), len(np.unique(labels))
+    )
+
+
+def test_lisi_knn():
+    X, labels = dummy_x_labels()
+    dist_mat = csr_matrix(scib_metrics.utils.cdist(X, X))
+    nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
+    knn_graph = nbrs.kneighbors_graph(X)
+    knn_graph = knn_graph.multiply(dist_mat)
+    lisi_res = scib_metrics.lisi_knn(knn_graph, labels, perplexity=10)
+    harmonypy_lisi_res = harmonypy_lisi(
+        X, pd.DataFrame(labels, columns=["labels"]), label_colnames=["labels"], perplexity=10
+    )[:, 0]
+    assert np.allclose(lisi_res, harmonypy_lisi_res)
+
+
+def test_ilisi_clisi_knn():
+    X, labels, batches = dummy_x_labels_batch()
+    dist_mat = csr_matrix(scib_metrics.utils.cdist(X, X))
+    nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
+    knn_graph = nbrs.kneighbors_graph(X)
+    knn_graph = knn_graph.multiply(dist_mat)
+    scib_metrics.ilisi_knn(knn_graph, batches, perplexity=10)
+    scib_metrics.clisi_knn(knn_graph, labels, perplexity=10)
+
+
+def test_nmi_ari_cluster_labels_kmeans():
+    X, labels = dummy_x_labels()
+    nmi, ari = scib_metrics.nmi_ari_cluster_labels_kmeans(X, labels)
+    assert isinstance(nmi, float)
+    assert isinstance(ari, float)
+
+
+def test_nmi_ari_cluster_labels_leiden_parallel():
+    X, labels = dummy_x_labels(return_symmetric_positive=True)
+    nmi, ari = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=True, n_jobs=2)
+    assert isinstance(nmi, float)
+    assert isinstance(ari, float)
+
+
+def test_nmi_ari_cluster_labels_leiden_single_resolution():
+    X, labels = dummy_x_labels(return_symmetric_positive=True)
+    nmi, ari = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=False, resolution=0.1)
     assert isinstance(nmi, float)
     assert isinstance(ari, float)
 

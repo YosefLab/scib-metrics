@@ -7,9 +7,12 @@ from sklearn.utils import check_array
 
 from scib_metrics.utils import compute_simpson_index
 
+from ._utils import _check_square
+
 
 def _convert_knn_graph_to_idx(X: csr_matrix) -> Tuple[np.ndarray, np.ndarray]:
     check_array(X, accept_sparse="csr")
+    _check_square(X)
 
     n_neighbors = np.unique(X.nonzero()[0], return_counts=True)[1]
     if len(np.unique(n_neighbors)) > 1:

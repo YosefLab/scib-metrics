@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
-- NMI/ARI metric with Leiden clustering resolution optimization ([#24][])
-- iLISI/cLISI metrics ([#20][])
+-   NMI/ARI metric with Leiden clustering resolution optimization ([#24][])
+-   iLISI/cLISI metrics ([#20][])
 
 [#20]: https://github.com/YosefLab/scib-metrics/pull/20
 [#24]: https://github.com/YosefLab/scib-metrics/pull/24

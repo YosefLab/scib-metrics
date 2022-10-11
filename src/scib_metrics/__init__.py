@@ -4,8 +4,8 @@ from importlib.metadata import version
 from . import utils
 from ._ari_nmi import nmi_ari_cluster_labels_kmeans, nmi_ari_cluster_labels_leiden
 from ._isolated_labels import isolated_labels
-from ._pcr import principal_component_regression
 from ._lisi import clisi_knn, ilisi_knn, lisi_knn
+from ._pcr import principal_component_regression
 from ._settings import settings
 from ._silhouette import silhouette_batch, silhouette_label
 

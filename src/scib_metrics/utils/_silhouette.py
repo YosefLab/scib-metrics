@@ -97,15 +97,15 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     X
-        Array of shape (n_samples, n_features) representing a
+        Array of shape (n_cells, n_features) representing a
         feature array.
     labels
-        Array of shape (n_samples,) representing label values
+        Array of shape (n_cells,) representing label values
         for each observation.
 
     Returns
     -------
-    silhouette scores array of shape (n_samples,)
+    silhouette scores array of shape (n_cells,)
     """
     if X.shape[0] != labels.shape[0]:
         raise ValueError("X and labels should have the same number of samples")

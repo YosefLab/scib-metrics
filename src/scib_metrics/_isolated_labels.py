@@ -26,11 +26,11 @@ def isolated_labels(
     Parameters
     ----------
     X
-        Array of shape (n_samples, n_features).
+        Array of shape (n_cells, n_features).
     labels
-        Array of shape (n_samples,) representing label values
+        Array of shape (n_cells,) representing label values
     batch
-        Array of shape (n_samples,) representing batch values
+        Array of shape (n_cells,) representing batch values
     iso_threshold
         Max number of batches per label for label to be considered as
         isolated, if integer. If `None`, considers minimum number of

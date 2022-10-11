@@ -13,6 +13,8 @@
     nmi_ari_cluster_labels
     silhouette_label
     silhouette_batch
+    ilisi_knn
+    clisi_knn
 ```
 
 ## Utils

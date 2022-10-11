@@ -14,7 +14,6 @@ __all__ = [
     "silhouette_label",
     "silhouette_batch",
     "nmi_ari_cluster_labels",
-    "lisi_knn",
     "ilisi_knn",
     "clisi_knn",
 ]

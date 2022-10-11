@@ -103,6 +103,11 @@ def compute_simpson_index(
         Measure of the effective number of neighbors.
     tol
         Tolerance for binary search.
+
+    Returns
+    -------
+    simpson_index
+        Simpson index of size (n_cells,).
     """
     knn_dists = jnp.array(knn_dists)
     knn_idx = jnp.array(knn_idx)

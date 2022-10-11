@@ -79,6 +79,16 @@ def test_lisi_knn():
     assert np.allclose(lisi_res, harmonypy_lisi_res)
 
 
+def test_ilisi_clisi_knn():
+    X, labels, batches = dummy_x_labels_batch()
+    dist_mat = csr_matrix(scib_metrics.utils.cdist(X, X))
+    nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
+    knn_graph = nbrs.kneighbors_graph(X)
+    knn_graph = knn_graph.multiply(dist_mat)
+    scib_metrics.ilisi_knn(knn_graph, batches, perplexity=10)
+    scib_metrics.clisi_knn(knn_graph, labels, perplexity=10)
+
+
 def test_isolated_labels():
     X, labels, batch = dummy_x_labels_batch()
     scib_metrics.isolated_labels(X, labels, batch)

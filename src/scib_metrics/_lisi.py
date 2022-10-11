@@ -30,14 +30,19 @@ def lisi_knn(knn_graph: csr_matrix, labels: np.ndarray, perplexity: float = None
     Parameters
     ----------
     knn_graph
-        Sparse array of shape (n_samples, n_samples) with non-zero values for
+        Sparse array of shape (n_cells, n_cells) with non-zero values for
         exactly each cell's k nearest neighbors.
     labels
-        Array of shape (n_samples,) representing label values
+        Array of shape (n_cells,) representing label values
         for each cell.
     perplexity
         Parameter controlling effective neighborhood size. If None, the
         perplexity is set to the number of neighbors // 3.
+
+    Returns
+    -------
+    lisi
+        Array of shape (n_cells,) with the LISI score for each cell.
     """
     knn_dists, knn_idx = _convert_knn_graph_to_idx(knn_graph)
 
@@ -48,3 +53,67 @@ def lisi_knn(knn_graph: csr_matrix, labels: np.ndarray, perplexity: float = None
 
     simpson = compute_simpson_index(knn_dists, knn_idx, labels, n_labels, perplexity=perplexity)
     return 1 / simpson
+
+def ilisi_knn(knn_graph: csr_matrix, batches: np.ndarray, perplexity: float = None, scale: bool=True) -> np.ndarray:
+    """Compute the local inverse simpson index (LISI) for each cell.
+
+    Code inspired by:
+    https://github.com/theislab/scib/blob/e578d84063adf4853ed087500bd3d67078e53337/scib/metrics/lisi.py#L50
+
+    Parameters
+    ----------
+    knn_graph
+        Sparse array of shape (n_cells, n_cells) with non-zero values for
+        exactly each cell's k nearest neighbors.
+    batches
+        Array of shape (n_cells,) representing batch values
+        for each cell.
+    perplexity
+        Parameter controlling effective neighborhood size. If None, the
+        perplexity is set to the number of neighbors // 3.
+    scale
+        Scale lisi into the range [0, 1]. If True, higher values are better.
+
+    Returns
+    -------
+    ilisi
+        Array of shape (n_cells,) with the iLISI score for each cell.
+    """
+    lisi = lisi_knn(knn_graph, batches, perplexity=perplexity)
+    ilisi = np.nanmedian(lisi)
+    if scale:
+        nbatches = len(np.unique(batches))
+        ilisi = (ilisi - 1) / (nbatches - 1)
+    return ilisi
+
+def clisi_knn(knn_graph: csr_matrix, labels: np.ndarray, perplexity: float = None, scale: bool=True) -> np.ndarray:
+    """Compute the local inverse simpson index (LISI) for each cell.
+
+    Code inspired by:
+    https://github.com/theislab/scib/blob/e578d84063adf4853ed087500bd3d67078e53337/scib/metrics/lisi.py#L105
+
+    Parameters
+    ----------
+    knn_graph
+        Sparse array of shape (n_cells, n_cells) with non-zero values for
+        exactly each cell's k nearest neighbors.
+    labels
+        Array of shape (n_cells,) representing cell type label values
+        for each cell.
+    perplexity
+        Parameter controlling effective neighborhood size. If None, the
+        perplexity is set to the number of neighbors // 3.
+    scale
+        Scale lisi into the range [0, 1]. If True, higher values are better.
+
+    Returns
+    -------
+    clisi
+        Array of shape (n_cells,) with the cLISI score for each cell.
+    """
+    lisi = lisi_knn(knn_graph, labels, perplexity=perplexity)
+    clisi = np.nanmedian(lisi)
+    if scale:
+        nlabels = len(np.unique(labels))
+        clisi = (nlabels - clisi) / (nlabels - 1)
+    return clisi

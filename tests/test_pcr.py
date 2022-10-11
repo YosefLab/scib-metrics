@@ -15,9 +15,9 @@ PCR_PARAMS = list(product([10, 100, 1000], [10, 100, 1000], [True, False]))
 def test_pcr(n_obs, n_vars, categorical):
     from scib.metrics import pc_regression
 
-    def _test_pcr(n_obs: int, n_vars: int, n_components: int, categorical: bool, eps=1e-3):
-        X = poisson_sample(n_obs, n_vars)
-        covariate = categorical_sample(n_obs, int(n_obs / 5)) if categorical else normal_sample(n_obs)
+    def _test_pcr(n_obs: int, n_vars: int, n_components: int, categorical: bool, eps=1e-3, seed=123):
+        X = poisson_sample(n_obs, n_vars, seed=seed)
+        covariate = categorical_sample(n_obs, int(n_obs / 5)) if categorical else normal_sample(n_obs, seed=seed)
 
         pcr_true = pc_regression(
             get_ndarray(X),

@@ -15,11 +15,7 @@ def principal_component_regression(
     categorical: bool = False,
     n_components: Optional[int] = None,
 ) -> float:
-    """Principal component regression (PCR).
-
-    Computes the overall variance contribution given a covariate according to the following formula:
-
-    # TODO: Add formula
+    """Principal component regression (PCR) :cite:p:`buttner2018`.
 
     Parameters
     ----------

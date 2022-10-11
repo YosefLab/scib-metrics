@@ -8,7 +8,7 @@ import scib_metrics
 from scib_metrics.utils import get_ndarray
 from tests.utils.sampling import categorical_sample, normal_sample, poisson_sample
 
-PCR_PARAMS = list(product([10, 100, 1000], [10, 100, 1000], [True, False]))
+PCR_PARAMS = list(product([100, 1000], [100, 1000], [True, False]))
 
 
 @pytest.mark.parametrize("n_obs, n_vars, categorical", PCR_PARAMS)

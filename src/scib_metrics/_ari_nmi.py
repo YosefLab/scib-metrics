@@ -25,6 +25,17 @@ def _compute_clustering_leiden(connectivity_graph: spmatrix, resolution: float) 
     return np.asarray(clusters)
 
 
+def _compute_nmi_ari_cluster_labels(
+    X: np.ndarray,
+    labels: np.ndarray,
+    resolution: float = 1.0,
+) -> Tuple[float, float]:
+    labels_pred = _compute_clustering_leiden(X, resolution)
+    nmi = normalized_mutual_info_score(labels, labels_pred, average_method="arithmetic")
+    ari = adjusted_rand_score(labels, labels_pred)
+    return nmi, ari
+
+
 def nmi_ari_cluster_labels_kmeans(X: np.ndarray, labels: np.ndarray) -> Tuple[float, float]:
     """Compute nmi and ari between k-means clusters and labels.
 
@@ -99,19 +110,15 @@ def nmi_ari_cluster_labels_leiden(
         try:
             from joblib import Parallel, delayed
 
-            out = Parallel(n_jobs=n_jobs)(
-                delayed(nmi_ari_cluster_labels_leiden)(X, labels, False, r) for r in resolutions
-            )
+            out = Parallel(n_jobs=n_jobs)(delayed(_compute_nmi_ari_cluster_labels)(X, labels, r) for r in resolutions)
         except ImportError:
             logger.info("Using for loop over resolutions. pip install joblib for parallelization.")
-            out = [nmi_ari_cluster_labels_leiden(X, labels, False, r) for r in resolutions]
+            out = [_compute_nmi_ari_cluster_labels(X, labels, r) for r in resolutions]
         nmi_ari = np.array(out)
         nmi_ind = np.argmax(nmi_ari[:, 0])
         nmi, ari = nmi_ari[nmi_ind, :]
         return nmi, ari
     else:
-        labels_pred = _compute_clustering_leiden(X, resolution)
-        nmi = normalized_mutual_info_score(labels, labels_pred, average_method="arithmetic")
-        ari = adjusted_rand_score(labels, labels_pred)
+        nmi, ari = _compute_nmi_ari_cluster_labels(X, labels, resolution)
 
     return nmi, ari

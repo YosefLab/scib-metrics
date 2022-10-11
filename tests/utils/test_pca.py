@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 import scib_metrics
 from tests.utils.sampling import poisson_sample
 
-PCA_PARAMS = list(product([100, 1000], [100, 1000]))
+PCA_PARAMS = list(product([10, 100, 1000], [10, 100, 1000]))
 
 
 @pytest.mark.parametrize("n_obs, n_vars", PCA_PARAMS)

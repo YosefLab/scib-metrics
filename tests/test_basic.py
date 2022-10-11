@@ -6,8 +6,10 @@ from sklearn.metrics import silhouette_samples as sk_silhouette_samples
 import scib_metrics
 
 
-def dummy_x_labels():
+def dummy_x_labels(return_symmetric_positive=False):
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
+    if return_symmetric_positive:
+        X = np.abs(X @ X.T)
     labels = np.array([0, 0, 1, 1, 0, 1])
     return X, labels
 
@@ -47,9 +49,23 @@ def test_silhouette_batch():
     scib_metrics.silhouette_batch(X, labels, batch)
 
 
-def test_nmi_ari_cluster_labels():
+def test_nmi_ari_cluster_labels_kmeans():
     X, labels = dummy_x_labels()
-    nmi, ari = scib_metrics.nmi_ari_cluster_labels(X, labels)
+    nmi, ari = scib_metrics.nmi_ari_cluster_labels_kmeans(X, labels)
+    assert isinstance(nmi, float)
+    assert isinstance(ari, float)
+
+
+def test_nmi_ari_cluster_labels_leiden_parallel():
+    X, labels = dummy_x_labels(return_symmetric_positive=True)
+    nmi, ari = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=True, n_jobs=2)
+    assert isinstance(nmi, float)
+    assert isinstance(ari, float)
+
+
+def test_nmi_ari_cluster_labels_leiden_single_resolution():
+    X, labels = dummy_x_labels(return_symmetric_positive=True)
+    nmi, ari = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=False, resolution=0.1)
     assert isinstance(nmi, float)
     assert isinstance(ari, float)
 

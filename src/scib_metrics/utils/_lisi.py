@@ -3,15 +3,15 @@ from typing import Tuple, Union
 import jax
 import jax.numpy as jnp
 import numpy as np
-from flax import struct
+import chex
 
 NdArray = Union[np.ndarray, jnp.ndarray]
 
 
-@struct.dataclass
+@chex.dataclass
 class _NeighborProbabilityState:
     H: float
-    P: jnp.ndarray
+    P: chex.ArrayDevice
     Hdiff: float
     beta: float
     betamin: float
@@ -54,13 +54,13 @@ def _get_neighbor_probability(
         )
         new_H, new_P = _Hbeta(knn_dists_row, new_beta)
         new_Hdiff = new_H - jnp.log(perplexity)
-        return _NeighborProbabilityState(new_H, new_P, new_Hdiff, new_beta, new_betamin, new_betamax, tries + 1)
+        return _NeighborProbabilityState(H=new_H, P=new_P, Hdiff=new_Hdiff, beta=new_beta, betamin=new_betamin, betamax=new_betamax, tries=tries + 1)
 
     def _get_neighbor_probability_convergence(state):
         Hdiff, tries = state.Hdiff, state.tries
         return jnp.logical_and(jnp.abs(Hdiff) > tol, tries < 50)
 
-    init_state = _NeighborProbabilityState(H, P, Hdiff, beta, betamin, betamax, 0)
+    init_state = _NeighborProbabilityState(H=H, P=P, Hdiff=Hdiff, beta=beta, betamin=betamin, betamax=betamax, tries=0)
     final_state = jax.lax.while_loop(_get_neighbor_probability_convergence, _get_neighbor_probability_step, init_state)
     return final_state.H, final_state.P
 

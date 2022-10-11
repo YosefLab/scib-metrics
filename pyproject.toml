@@ -21,7 +21,7 @@ urls.Source = "https://github.com/yoseflab/scib-metrics"
 urls.Home-page = "https://github.com/yoseflab/scib-metrics"
 dependencies = [
     "anndata",
-    "flax",
+    "chex",
     "jax",
     "jaxlib",
     "numpy",

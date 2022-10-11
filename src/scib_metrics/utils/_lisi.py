@@ -1,9 +1,9 @@
 from typing import Tuple, Union
 
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
-import chex
 
 NdArray = Union[np.ndarray, jnp.ndarray]
 
@@ -54,7 +54,9 @@ def _get_neighbor_probability(
         )
         new_H, new_P = _Hbeta(knn_dists_row, new_beta)
         new_Hdiff = new_H - jnp.log(perplexity)
-        return _NeighborProbabilityState(H=new_H, P=new_P, Hdiff=new_Hdiff, beta=new_beta, betamin=new_betamin, betamax=new_betamax, tries=tries + 1)
+        return _NeighborProbabilityState(
+            H=new_H, P=new_P, Hdiff=new_Hdiff, beta=new_beta, betamin=new_betamin, betamax=new_betamax, tries=tries + 1
+        )
 
     def _get_neighbor_probability_convergence(state):
         Hdiff, tries = state.Hdiff, state.tries

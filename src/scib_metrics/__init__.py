@@ -4,7 +4,7 @@ from importlib.metadata import version
 from . import utils
 from ._ari_nmi import nmi_ari_cluster_labels
 from ._isolated_labels import isolated_labels
-from ._lisi import lisi_knn, ilisi_knn, clisi_knn
+from ._lisi import clisi_knn, ilisi_knn, lisi_knn
 from ._settings import settings
 from ._silhouette import silhouette_batch, silhouette_label
 

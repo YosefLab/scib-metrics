@@ -51,7 +51,6 @@ def principal_component_regression(
     return float(pcr)
 
 
-@jax.jit
 def _pcr(
     X_pca: NdArray,
     covariate: NdArray,

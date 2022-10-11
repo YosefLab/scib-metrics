@@ -1,6 +1,5 @@
 from typing import Optional, Tuple
 
-import jax
 import jax.numpy as jnp
 from chex import dataclass
 
@@ -119,12 +118,10 @@ def pca(
         components=get_ndarray(components),
         variance=get_ndarray(variance_),
         variance_ratio=get_ndarray(variance_ratio_),
-        svd=_SVDResult(u=get_ndarray(u), s=get_ndarray(s), v=get_ndarray(v)) if return_svd else None,
     )
     return results
 
 
-@jax.jit
 def _pca(
     X: NdArray,
 ) -> Tuple[NdArray, NdArray, NdArray, NdArray, NdArray]:

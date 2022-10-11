@@ -20,12 +20,12 @@ urls.Documentation = "https://scib-metrics.readthedocs.io/"
 urls.Source = "https://github.com/yoseflab/scib-metrics"
 urls.Home-page = "https://github.com/yoseflab/scib-metrics"
 dependencies = [
-    "anndata",
-    "chex",
+    "anndata>=0.8.0",
+    "chex>=0.1.0",
     "jax>=0.3.0",
-    "jaxlib",
+    "jaxlib>=0.3.0",
     "numpy>=1.23.0",
-    "pandas",
+    "pandas>=1.5.0",
     "scipy>=1.9.0",
     "scikit-learn>=1.1.0",
     "scanpy>=1.9.0",
@@ -50,9 +50,9 @@ doc = [
     "sphinx-copybutton",
 ]
 test = [
-    "pytest",
+    "pytest>=7.1.0",
     "pytest-cov",
-    "scib",
+    "scib>=1.0.0",
     "harmonypy",
     "joblib",
 ]

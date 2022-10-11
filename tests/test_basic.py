@@ -14,10 +14,12 @@ import scib_metrics
 sys.path.append("../src/")
 
 
-def dummy_x_labels():
+def dummy_x_labels(return_symmetric_positive=False):
     np.random.seed(1)
     X = np.random.normal(size=(100, 10))
     labels = np.random.randint(0, 2, size=(100,))
+    if return_symmetric_positive:
+        X = np.abs(X @ X.T)
     return X, labels
 
 
@@ -87,6 +89,27 @@ def test_ilisi_clisi_knn():
     knn_graph = knn_graph.multiply(dist_mat)
     scib_metrics.ilisi_knn(knn_graph, batches, perplexity=10)
     scib_metrics.clisi_knn(knn_graph, labels, perplexity=10)
+
+
+def test_nmi_ari_cluster_labels_kmeans():
+    X, labels = dummy_x_labels()
+    nmi, ari = scib_metrics.nmi_ari_cluster_labels_kmeans(X, labels)
+    assert isinstance(nmi, float)
+    assert isinstance(ari, float)
+
+
+def test_nmi_ari_cluster_labels_leiden_parallel():
+    X, labels = dummy_x_labels(return_symmetric_positive=True)
+    nmi, ari = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=True, n_jobs=2)
+    assert isinstance(nmi, float)
+    assert isinstance(ari, float)
+
+
+def test_nmi_ari_cluster_labels_leiden_single_resolution():
+    X, labels = dummy_x_labels(return_symmetric_positive=True)
+    nmi, ari = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=False, resolution=0.1)
+    assert isinstance(nmi, float)
+    assert isinstance(ari, float)
 
 
 def test_isolated_labels():

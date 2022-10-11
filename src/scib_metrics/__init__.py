@@ -2,7 +2,7 @@ import logging
 from importlib.metadata import version
 
 from . import utils
-from ._ari_nmi import nmi_ari_cluster_labels
+from ._ari_nmi import nmi_ari_cluster_labels_kmeans, nmi_ari_cluster_labels_leiden
 from ._isolated_labels import isolated_labels
 from ._lisi import clisi_knn, ilisi_knn, lisi_knn
 from ._settings import settings
@@ -13,9 +13,10 @@ __all__ = [
     "isolated_labels",
     "silhouette_label",
     "silhouette_batch",
-    "nmi_ari_cluster_labels",
     "ilisi_knn",
     "clisi_knn",
+    "nmi_ari_cluster_labels_kmeans",
+    "nmi_ari_cluster_labels_leiden",
 ]
 
 __version__ = version("scib-metrics")

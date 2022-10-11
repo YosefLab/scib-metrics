@@ -1,8 +1,8 @@
-from dataclasses import dataclass
 from typing import Optional, Tuple
 
 import jax
 import jax.numpy as jnp
+from chex import dataclass
 
 from .._types import NdArray
 from ._utils import get_ndarray
@@ -115,11 +115,11 @@ def pca(
     variance_ratio_ = variance_ratio[:n_components]
 
     results = _PCAResult(
-        get_ndarray(coordinates),
-        get_ndarray(components),
-        get_ndarray(variance_),
-        get_ndarray(variance_ratio_),
-        svd=_SVDResult(get_ndarray(u), get_ndarray(s), get_ndarray(v)) if return_svd else None,
+        coordinates=get_ndarray(coordinates),
+        components=get_ndarray(components),
+        variance=get_ndarray(variance_),
+        variance_ratio=get_ndarray(variance_ratio_),
+        svd=_SVDResult(u=get_ndarray(u), s=get_ndarray(s), v=get_ndarray(v)) if return_svd else None,
     )
     return results
 

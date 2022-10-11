@@ -22,13 +22,13 @@ urls.Home-page = "https://github.com/yoseflab/scib-metrics"
 dependencies = [
     "anndata",
     "chex",
-    "jax",
+    "jax>=0.3.0",
     "jaxlib",
-    "numpy",
+    "numpy>=1.23.0",
     "pandas",
-    "scipy",
-    "scikit-learn",
-    "scanpy",
+    "scipy>=1.9.0",
+    "scikit-learn>=1.1.0",
+    "scanpy>=1.9.0",
     "rich",
     "igraph>0.9.0"
 ]

@@ -30,8 +30,8 @@ def test_pca(n_obs: int, n_vars: int):
         assert pca.svd.v.shape == (max_components, X.shape[1])
 
         # VALUE CHECKS
-        # TODO: Currently not checking coordinates and components, implementations
-        # TODO: differ very slightly and not sure why (martinkim0).
+        # TODO(martinkim0): Currently not checking coordinates and components,
+        # TODO(martinkim0): implementations differ very slightly and not sure why.
         pca_true = PCA(n_components=n_components, svd_solver="full").fit(X)
         # assert np.allclose(pca_true.transform(X), pca.coordinates, atol=eps)
         # assert np.allclose(pca_true.components_, pca.components, atol=eps)

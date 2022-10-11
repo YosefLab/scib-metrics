@@ -22,10 +22,7 @@ def _convert_knn_graph_to_idx(knn_graph: csr_matrix) -> Tuple[np.ndarray, np.nda
 
 
 def lisi_knn(knn_graph: csr_matrix, labels: np.ndarray, perplexity: float = None) -> np.ndarray:
-    """Compute the local inverse simpson index (LISI) for each cell.
-
-    Code inspired by:
-    https://github.com/theislab/scib/blob/e578d84063adf4853ed087500bd3d67078e53337/scib/metrics/lisi.py#L586
+    """Compute the local inverse simpson index (LISI) for each cell :cite:p:`korsunsky2019harmony`.
 
     Parameters
     ----------
@@ -54,11 +51,11 @@ def lisi_knn(knn_graph: csr_matrix, labels: np.ndarray, perplexity: float = None
     simpson = compute_simpson_index(knn_dists, knn_idx, labels, n_labels, perplexity=perplexity)
     return 1 / simpson
 
-def ilisi_knn(knn_graph: csr_matrix, batches: np.ndarray, perplexity: float = None, scale: bool=True) -> np.ndarray:
-    """Compute the local inverse simpson index (LISI) for each cell.
 
-    Code inspired by:
-    https://github.com/theislab/scib/blob/e578d84063adf4853ed087500bd3d67078e53337/scib/metrics/lisi.py#L50
+def ilisi_knn(knn_graph: csr_matrix, batches: np.ndarray, perplexity: float = None, scale: bool = True) -> np.ndarray:
+    """Compute the integration local inverse simpson index (iLISI) for each cell :cite:p:`korsunsky2019harmony`.
+
+    Returns a scaled version of the iLISI score for each cell, by default :cite:p:`luecken2022benchmarking`.
 
     Parameters
     ----------
@@ -86,11 +83,11 @@ def ilisi_knn(knn_graph: csr_matrix, batches: np.ndarray, perplexity: float = No
         ilisi = (ilisi - 1) / (nbatches - 1)
     return ilisi
 
-def clisi_knn(knn_graph: csr_matrix, labels: np.ndarray, perplexity: float = None, scale: bool=True) -> np.ndarray:
-    """Compute the local inverse simpson index (LISI) for each cell.
 
-    Code inspired by:
-    https://github.com/theislab/scib/blob/e578d84063adf4853ed087500bd3d67078e53337/scib/metrics/lisi.py#L105
+def clisi_knn(knn_graph: csr_matrix, labels: np.ndarray, perplexity: float = None, scale: bool = True) -> np.ndarray:
+    """Compute the cell-type local inverse simpson index (cLISI) for each cell :cite:p:`korsunsky2019harmony`.
+
+    Returns a scaled version of the cLISI score for each cell, by default :cite:p:`luecken2022benchmarking`.
 
     Parameters
     ----------

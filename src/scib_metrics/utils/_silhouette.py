@@ -5,7 +5,6 @@ from typing import Union
 import jax
 import jax.numpy as jnp
 import numpy as np
-from chex import assert_equal_shape
 
 from ._dist import cdist
 

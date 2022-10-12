@@ -55,7 +55,6 @@ def _intra_cluster_distances_block(i: int, input: _IntraClusterData) -> jnp.ndar
     return intra_dist
 
 
-@jax.jit
 def _nearest_cluster_distances(X: np.ndarray, labels: np.ndarray, unique_labels: np.ndarray):
     """Calculate the mean nearest-cluster distance for observation i."""
     inter_dist = jnp.array(np.inf * np.ones((X.shape[0],)))

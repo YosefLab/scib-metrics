@@ -10,9 +10,12 @@
     :toctree: generated
 
     isolated_labels
-    nmi_ari_cluster_labels
+    nmi_ari_cluster_labels_kmeans
+    nmi_ari_cluster_labels_leiden
     silhouette_label
     silhouette_batch
+    ilisi_knn
+    clisi_knn
 ```
 
 ## Utils
@@ -26,6 +29,7 @@
 
     utils.cdist
     utils.silhouette_samples
+    utils.KMeansJax
 ```
 
 ## Settings

@@ -15,7 +15,7 @@ def isolated_labels(
     batch: np.ndarray,
     iso_threshold: Optional[int] = None,
 ) -> float:
-    """Isolated label score.
+    """Isolated label score :cite:p:`luecken2022benchmarking`.
 
     Score how well labels of isolated labels are distiguished in the dataset by
     average-width silhouette score (ASW) on isolated label vs all other labels.
@@ -38,7 +38,7 @@ def isolated_labels(
 
     Returns
     -------
-    isolated_label_score: float
+    isolated_label_score
     """
     scores = {}
     isolated_labels = _get_isolated_labels(labels, batch, iso_threshold)

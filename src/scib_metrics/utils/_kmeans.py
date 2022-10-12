@@ -53,7 +53,12 @@ class KMeansJax:
     def fit(self, X: np.ndarray):
         """Fit the model to the data."""
         X = check_array(X, dtype=np.float32, order="C")
+        # Subtract mean for numerical accuracy
+        mean = X.mean(axis=0)
+        X -= mean
         self._fit(X)
+        X += mean
+        self.cluster_centroids_ += mean
         return self
 
     def _fit(self, X: np.ndarray):

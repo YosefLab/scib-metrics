@@ -7,7 +7,6 @@ import jax.numpy as jnp
 import numpy as np
 
 from ._dist import cdist
-from ._utils import get_ndarray
 
 NdArray = Union[np.ndarray, jnp.ndarray]
 

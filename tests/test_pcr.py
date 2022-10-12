@@ -8,7 +8,9 @@ import scib_metrics
 from scib_metrics.utils import get_ndarray
 from tests.utils.sampling import categorical_sample, normal_sample, poisson_sample
 
-PCR_PARAMS = list(product([10, 100, 1000], [10, 100, 1000], [True, False]))
+PCR_PARAMS = list(product([10, 100, 1000], [10, 100, 1000], [False]))
+# TODO(martinkim0): Currently not testing categorical covariates because of
+# TODO(martinkim0): reproducibility issues with original scib. See comment in PR #16.
 
 
 @pytest.mark.parametrize("n_obs, n_vars, categorical", PCR_PARAMS)
@@ -33,7 +35,7 @@ def test_pcr(n_obs, n_vars, categorical):
         assert np.allclose(pcr_true, pcr, atol=eps)
 
     max_components = min(n_obs, n_vars)
-    # _test_pcr(n_obs, n_vars, n_components=max_components, categorical=categorical)
+    _test_pcr(n_obs, n_vars, n_components=max_components, categorical=categorical)
     _test_pcr(n_obs, n_vars, n_components=max_components - 1, categorical=categorical)
     _test_pcr(n_obs, n_vars, n_components=int(max_components / 2), categorical=categorical)
     _test_pcr(n_obs, n_vars, n_components=1, categorical=categorical)

@@ -20,9 +20,9 @@ def principal_component_regression(
     Parameters
     ----------
     X
-        Array of shape (n_samples, n_features).
+        Array of shape (n_cells, n_features).
     covariate
-        Array of shape (n_samples,) or (n_samples, 1) representing batch/covariate values.
+        Array of shape (n_cells,) or (n_cells, 1) representing batch/covariate values.
     categorical
         If True, batch will be treated as categorical and one-hot encoded.
     n_components:

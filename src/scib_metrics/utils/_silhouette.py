@@ -75,18 +75,20 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
     if X.shape[0] != labels.shape[0]:
         raise ValueError("X and labels should have the same number of samples")
     new_xs = []
-    largest_label = 0
-    for l in np.unique(labels):
-        largest_label = max(largest_label, sum(labels == l))
+    cumulative_mask = []
+    _, largest_counts = np.unique(labels, return_counts=True)
+    largest_label_count = np.max(largest_counts)
     for l in np.unique(labels):
         subset_x = X[labels == l]
-        new_x = np.zeros((largest_label, X.shape[1]))
+        new_x = np.zeros((largest_label_count, X.shape[1]))
         new_x[: subset_x.shape[0], :] = subset_x
+        cumulative_mask += [True] * subset_x.shape[0] + [False] * (largest_label_count - subset_x.shape[0])
         new_xs.append(new_x)
     # labels by cells by features
     # cells dimension is same size for each label, padded with zeros
     # to make jit happy
     X = np.stack(new_xs)
+    cumulative_mask = np.array(cumulative_mask)
     intra_dist = _intra_cluster_distances(X)
     inter_dist = _nearest_cluster_distances(X)
     # return jax.device_get((inter_dist - intra_dist) / jnp.maximum(intra_dist, inter_dist))

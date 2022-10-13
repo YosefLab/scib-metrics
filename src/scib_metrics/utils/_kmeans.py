@@ -6,7 +6,9 @@ import jax.numpy as jnp
 import numpy as np
 from sklearn.utils import check_array
 
+from .._types import IntOrKey
 from ._dist import cdist
+from ._utils import validate_seed
 
 
 def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jnp.ndarray) -> jnp.ndarray:
@@ -60,7 +62,7 @@ def _get_dist_labels(X: jnp.ndarray, centroids: jnp.ndarray) -> jnp.ndarray:
 class KMeansJax:
     """Jax implementation of :class:`sklearn.cluster.KMeans`.
 
-    This implementation is limited to random initialization and euclidean distance.
+    This implementation is limited to Euclidean distance.
 
     Parameters
     ----------
@@ -70,7 +72,7 @@ class KMeansJax:
         Cluster centroid initialization method. One of the following:
 
         * ``'k-means++'``: Sample initial cluster centroids based on an
-            empirical distribution of the points' constributions to the
+            empirical distribution of the points' contributions to the
             overall inertia.
         * ``'random'``: Uniformly sample observations as initial centroids
     n_init
@@ -90,13 +92,13 @@ class KMeansJax:
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-4,
-        seed: int = 0,
+        seed: IntOrKey = 0,
     ):
         self.n_clusters = n_clusters
         self.n_init = n_init
         self.max_iter = max_iter
         self.tol = tol
-        self.seed = seed
+        self.seed: jax.random.KeyArray = validate_seed(seed)
 
         if init not in ["k-means++", "random"]:
             raise ValueError("Invalid init method, must be one of ['k-means++' or 'random'].")
@@ -117,9 +119,8 @@ class KMeansJax:
         return self
 
     def _fit(self, X: np.ndarray):
-        key = jax.random.PRNGKey(self.seed)
         all_centroids, all_inertias = jax.vmap(lambda key: self._kmeans_full_run(X, key))(
-            jax.random.split(key, self.n_init)
+            jax.random.split(self.seed, self.n_init)
         )
         i = jnp.argmin(all_inertias)
         self.cluster_centroids_ = np.array(jax.device_get(all_centroids[i]))

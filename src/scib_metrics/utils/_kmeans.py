@@ -20,36 +20,35 @@ def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray
 
 
 @partial(jax.jit, static_argnums=1)
-def _initialize_kmeans_plus_plus(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
+def _initialize_plus_plus(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
     """Initialize cluster centroids with k-means++ algorithm."""
 
-    def _plus_plus_initial(key):
+    def _initial(key):
         key, subkey = jax.random.split(key)
         N = X.shape[0]
-        # Sample first centroid uniformly at random
+        # sample first centroid uniformly at random
         idx = jax.random.choice(subkey, N)
         centroids = jnp.full((n_clusters,), -1, dtype=jnp.int32).at[0].set(idx)
         mask = jnp.zeros((N,), dtype=jnp.bool_).at[idx].set(True)
         return centroids, mask, key
 
-    def _plus_plus_step(state):
+    def _step(state):
         centroids, mask, key = state
         key, subkey = jax.random.split(key)
-        # d(x) = min_{mu in centroids} ||x - mu||^2, d(x) = 0 if x in C
-        dists_ = jnp.where(mask, dists, jnp.inf)
-        probs = jnp.where(mask, 0, jnp.min(dists_, axis=1) ** 2)
-        # sample with probability ~ d(x)^2
+        # d(x) = min_{mu in centroids} ||x - mu||^2, d(x) = 0 if x in C\
+        probs = jnp.where(mask, 0, jnp.min(jnp.where(mask, dists, jnp.inf), axis=1) ** 2)
+        # sample with probability ~ d(x)
         idx = jax.random.choice(subkey, X.shape[0], p=probs / jnp.sum(probs))
         centroids = centroids.at[jnp.sum(mask)].set(idx)
         mask = mask.at[idx].set(True)
         return centroids, mask, key
 
-    def _plus_plus_convergence(state):
+    def _convergence(state):
         _, mask, _ = state
         return jnp.sum(mask) < n_clusters
 
     dists = cdist(X, X)
-    centroids, _, _ = jax.lax.while_loop(_plus_plus_convergence, _plus_plus_step, _plus_plus_initial(key))
+    centroids, _, _ = jax.lax.while_loop(_convergence, _step, _initial(key))
     return X[centroids]
 
 
@@ -105,7 +104,7 @@ class KMeansJax:
         if init not in ["k-means++", "random"]:
             raise ValueError("Invalid init method, must be one of ['k-means++' or 'random'].")
         if init == "k-means++":
-            self._initialize = _initialize_kmeans_plus_plus
+            self._initialize = _initialize_plus_plus
         else:
             self._initialize = _initialize_random
 

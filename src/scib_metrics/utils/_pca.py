@@ -15,7 +15,7 @@ class _SVDResult:
     Attributes
     ----------
     u
-        Array of shape (n_samples, n_components) containing the left singular vectors.
+        Array of shape (n_cells, n_components) containing the left singular vectors.
     s
         Array of shape (n_components,) containing the singular values.
     v
@@ -34,7 +34,7 @@ class _PCAResult:
     Attributes
     ----------
     coordinates
-        Array of shape (n_samples, n_components) containing the PCA coordinates.
+        Array of shape (n_cells, n_components) containing the PCA coordinates.
     components
         Array of shape (n_components, n_features) containing the PCA components.
     variance
@@ -91,7 +91,7 @@ def pca(
     Parameters
     ----------
     X
-        Array of shape (n_samples, n_features).
+        Array of shape (n_cells, n_features).
     n_components
         Number of components to keep. If None, all components are kept.
     return_svd
@@ -103,7 +103,7 @@ def pca(
     """
     max_components = min(X.shape)
     if n_components and n_components > max_components:
-        raise ValueError(f"n_components = {n_components} must be <= min(n_samples, n_features) = {max_components}")
+        raise ValueError(f"n_components = {n_components} must be <= min(n_cells, n_features) = {max_components}")
     n_components = n_components or max_components
 
     u, s, v, variance, variance_ratio = _pca(X)
@@ -133,7 +133,7 @@ def _pca(
     Parameters
     ----------
     X
-        Array of shape (n_samples, n_features).
+        Array of shape (n_cells, n_features).
 
     Returns
     -------

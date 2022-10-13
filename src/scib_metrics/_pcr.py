@@ -59,9 +59,9 @@ def _pcr(
     Parameters
     ----------
     X_pca
-        Array of shape (n_samples, n_components) containing PCA coordinates. Must be standardized.
-    batch
-        Array of shape (n_samples, 1) or (n_samples, n_classes) containing batch/covariate values. Must be standardized
+        Array of shape (n_cells, n_components) containing PCA coordinates. Must be standardized.
+    covariate
+        Array of shape (n_cells, 1) or (n_cells, n_classes) containing batch/covariate values. Must be standardized
         if not categorical (one-hot).
     var
         Array of shape (n_components,) containing the explained variance of each PC.

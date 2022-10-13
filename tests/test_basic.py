@@ -11,6 +11,8 @@ from sklearn.neighbors import NearestNeighbors
 
 import scib_metrics
 
+scib_metrics.settings.jax_fix_no_kernel_image()
+
 sys.path.append("../src/")
 
 

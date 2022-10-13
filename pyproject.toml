@@ -54,6 +54,8 @@ test = [
     "pytest-cov",
     "harmonypy",
     "joblib",
+    "flake8",
+    "black",
 ]
 parallel = [
     "joblib"

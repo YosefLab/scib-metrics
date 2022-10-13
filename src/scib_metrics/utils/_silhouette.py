@@ -9,7 +9,7 @@ from ._dist import cdist
 NdArray = Union[np.ndarray, jnp.ndarray]
 
 
-@jax.jit
+# @jax.jit
 def _intra_cluster_distances(X: np.ndarray):
     """Calculate the mean intra-cluster distance."""
     # Labels by cells
@@ -17,7 +17,7 @@ def _intra_cluster_distances(X: np.ndarray):
     return intra_dist_per_label
 
 
-@jax.jit
+# @jax.jit
 def _intra_cluster_distances_block(subset: jnp.ndarray) -> jnp.ndarray:
     mask = subset.sum(1) != 0
     full_mask = jnp.outer(mask, mask)
@@ -25,18 +25,18 @@ def _intra_cluster_distances_block(subset: jnp.ndarray) -> jnp.ndarray:
     per_cell_sum = jnp.where(full_mask, distances, 0).sum(axis=1)
     real_cells_in_subset = mask.sum()
     per_cell_mean = per_cell_sum / (real_cells_in_subset - 1)
-    # per_cell_mean.at[real_cells_in_subset:].set(0)
     return per_cell_mean
 
 
-def _nearest_cluster_distances(X: np.ndarray):
-    """Calculate the mean nearest-cluster distance for observation i."""
-    inter_dist = jax.vmap(lambda x1: jax.vmap(lambda y1: _nearest_cluster_distance_block(x1, y1))(X))(X)
+@jax.jit
+def _pairwise_cluster_distances(X: np.ndarray):
+    """Calculate the mean pairwise-cluster distance for observation i."""
+    inter_dist = jax.vmap(lambda x1: jax.vmap(lambda y1: _pairwise_cluster_distance_block(x1, y1))(X))(X)
     return inter_dist
 
 
 @jax.jit
-def _nearest_cluster_distance_block(subset_a: np.ndarray, subset_b: np.ndarray) -> Union[jnp.ndarray, jnp.ndarray]:
+def _pairwise_cluster_distance_block(subset_a: np.ndarray, subset_b: np.ndarray) -> Union[jnp.ndarray, jnp.ndarray]:
     mask_a = subset_a.sum(1) != 0
     mask_b = subset_b.sum(1) != 0
     full_mask = jnp.outer(mask_a, mask_b)
@@ -48,8 +48,6 @@ def _nearest_cluster_distance_block(subset_a: np.ndarray, subset_b: np.ndarray) 
     real_cells_in_subset_b = mask_b.sum()
     values_a /= real_cells_in_subset_b
     values_b /= real_cells_in_subset_a
-    # values_a.at[real_cells_in_subset_a:].set(0)
-    # values_b.at[real_cells_in_subset_b:].set(0)
     return values_a, values_b
 
 
@@ -89,7 +87,6 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
     # to make jit happy
     X = np.stack(new_xs)
     cumulative_mask = np.array(cumulative_mask)
-    intra_dist = _intra_cluster_distances(X)
-    inter_dist = _nearest_cluster_distances(X)
+    inter_dist_a_b, inter_dist_b_a = _pairwise_cluster_distances(X)
     # return jax.device_get((inter_dist - intra_dist) / jnp.maximum(intra_dist, inter_dist))
-    return intra_dist, inter_dist
+    # return intra_dist, inter_dist

@@ -11,7 +11,7 @@ from ._dist import cdist
 from ._utils import validate_seed
 
 
-def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jnp.ndarray) -> jnp.ndarray:
+def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
     """Initialize cluster centroids randomly."""
     n_obs = X.shape[0]
     indices = jax.random.choice(key, n_obs, (n_clusters,), replace=False)
@@ -19,36 +19,38 @@ def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jnp.ndarray) -> jnp
     return initial_state
 
 
-@jax.jit
-def _initialize_kmeans_plus_plus(X: jnp.ndarray, n_clusters: int, key: jnp.ndarray) -> jnp.ndarray:
+@partial(jax.jit, static_argnums=1)
+def _initialize_kmeans_plus_plus(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
     """Initialize cluster centroids with k-means++ algorithm."""
 
     def _plus_plus_initial(key):
         key, subkey = jax.random.split(key)
-        dists = cdist(X, X)
-        centroids = jnp.zeros((X.shape[0],), dtype=jnp.int32)
-        centroids = centroids.at[jax.random.choice(subkey, X.shape[0])].set(1)
-        return (centroids, dists, key)
+        N = X.shape[0]
+        # Sample first centroid uniformly at random
+        idx = jax.random.choice(subkey, N)
+        centroids = jnp.full((n_clusters,), -1, dtype=jnp.int32).at[0].set(idx)
+        mask = jnp.zeros((N,), dtype=jnp.bool_).at[idx].set(True)
+        return centroids, mask, key
 
     def _plus_plus_step(state):
-        centroids, dists, key = state
+        centroids, mask, key = state
         key, subkey = jax.random.split(key)
-        mask = centroids == 1
-        # Only consider distances to centroids
+        # d(x) = min_{mu in centroids} ||x - mu||^2, d(x) = 0 if x in C
         dists_ = jnp.where(mask, dists, jnp.inf)
-        # Mask out current centroids
         probs = jnp.where(mask, 0, jnp.min(dists_, axis=1) ** 2)
-        # Sample new center with probability ~ d(x)^2
-        new_idx = jax.random.choice(subkey, X.shape[0], p=probs / jnp.sum(probs))
-        centroids = centroids.at[new_idx].set(1)
-        return centroids, dists, key
+        # sample with probability ~ d(x)^2
+        idx = jax.random.choice(subkey, X.shape[0], p=probs / jnp.sum(probs))
+        centroids = centroids.at[jnp.sum(mask)].set(idx)
+        mask = mask.at[idx].set(True)
+        return centroids, mask, key
 
     def _plus_plus_convergence(state):
-        centroids, _, _ = state
-        return jnp.sum(centroids) < n_clusters
+        _, mask, _ = state
+        return jnp.sum(mask) < n_clusters
 
+    dists = cdist(X, X)
     centroids, _, _ = jax.lax.while_loop(_plus_plus_convergence, _plus_plus_step, _plus_plus_initial(key))
-    return centroids
+    return X[centroids]
 
 
 @jax.jit

@@ -18,6 +18,38 @@ def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jnp.ndarray) -> jnp
 
 
 @jax.jit
+def _initialize_kmeans_plus_plus(X: jnp.ndarray, n_clusters: int, key: jnp.ndarray) -> jnp.ndarray:
+    """Initialize cluster centroids with k-means++ algorithm."""
+
+    def _plus_plus_initial(key):
+        key, subkey = jax.random.split(key)
+        dists = cdist(X, X)
+        centroids = jnp.zeros((X.shape[0],), dtype=jnp.int32)
+        centroids = centroids.at[jax.random.choice(subkey, X.shape[0])].set(1)
+        return (centroids, dists, key)
+
+    def _plus_plus_step(state):
+        centroids, dists, key = state
+        key, subkey = jax.random.split(key)
+        mask = centroids == 1
+        # Only consider distances to centroids
+        dists_ = jnp.where(mask, dists, jnp.inf)
+        # Mask out current centroids
+        probs = jnp.where(mask, 0, jnp.min(dists_, axis=1) ** 2)
+        # Sample new center with probability ~ d(x)^2
+        new_idx = jax.random.choice(subkey, X.shape[0], p=probs / jnp.sum(probs))
+        centroids = centroids.at[new_idx].set(1)
+        return centroids, dists, key
+
+    def _plus_plus_convergence(state):
+        centroids, _, _ = state
+        return jnp.sum(centroids) < n_clusters
+
+    centroids, _, _ = jax.lax.while_loop(_plus_plus_convergence, _plus_plus_step, _plus_plus_initial(key))
+    return centroids
+
+
+@jax.jit
 def _get_dist_labels(X: jnp.ndarray, centroids: jnp.ndarray) -> jnp.ndarray:
     """Get the distance and labels for each observation."""
     dist = cdist(X, centroids)
@@ -68,7 +100,10 @@ class KMeansJax:
 
         if init not in ["k-means++", "random"]:
             raise ValueError("Invalid init method, must be one of ['k-means++' or 'random'].")
-        self.init = init
+        if init == "k-means++":
+            self._initialize = _initialize_kmeans_plus_plus
+        else:
+            self._initialize = _initialize_random
 
     def fit(self, X: np.ndarray):
         """Fit the model to the data."""
@@ -128,7 +163,7 @@ class KMeansJax:
             cond2 = n_iter > self.max_iter
             return jnp.logical_or(cond1, cond2)[0]
 
-        centroids = _initialize_random(X, self.n_clusters, key)
+        centroids = self._initialize(X, self.n_clusters, key)
         # centroids, new_inertia, old_inertia, n_iter
         state = (centroids, jnp.inf, jnp.inf, jnp.array([0.0]))
         state = _kmeans_step(state)

@@ -46,13 +46,12 @@ def _intra_cluster_distances_block(subset: jnp.ndarray) -> jnp.ndarray:
 # @jax.jit
 def _nearest_cluster_distances(X: jnp.ndarray, inds: jnp.ndarray = None) -> jnp.ndarray:
     """Calculate the mean nearest-cluster distance for observation i."""
-    carry = 0
 
-    def _body_fn(carry, inds):
+    def _body_fn(inds):
         i, j = inds
-        return carry, _nearest_cluster_distance_block(X[i], X[j])
+        return _nearest_cluster_distance_block(X[i], X[j])
 
-    _, inter_dist = jax.lax.scan(_body_fn, carry, (inds[0], inds[1]))
+    inter_dist = jax.lax.map(_body_fn, (inds[0], inds[1]))
     return inter_dist
 
 

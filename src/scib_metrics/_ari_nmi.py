@@ -7,6 +7,7 @@ from scipy.sparse import spmatrix
 from sklearn.metrics.cluster import adjusted_rand_score, normalized_mutual_info_score
 from sklearn.utils import check_array
 
+from ._utils import _check_square
 from .utils import KMeansJax
 
 logger = logging.getLogger(__name__)
@@ -46,9 +47,9 @@ def nmi_ari_cluster_labels_kmeans(X: np.ndarray, labels: np.ndarray) -> Tuple[fl
     Parameters
     ----------
     X
-        Array of shape (n_samples, n_features).
+        Array of shape (n_cells, n_features).
     labels
-        Array of shape (n_samples,) representing label values
+        Array of shape (n_cells,) representing label values
 
     Returns
     -------
@@ -79,11 +80,11 @@ def nmi_ari_cluster_labels_leiden(
     Parameters
     ----------
     X
-        Array of shape (n_samples, n_samples) representing a connectivity graph.
+        Array of shape (n_cells, n_cells) representing a connectivity graph.
         Values should represent weights between pairs of neighbors, with a higher weight
         indicating more connected.
     labels
-        Array of shape (n_samples,) representing label values
+        Array of shape (n_cells,) representing label values
     optimize_resolution
         Whether to optimize the resolution parameter of leiden clustering by searching over
         10 values
@@ -100,9 +101,8 @@ def nmi_ari_cluster_labels_leiden(
     ari
         Adjusted rand index score
     """
-    X = check_array(X, accept_sparse=False, ensure_2d=True)
-    if X.shape[0] != X.shape[1]:
-        raise ValueError("X should be a square matrix")
+    X = check_array(X, accept_sparse=True, ensure_2d=True)
+    _check_square(X)
     labels = check_array(labels, accept_sparse=False, ensure_2d=False)
     if optimize_resolution:
         n = 10

@@ -44,7 +44,7 @@ def _intra_cluster_distances_block(subset: jnp.ndarray) -> jnp.ndarray:
 
 
 # @jax.jit
-def _nearest_cluster_distances(X: jnp.ndarray, inds: jnp.ndarray = None) -> jnp.ndarray:
+def _nearest_cluster_distances(X: jnp.ndarray, inds: jnp.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray]:
     """Calculate the mean nearest-cluster distance for observation i."""
 
     def _body_fn(inds):

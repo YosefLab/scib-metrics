@@ -52,6 +52,7 @@ doc = [
 test = [
     "pytest",
     "pytest-cov",
+    "scib",
     "harmonypy",
     "joblib",
     # For vscode Python extension testing
@@ -71,9 +72,6 @@ omit = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 xfail_strict = true
-addopts = [
-    "--import-mode=importlib",  # allow using test files with same name
-]
 
 [tool.isort]
 include_trailing_comma = true

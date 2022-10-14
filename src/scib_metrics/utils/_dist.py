@@ -18,13 +18,13 @@ def cdist(x: np.ndarray, y: np.ndarray) -> jnp.ndarray:
     Parameters
     ----------
     x
-        Array of shape (n_samples_a, n_features)
+        Array of shape (n_cells_a, n_features)
     y
-        Array of shape (n_samples_b, n_features)
+        Array of shape (n_cells_b, n_features)
 
     Returns
     -------
     dist
-        Array of shape (n_samples_a, n_samples_b)
+        Array of shape (n_cells_a, n_cells_b)
     """
     return jax.vmap(lambda x1: jax.vmap(lambda y1: _euclidean_distance(x1, y1))(y))(x)

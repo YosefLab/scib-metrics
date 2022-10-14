@@ -6,7 +6,7 @@ import numpy as np
 from chex import ArrayDevice
 from jax import nn
 
-from .._types import NdArray
+from .._types import IntOrKey, NdArray
 
 
 def get_ndarray(x: ArrayDevice) -> np.ndarray:
@@ -31,3 +31,8 @@ def one_hot(y: NdArray, n_classes: Optional[int] = None) -> jnp.ndarray:
     """
     n_classes = n_classes or jnp.max(y) + 1
     return nn.one_hot(jnp.ravel(y), n_classes)
+
+
+def validate_seed(seed: IntOrKey) -> jax.random.KeyArray:
+    """Validate a seed and return a Jax random key."""
+    return jax.random.PRNGKey(seed) if isinstance(seed, int) else seed

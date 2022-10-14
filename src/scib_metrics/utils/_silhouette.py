@@ -56,7 +56,7 @@ def _nearest_cluster_distances(X: jnp.ndarray, inds: jnp.ndarray = None) -> jnp.
 
 
 @jax.jit
-def _nearest_cluster_distance_block(subset_a: jnp.ndarray, subset_b: jnp.ndarray) -> Union[jnp.ndarray, jnp.ndarray]:
+def _nearest_cluster_distance_block(subset_a: jnp.ndarray, subset_b: jnp.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray]:
     mask_a = subset_a.sum(1) != 0
     mask_b = subset_b.sum(1) != 0
     full_mask = jnp.outer(mask_a, mask_b)

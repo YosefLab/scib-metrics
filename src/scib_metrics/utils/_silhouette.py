@@ -122,6 +122,8 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
     Code inspired by:
     https://github.com/maxschelski/pytorch-cluster-metrics/
 
+    Implements :func:`sklearn.metrics.silhouette_samples`.
+
     Parameters
     ----------
     X

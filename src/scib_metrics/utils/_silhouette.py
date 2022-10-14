@@ -53,13 +53,6 @@ def _nearest_cluster_distances(X: jnp.ndarray, inds: jnp.ndarray = None) -> jnp.
         return carry, _nearest_cluster_distance_block(X[i], X[j])
 
     _, inter_dist = jax.lax.scan(_body_fn, carry, (inds[0], inds[1]))
-    # inter_dist_a = []
-    # inter_dist_b = []
-    # for i, j in zip(inds[0], inds[1]):
-    #     res = _nearest_cluster_distance_block(X[i], X[j])
-    #     inter_dist_a.append(res[0])
-    #     inter_dist_b.append(res[1])
-    # return jnp.stack(inter_dist_a), jnp.stack(inter_dist_b)
     return inter_dist
 
 

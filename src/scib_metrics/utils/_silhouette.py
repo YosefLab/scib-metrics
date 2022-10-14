@@ -67,6 +67,7 @@ def _format_data(X: np.ndarray, labels: np.ndarray) -> Tuple[jnp.ndarray, jnp.nd
     The padding ensures each label has the same number of cells, which helps
     reduce the number of jit compilations that occur.
     """
+    # TODO(adamgayoso): Make this jittable
     new_xs = []
     cumulative_mask = []
     _, largest_counts = np.unique(labels, return_counts=True)

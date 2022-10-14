@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Tuple, Union
 
 import chex
@@ -22,8 +23,13 @@ class _InterClusterData:
 @jax.jit
 def _intra_cluster_distances(X: jnp.ndarray):
     """Calculate the mean intra-cluster distance."""
+    carry = 0
+
+    def _body_fn(carry, cell_type_x):
+        return carry, _intra_cluster_distances_block(cell_type_x)
+
     # Labels by cells
-    intra_dist_per_label = jax.vmap(_intra_cluster_distances_block, in_axes=0)(X)
+    _, intra_dist_per_label = jax.lax.scan(_body_fn, carry, X)
     return intra_dist_per_label
 
 
@@ -41,7 +47,12 @@ def _intra_cluster_distances_block(subset: jnp.ndarray) -> jnp.ndarray:
 @jax.jit
 def _nearest_cluster_distances(X: jnp.ndarray, inds: jnp.ndarray = None) -> jnp.ndarray:
     """Calculate the mean nearest-cluster distance for observation i."""
-    inter_dist = jax.vmap(lambda i, j, X: _nearest_cluster_distance_block(X[i], X[j]), in_axes=(0, 0, None))(*inds, X)
+
+    def _body_fn(X, inds):
+        i, j = inds
+        return X, _nearest_cluster_distance_block(X[i], X[j])
+
+    _, inter_dist = jax.lax.scan(_body_fn, X, (inds[0], inds[1]))
     return inter_dist
 
 
@@ -89,6 +100,7 @@ def _format_data(X: np.ndarray, labels: np.ndarray) -> Tuple[jnp.ndarray, jnp.nd
     return X, cumulative_mask, remapped_inds
 
 
+@partial(jax.jit, donate_argnums=(1,))
 def _aggregate_inter_dists(i: int, inter_cluster_data: _InterClusterData) -> _InterClusterData:
     """Aggregate inter-cluster distances."""
     inter_dist_per_label = inter_cluster_data.inter_dist_per_label
@@ -138,6 +150,7 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
     inter_dist_per_label = jnp.inf * jnp.ones((n_labels, X.shape[1]))
     inter_inds = jnp.triu_indices(n_labels, k=1)
     inter_dist_a_b, inter_dist_b_a = _nearest_cluster_distances(X, inter_inds)
+    del X
     inter_cluster_data = _InterClusterData(
         inter_dist_a_b=inter_dist_a_b,
         inter_dist_b_a=inter_dist_b_a,
@@ -155,4 +168,4 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
     inter_dist = jnp.zeros_like(inter_dist_shuffled)
     inter_dist = inter_dist.at[remapped_inds].set(inter_dist_shuffled)
 
-    return jax.device_get((inter_dist - intra_dist) / jnp.maximum(intra_dist, inter_dist))
+    return np.array(jax.device_get((inter_dist - intra_dist) / jnp.maximum(intra_dist, inter_dist)))

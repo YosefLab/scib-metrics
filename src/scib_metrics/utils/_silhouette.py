@@ -154,10 +154,4 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
     inter_dist = jnp.zeros_like(inter_dist_shuffled)
     inter_dist = inter_dist.at[remapped_inds].set(inter_dist_shuffled)
 
-    # inter_dist_array_a_b = jnp.inf * jnp.ones((n_labels, n_labels, X.shape[1]))
-    # inter_dist_array_a_b = inter_dist_array_a_b.at[inter_inds].set(inter_dist_a_b)
-    # # (padded cells,)
-    # inter_dist_array_a_b = jnp.min(inter_dist_array_a_b, axis=1).ravel()
-    # inter_dist_array_a_b = inter_dist_array_a_b[cumulative_mask]
-
     return jax.device_get((inter_dist - intra_dist) / jnp.maximum(intra_dist, inter_dist))

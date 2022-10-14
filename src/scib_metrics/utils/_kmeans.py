@@ -9,7 +9,6 @@ from sklearn.utils import check_array
 from .._types import IntOrKey
 from ._dist import cdist
 from ._utils import get_ndarray, validate_seed
-from ._utils import validate_seed
 
 
 def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:

@@ -54,6 +54,7 @@ test = [
     "pytest-cov",
     "harmonypy",
     "joblib",
+    # For vscode Python extension testing
     "flake8",
     "black",
 ]

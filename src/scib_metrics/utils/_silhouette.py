@@ -64,7 +64,7 @@ def _nearest_cluster_distance_block(subset_a: jnp.ndarray, subset_b: jnp.ndarray
     distances = cdist(subset_a, subset_b)
     masked_distances = jnp.where(full_mask, distances, 0)
     values_a = masked_distances.sum(axis=1)
-    values_b = jnp.where(full_mask, distances, 0).sum(axis=0)
+    values_b = masked_distances.sum(axis=0)
     real_cells_in_subset_a = mask_a.sum()
     real_cells_in_subset_b = mask_b.sum()
     values_a /= real_cells_in_subset_b

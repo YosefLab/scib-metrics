@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.0.5 (2022-10-DD)
+
+### Added
+
+-   Standardize language of docstring ([#30][])
+
+[#30]: https://github.com/YosefLab/scib-metrics/pull/30
+
 ## 0.0.4 (2022-10-10)
 
 ### Added

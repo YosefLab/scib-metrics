@@ -10,9 +10,9 @@ def silhouette_label(X: np.ndarray, labels: np.ndarray, rescale: bool = True) ->
     Parameters
     ----------
     X
-        Array of shape (n_samples, n_features).
+        Array of shape (n_cells, n_features).
     labels
-        Array of shape (n_samples,) representing label values
+        Array of shape (n_cells,) representing label values
     rescale
         Scale asw into the range [0, 1].
 
@@ -32,11 +32,11 @@ def silhouette_batch(X: np.ndarray, labels: np.ndarray, batch: np.ndarray, resca
     Parameters
     ----------
     X
-        Array of shape (n_samples, n_features).
+        Array of shape (n_cells, n_features).
     labels
-        Array of shape (n_samples,) representing label values
+        Array of shape (n_cells,) representing label values
     batch
-        Array of shape (n_samples,) representing batch values
+        Array of shape (n_cells,) representing batch values
     rescale
         Scale asw into the range [0, 1]. If True, higher values are better.
 

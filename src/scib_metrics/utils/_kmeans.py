@@ -8,7 +8,7 @@ from sklearn.utils import check_array
 
 from .._types import IntOrKey
 from ._dist import cdist
-from ._utils import validate_seed
+from ._utils import get_ndarray, validate_seed
 
 
 def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
@@ -124,10 +124,10 @@ class KMeansJax:
             jax.random.split(self.seed, self.n_init)
         )
         i = jnp.argmin(all_inertias)
-        self.cluster_centroids_ = np.array(jax.device_get(all_centroids[i]))
-        self.inertia_ = np.array(jax.device_get(all_inertias[i]))
+        self.cluster_centroids_ = get_ndarray(all_centroids[i])
+        self.inertia_ = get_ndarray(all_inertias[i])
         _, labels = _get_dist_labels(X, self.cluster_centroids_)
-        self.labels_ = np.array(jax.device_get(labels))
+        self.labels_ = get_ndarray(labels)
 
     @partial(jax.jit, static_argnums=(0,))
     def _kmeans_full_run(self, X: jnp.ndarray, key: jnp.ndarray) -> jnp.ndarray:

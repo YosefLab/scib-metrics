@@ -23,13 +23,12 @@ class _InterClusterData:
 @jax.jit
 def _intra_cluster_distances(X: jnp.ndarray):
     """Calculate the mean intra-cluster distance."""
-    carry = 0
 
-    def _body_fn(carry, cell_type_x):
-        return carry, _intra_cluster_distances_block(cell_type_x)
+    def _body_fn(cell_type_x):
+        return _intra_cluster_distances_block(cell_type_x)
 
     # Labels by cells
-    _, intra_dist_per_label = jax.lax.scan(_body_fn, carry, X)
+    intra_dist_per_label = jax.lax.map(_body_fn, X)
     return intra_dist_per_label
 
 
@@ -44,15 +43,23 @@ def _intra_cluster_distances_block(subset: jnp.ndarray) -> jnp.ndarray:
     return per_cell_mean
 
 
-@jax.jit
+# @jax.jit
 def _nearest_cluster_distances(X: jnp.ndarray, inds: jnp.ndarray = None) -> jnp.ndarray:
     """Calculate the mean nearest-cluster distance for observation i."""
+    carry = 0
 
-    def _body_fn(X, inds):
+    def _body_fn(carry, inds):
         i, j = inds
-        return X, _nearest_cluster_distance_block(X[i], X[j])
+        return carry, _nearest_cluster_distance_block(X[i], X[j])
 
-    _, inter_dist = jax.lax.scan(_body_fn, X, (inds[0], inds[1]))
+    _, inter_dist = jax.lax.scan(_body_fn, carry, (inds[0], inds[1]))
+    # inter_dist_a = []
+    # inter_dist_b = []
+    # for i, j in zip(inds[0], inds[1]):
+    #     res = _nearest_cluster_distance_block(X[i], X[j])
+    #     inter_dist_a.append(res[0])
+    #     inter_dist_b.append(res[1])
+    # return jnp.stack(inter_dist_a), jnp.stack(inter_dist_b)
     return inter_dist
 
 
@@ -158,12 +165,9 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
         indices_a=inter_inds[0],
         indices_b=inter_inds[1],
     )
-    inter_cluster_data = jax.lax.fori_loop(
-        0,
-        inter_inds[0].shape[0],
-        _aggregate_inter_dists,
-        inter_cluster_data,
-    )
+    # jax.lax.fori_loop is slow here
+    for i in range(inter_inds[0].shape[0]):
+        inter_cluster_data = _aggregate_inter_dists(i, inter_cluster_data)
     inter_dist_shuffled = inter_cluster_data.inter_dist_per_label.ravel()[cumulative_mask]
     inter_dist = jnp.zeros_like(inter_dist_shuffled)
     inter_dist = inter_dist.at[remapped_inds].set(inter_dist_shuffled)

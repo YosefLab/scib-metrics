@@ -1,5 +1,6 @@
-from typing import Union
+from typing import Tuple, Union
 
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -9,8 +10,17 @@ from ._dist import cdist, pdist_squareform
 NdArray = Union[np.ndarray, jnp.ndarray]
 
 
+@chex.dataclass
+class _InterClusterData:
+    inter_dist_a_b: jnp.ndarray
+    inter_dist_b_a: jnp.ndarray
+    inter_dist_per_label: jnp.ndarray
+    indices_a: jnp.ndarray
+    indices_b: jnp.ndarray
+
+
 @jax.jit
-def _intra_cluster_distances(X: np.ndarray):
+def _intra_cluster_distances(X: jnp.ndarray):
     """Calculate the mean intra-cluster distance."""
     # Labels by cells
     intra_dist_per_label = jax.vmap(_intra_cluster_distances_block, in_axes=0)(X)
@@ -29,14 +39,14 @@ def _intra_cluster_distances_block(subset: jnp.ndarray) -> jnp.ndarray:
 
 
 @jax.jit
-def _nearest_cluster_distances(X: np.ndarray):
+def _nearest_cluster_distances(X: jnp.ndarray, inds: jnp.ndarray = None) -> jnp.ndarray:
     """Calculate the mean nearest-cluster distance for observation i."""
-    inter_dist = jax.vmap(lambda x1: jax.vmap(lambda y1: _nearest_cluster_distance_block(x1, y1))(X))(X)
+    inter_dist = jax.vmap(lambda i, j, X: _nearest_cluster_distance_block(X[i], X[j]), in_axes=(0, 0, None))(*inds, X)
     return inter_dist
 
 
 @jax.jit
-def _nearest_cluster_distance_block(subset_a: np.ndarray, subset_b: np.ndarray) -> Union[jnp.ndarray, jnp.ndarray]:
+def _nearest_cluster_distance_block(subset_a: jnp.ndarray, subset_b: jnp.ndarray) -> Union[jnp.ndarray, jnp.ndarray]:
     mask_a = subset_a.sum(1) != 0
     mask_b = subset_b.sum(1) != 0
     full_mask = jnp.outer(mask_a, mask_b)
@@ -49,6 +59,48 @@ def _nearest_cluster_distance_block(subset_a: np.ndarray, subset_b: np.ndarray) 
     values_a /= real_cells_in_subset_b
     values_b /= real_cells_in_subset_a
     return values_a, values_b
+
+
+def _format_data(X: np.ndarray, labels: np.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+    """Reshape data to be labels by cells (padded) by features.
+
+    The padding ensures each label has the same number of cells, which helps
+    reduce the number of jit compilations that occur.
+    """
+    new_xs = []
+    cumulative_mask = []
+    _, largest_counts = np.unique(labels, return_counts=True)
+    largest_label_count = np.max(largest_counts)
+    original_inds = np.arange(X.shape[0])
+    remapped_inds = []
+    for l in np.unique(labels):
+        subset_x = X[labels == l]
+        new_x = np.zeros((largest_label_count, X.shape[1]))
+        new_x[: subset_x.shape[0], :] = subset_x
+        cumulative_mask += [True] * subset_x.shape[0] + [False] * (largest_label_count - subset_x.shape[0])
+        new_xs.append(new_x)
+        remapped_inds.append(original_inds[labels == l])
+    cumulative_mask = jnp.array(cumulative_mask)
+    remapped_inds = jnp.concatenate(remapped_inds)
+    # labels by cells by features
+    X = jnp.stack(new_xs)
+
+    return X, cumulative_mask, remapped_inds
+
+
+def _aggregate_inter_dists(i: int, inter_cluster_data: _InterClusterData) -> _InterClusterData:
+    """Aggregate inter-cluster distances."""
+    inter_dist_per_label = inter_cluster_data.inter_dist_per_label
+    inter_dist_a_b = inter_cluster_data.inter_dist_a_b
+    inter_dist_b_a = inter_cluster_data.inter_dist_b_a
+    indices_a = inter_cluster_data.indices_a
+    indices_b = inter_cluster_data.indices_b
+    dist_a = inter_dist_per_label[indices_a[i]]
+    dist_b = inter_dist_per_label[indices_b[i]]
+    inter_dist_per_label = inter_dist_per_label.at[indices_a[i]].set(jnp.minimum(dist_a, inter_dist_a_b[i]))
+    inter_dist_per_label = inter_dist_per_label.at[indices_b[i]].set(jnp.minimum(dist_b, inter_dist_b_a[i]))
+    inter_cluster_data.inter_dist_per_label = inter_dist_per_label
+    return inter_cluster_data
 
 
 def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
@@ -72,22 +124,40 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
     """
     if X.shape[0] != labels.shape[0]:
         raise ValueError("X and labels should have the same number of samples")
-    new_xs = []
-    cumulative_mask = []
-    _, largest_counts = np.unique(labels, return_counts=True)
-    largest_label_count = np.max(largest_counts)
-    for l in np.unique(labels):
-        subset_x = X[labels == l]
-        new_x = np.zeros((largest_label_count, X.shape[1]))
-        new_x[: subset_x.shape[0], :] = subset_x
-        cumulative_mask += [True] * subset_x.shape[0] + [False] * (largest_label_count - subset_x.shape[0])
-        new_xs.append(new_x)
-    # labels by cells by features
-    # cells dimension is same size for each label, padded with zeros
-    # to make jit happy
-    X = jnp.stack(new_xs)
-    cumulative_mask = np.array(cumulative_mask)
-    _intra_cluster_distances(X)
-    inter_dist_a_b, inter_dist_b_a = _nearest_cluster_distances(X)
-    # return jax.device_get((inter_dist - intra_dist) / jnp.maximum(intra_dist, inter_dist))
-    # return intra_dist, inter_dist
+    X, cumulative_mask, remapped_inds = _format_data(X, labels)
+    n_labels = X.shape[0]
+
+    # Compute intra-cluster distances
+    intra_dist_shuffled = _intra_cluster_distances(X).ravel()[cumulative_mask]
+    # Now unshuffle it
+    intra_dist = jnp.zeros_like(intra_dist_shuffled)
+    intra_dist = intra_dist.at[remapped_inds].set(intra_dist_shuffled)
+
+    # Compute nearest-cluster distances
+    inter_dist_per_label = jnp.inf * jnp.ones((n_labels, X.shape[1]))
+    inter_inds = jnp.triu_indices(n_labels, k=1)
+    inter_dist_a_b, inter_dist_b_a = _nearest_cluster_distances(X, inter_inds)
+    inter_cluster_data = _InterClusterData(
+        inter_dist_a_b=inter_dist_a_b,
+        inter_dist_b_a=inter_dist_b_a,
+        inter_dist_per_label=inter_dist_per_label,
+        indices_a=inter_inds[0],
+        indices_b=inter_inds[1],
+    )
+    inter_cluster_data = jax.lax.fori_loop(
+        0,
+        inter_inds[0].shape[0],
+        _aggregate_inter_dists,
+        inter_cluster_data,
+    )
+    inter_dist_shuffled = inter_cluster_data.inter_dist_per_label.ravel()[cumulative_mask]
+    inter_dist = jnp.zeros_like(inter_dist_shuffled)
+    inter_dist = inter_dist.at[remapped_inds].set(inter_dist_shuffled)
+
+    # inter_dist_array_a_b = jnp.inf * jnp.ones((n_labels, n_labels, X.shape[1]))
+    # inter_dist_array_a_b = inter_dist_array_a_b.at[inter_inds].set(inter_dist_a_b)
+    # # (padded cells,)
+    # inter_dist_array_a_b = jnp.min(inter_dist_array_a_b, axis=1).ravel()
+    # inter_dist_array_a_b = inter_dist_array_a_b[cumulative_mask]
+
+    return jax.device_get((inter_dist - intra_dist) / jnp.maximum(intra_dist, inter_dist))

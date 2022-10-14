@@ -1,19 +1,55 @@
 from functools import partial
+from typing import Literal
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 from sklearn.utils import check_array
 
+from .._types import IntOrKey
 from ._dist import cdist
+from ._utils import validate_seed
 
 
-def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jnp.ndarray) -> jnp.ndarray:
+def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
     """Initialize cluster centroids randomly."""
     n_obs = X.shape[0]
     indices = jax.random.choice(key, n_obs, (n_clusters,), replace=False)
     initial_state = X[indices]
     return initial_state
+
+
+@partial(jax.jit, static_argnums=1)
+def _initialize_plus_plus(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
+    """Initialize cluster centroids with k-means++ algorithm."""
+
+    def _init(key):
+        key, subkey = jax.random.split(key)
+        # sample first centroid uniformly at random
+        idx = jax.random.choice(subkey, n_obs)
+        centroids = jnp.full((n_clusters,), -1, dtype=jnp.int32).at[0].set(idx)
+        mask = jnp.zeros((n_obs,), dtype=jnp.bool_).at[idx].set(True)
+        return centroids, mask, key
+
+    def _step(state):
+        centroids, mask, key = state
+        key, subkey = jax.random.split(key)
+        # d(x) = min_{mu in centroids} ||x - mu||^2, d(x) = 0 if x in centroids
+        probs = jnp.where(mask, 0, jnp.min(jnp.where(mask, dists, jnp.inf), axis=1) ** 2)
+        # sample with probability ~ d(x)
+        idx = jax.random.choice(subkey, n_obs, p=probs / jnp.sum(probs))
+        centroids = centroids.at[jnp.sum(mask)].set(idx)
+        mask = mask.at[idx].set(True)
+        return centroids, mask, key
+
+    def _convergence(state):
+        _, mask, _ = state
+        return jnp.sum(mask) < n_clusters
+
+    dists = cdist(X, X)
+    n_obs = X.shape[0]
+    centroids, _, _ = jax.lax.while_loop(_convergence, _step, _init(key))
+    return X[centroids]
 
 
 @jax.jit
@@ -27,12 +63,19 @@ def _get_dist_labels(X: jnp.ndarray, centroids: jnp.ndarray) -> jnp.ndarray:
 class KMeansJax:
     """Jax implementation of :class:`sklearn.cluster.KMeans`.
 
-    This implementation is limited to random initialization and euclidean distance.
+    This implementation is limited to Euclidean distance.
 
     Parameters
     ----------
     n_clusters
         Number of clusters.
+    init
+        Cluster centroid initialization method. One of the following:
+
+        * ``'k-means++'``: Sample initial cluster centroids based on an
+            empirical distribution of the points' contributions to the
+            overall inertia.
+        * ``'random'``: Uniformly sample observations as initial centroids
     n_init
         Number of times the k-means algorithm will be initialized.
     max_iter
@@ -43,12 +86,27 @@ class KMeansJax:
         Random seed.
     """
 
-    def __init__(self, n_clusters: int = 8, *, n_init: int = 10, max_iter: int = 300, tol: float = 1e-4, seed: int = 0):
+    def __init__(
+        self,
+        n_clusters: int = 8,
+        init: Literal["k-means++", "random"] = "k-means++",
+        n_init: int = 10,
+        max_iter: int = 300,
+        tol: float = 1e-4,
+        seed: IntOrKey = 0,
+    ):
         self.n_clusters = n_clusters
         self.n_init = n_init
         self.max_iter = max_iter
         self.tol = tol
-        self.seed = seed
+        self.seed: jax.random.KeyArray = validate_seed(seed)
+
+        if init not in ["k-means++", "random"]:
+            raise ValueError("Invalid init method, must be one of ['k-means++' or 'random'].")
+        if init == "k-means++":
+            self._initialize = _initialize_plus_plus
+        else:
+            self._initialize = _initialize_random
 
     def fit(self, X: np.ndarray):
         """Fit the model to the data."""
@@ -62,9 +120,8 @@ class KMeansJax:
         return self
 
     def _fit(self, X: np.ndarray):
-        key = jax.random.PRNGKey(self.seed)
         all_centroids, all_inertias = jax.vmap(lambda key: self._kmeans_full_run(X, key))(
-            jax.random.split(key, self.n_init)
+            jax.random.split(self.seed, self.n_init)
         )
         i = jnp.argmin(all_inertias)
         self.cluster_centroids_ = np.array(jax.device_get(all_centroids[i]))
@@ -108,7 +165,7 @@ class KMeansJax:
             cond2 = n_iter > self.max_iter
             return jnp.logical_or(cond1, cond2)[0]
 
-        centroids = _initialize_random(X, self.n_clusters, key)
+        centroids = self._initialize(X, self.n_clusters, key)
         # centroids, new_inertia, old_inertia, n_iter
         state = (centroids, jnp.inf, jnp.inf, jnp.array([0.0]))
         state = _kmeans_step(state)

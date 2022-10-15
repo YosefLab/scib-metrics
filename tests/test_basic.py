@@ -6,10 +6,13 @@ import pandas as pd
 from harmonypy import compute_lisi as harmonypy_lisi
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist as sp_cdist
+from scipy.spatial.distance import pdist, squareform
 from sklearn.metrics import silhouette_samples as sk_silhouette_samples
 from sklearn.neighbors import NearestNeighbors
 
 import scib_metrics
+
+scib_metrics.settings.jax_fix_no_kernel_image()
 
 sys.path.append("../src/")
 
@@ -37,6 +40,11 @@ def test_cdist():
     x = jnp.array([[1, 2], [3, 4]])
     y = jnp.array([[5, 6], [7, 8]])
     assert np.allclose(scib_metrics.utils.cdist(x, y), sp_cdist(x, y))
+
+
+def test_pdist():
+    x = jnp.array([[1, 2], [3, 4]])
+    assert np.allclose(scib_metrics.utils.pdist_squareform(x), squareform(pdist(x)))
 
 
 def test_silhouette_samples():

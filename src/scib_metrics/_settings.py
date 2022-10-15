@@ -98,6 +98,10 @@ class ScibConfig:
         ch.setFormatter(formatter)
         scib_logger.addHandler(ch)
 
+    def jax_fix_no_kernel_image(self) -> None:
+        """Fix for JAX error "No kernel image is available for execution on the device"."""
+        os.environ["XLA_FLAGS"] = "--xla_gpu_force_compilation_parallelism=1"
+
     @property
     def jax_preallocate_gpu_memory(self):
         """Jax GPU memory allocation settings.

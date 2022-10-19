@@ -1,5 +1,3 @@
-
-
 # Developer documentation
 
 Welcome to the developer guidelines! This document is split into two parts:
@@ -281,8 +279,8 @@ Before making a release, you need to update the version number. Please adhere to
 > 3.  PATCH version when you make backwards compatible bug fixes.
 >
 > Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
-We use [bump2version][] to automatically update the version number in all places and automatically create a git tag.
-Run one of the following commands in the root of the repository
+> We use [bump2version][] to automatically update the version number in all places and automatically create a git tag.
+> Run one of the following commands in the root of the repository
 
 ```bash
 bump2version patch

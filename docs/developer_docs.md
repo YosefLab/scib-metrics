@@ -167,7 +167,7 @@ In `pyproject.toml` add the following changes, and you are good to go!
 +source = "vcs"
 +
  [tool.coverage.run]
- source = ["{{ cookiecutter.project_name }}"]
+ source = ["scib-metrics"]
  omit = [
 ```
 

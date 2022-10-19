@@ -159,7 +159,7 @@ In `pyproject.toml` add the following changes, and you are good to go!
 -requires = ["hatchling"]
 +requires = ["hatchling", "hatch-vcs"]
  [project]
- name = "{{ cookiecutter.project_name }}"
+ name = "scib-metrics"
 -version = "0.3.1dev"
 +dynamic = ["version"]
 @@ -60,6 +60,9 @@

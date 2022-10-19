@@ -190,7 +190,7 @@ In addition to the packages needed to _use_ this package, you need additional py
 the documentation_. It's easy to install them using `pip`:
 
 ```bash
-pip install "{{ cookiecutter.project_name }}[dev,test,doc]"
+pip install "scib-metrics[dev,test,doc]"
 ```
 
 ### Code-style

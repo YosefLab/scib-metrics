@@ -10,10 +10,9 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.0.6 (2022-10-27)
 
-- Reimplement silhouette in a memory constant way, pdist using lax scan ([#42][])
+-   Reimplement silhouette in a memory constant way, pdist using lax scan ([#42][])
 
 [#42]: https://github.com/YosefLab/scib-metrics/pull/42
-
 
 ## 0.0.5 (2022-10-24)
 

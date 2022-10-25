@@ -71,7 +71,7 @@ def _pairwise_distances_chunked(X: jnp.ndarray, chunk_size: int, reduce_fn: call
     return jnp.concatenate(intra_dists_all), jnp.concatenate(inter_dists_all)
 
 
-def silhouette_samples(X: np.ndarray, labels: np.ndarray, chunk_size: int = 128) -> np.ndarray:
+def silhouette_samples(X: np.ndarray, labels: np.ndarray, chunk_size: int = 256) -> np.ndarray:
     """Compute the Silhouette Coefficient for each observation.
 
     Implements :func:`sklearn.metrics.silhouette_samples`.

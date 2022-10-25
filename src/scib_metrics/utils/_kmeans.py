@@ -120,8 +120,8 @@ class KMeansJax:
         return self
 
     def _fit(self, X: np.ndarray):
-        all_centroids, all_inertias = jax.vmap(lambda key: self._kmeans_full_run(X, key))(
-            jax.random.split(self.seed, self.n_init)
+        all_centroids, all_inertias = jax.lax.map(
+            lambda key: self._kmeans_full_run(X, key), jax.random.split(self.seed, self.n_init)
         )
         i = jnp.argmin(all_inertias)
         self.cluster_centroids_ = get_ndarray(all_centroids[i])

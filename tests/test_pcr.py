@@ -42,7 +42,7 @@ def test_pcr(n_obs, n_vars, categorical):
 
 
 @pytest.mark.parametrize("n_obs, n_vars, categorical", PCR_COMPARISON_PARAMS)
-def test_pcr_harmony(n_obs, n_vars, categorical):
+def test_pcr_comparison(n_obs, n_vars, categorical):
     X_pre = poisson_sample(n_obs, n_vars, seed=0)
     X_post = poisson_sample(n_obs, n_vars, seed=1)
     covariate = categorical_sample(n_obs, int(n_obs / 5)) if categorical else normal_sample(n_obs, seed=0)

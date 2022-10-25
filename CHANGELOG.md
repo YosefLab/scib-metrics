@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.0.7 (2022-10-25)
+
+-   Fix memory issue in `KMeansJax` by using `_kmeans_full_run` with `map` instead of `vmap` ([#45][])
+
+[#45]: https://github.com/YosefLab/scib-metrics/pull/45
+
 ## 0.0.6 (2022-10-25)
 
 -   Reimplement silhouette in a memory constant way, pdist using lax scan ([#42][])

@@ -92,7 +92,7 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray, chunk_size: int = 128)
     """
     if X.shape[0] != labels.shape[0]:
         raise ValueError("X and labels should have the same number of samples")
-
+    labels = jnp.asarray(labels).astype(int)
     label_freqs = jnp.bincount(labels)
     reduce_fn = partial(_silhouette_reduce, labels=labels, label_freqs=label_freqs)
     results = _pairwise_distances_chunked(X, chunk_size=chunk_size, reduce_fn=reduce_fn)

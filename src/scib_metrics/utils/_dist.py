@@ -27,7 +27,7 @@ def cdist(x: np.ndarray, y: np.ndarray) -> jnp.ndarray:
     dist
         Array of shape (n_cells_a, n_cells_b)
     """
-    return jax.lax.map(lambda x1: jax.lax.map(lambda y1: _euclidean_distance(x1, y1), y), x)
+    return jax.vmap(lambda x1: jax.vmap(lambda y1: _euclidean_distance(x1, y1))(y))(x)
 
 
 @jax.jit
@@ -46,7 +46,6 @@ def pdist_squareform(X: np.ndarray) -> jnp.ndarray:
     dist
         Array of shape (n_cells, n_cells)
     """
-    # TODO(adamgayoso): Figure out how to speed up something like this
     n_cells = X.shape[0]
     inds = jnp.triu_indices(n_cells)
 

@@ -13,7 +13,16 @@ and this project adheres to [Semantic Versioning][].
 ### Added
 
 -   Standardize language of docstring ([#30][])
+-   Use K-means++ initialization ([#23][])
+-   Add pc regression and pc comparsion ([#16][] and [#38][])
+-   Lax'd silhouette ([#33][])
+-   Cookicutter template sync ([#35][])
 
+[#33]: https://github.com/YosefLab/scib-metrics/pull/33
+[#38]: https://github.com/YosefLab/scib-metrics/pull/38
+[#35]: https://github.com/YosefLab/scib-metrics/pull/35
+[#16]: https://github.com/YosefLab/scib-metrics/pull/16
+[#23]: https://github.com/YosefLab/scib-metrics/pull/23
 [#30]: https://github.com/YosefLab/scib-metrics/pull/30
 
 ## 0.0.4 (2022-10-10)

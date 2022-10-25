@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Tuple, Union
+from typing import Tuple
 
 import jax
 import jax.numpy as jnp
@@ -7,8 +7,7 @@ import numpy as np
 import pandas as pd
 
 from ._dist import cdist
-
-NdArray = Union[np.ndarray, jnp.ndarray]
+from ._utils import get_ndarray
 
 
 @jax.jit
@@ -103,5 +102,5 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray, chunk_size: int = 256)
     denom = jnp.take(label_freqs - 1, labels, mode="clip")
     intra_clust_dists /= denom
     sil_samples = inter_clust_dists - intra_clust_dists
-    sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
-    return np.array(jax.device_get(jnp.nan_to_num(sil_samples)))
+    sil_samples /= jnp.maximum(intra_clust_dists, inter_clust_dists)
+    return get_ndarray(jnp.nan_to_num(sil_samples))

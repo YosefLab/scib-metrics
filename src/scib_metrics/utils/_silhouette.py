@@ -1,125 +1,77 @@
 from functools import partial
-from typing import Tuple, Union
+from typing import Tuple
 
-import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pandas as pd
 
-from ._dist import cdist, pdist_squareform
-
-NdArray = Union[np.ndarray, jnp.ndarray]
-
-
-@chex.dataclass
-class _InterClusterData:
-    inter_dist_a_b: jnp.ndarray
-    inter_dist_b_a: jnp.ndarray
-    inter_dist_per_label: jnp.ndarray
-    indices_a: jnp.ndarray
-    indices_b: jnp.ndarray
+from ._dist import cdist
+from ._utils import get_ndarray
 
 
 @jax.jit
-def _intra_cluster_distances(X: jnp.ndarray):
-    """Calculate the mean intra-cluster distance."""
+def _silhouette_reduce(
+    D_chunk: jnp.ndarray, start: int, labels: jnp.ndarray, label_freqs: jnp.ndarray
+) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    """Accumulate silhouette statistics for vertical chunk of X.
 
-    def _body_fn(cell_type_x):
-        return _intra_cluster_distances_block(cell_type_x)
+    Follows scikit-learn implementation.
 
-    # Labels by cells
-    intra_dist_per_label = jax.lax.map(_body_fn, X)
-    return intra_dist_per_label
-
-
-@jax.jit
-def _intra_cluster_distances_block(subset: jnp.ndarray) -> jnp.ndarray:
-    mask = subset.sum(1) != 0
-    full_mask = jnp.outer(mask, mask)
-    distances = pdist_squareform(subset)
-    per_cell_sum = jnp.where(full_mask, distances, 0).sum(axis=1)
-    real_cells_in_subset = mask.sum()
-    per_cell_mean = per_cell_sum / (real_cells_in_subset - 1)
-    return per_cell_mean
-
-
-# @jax.jit
-def _nearest_cluster_distances(X: jnp.ndarray, inds: jnp.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray]:
-    """Calculate the mean nearest-cluster distance for observation i."""
-
-    def _body_fn(inds):
-        i, j = inds
-        return _nearest_cluster_distance_block(X[i], X[j])
-
-    inter_dist = jax.lax.map(_body_fn, (inds[0], inds[1]))
-    return inter_dist
-
-
-@jax.jit
-def _nearest_cluster_distance_block(subset_a: jnp.ndarray, subset_b: jnp.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray]:
-    mask_a = subset_a.sum(1) != 0
-    mask_b = subset_b.sum(1) != 0
-    full_mask = jnp.outer(mask_a, mask_b)
-    distances = cdist(subset_a, subset_b)
-    masked_distances = jnp.where(full_mask, distances, 0)
-    values_a = masked_distances.sum(axis=1)
-    values_b = masked_distances.sum(axis=0)
-    real_cells_in_subset_a = mask_a.sum()
-    real_cells_in_subset_b = mask_b.sum()
-    values_a /= real_cells_in_subset_b
-    values_b /= real_cells_in_subset_a
-    return values_a, values_b
-
-
-def _format_data(X: np.ndarray, labels: np.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-    """Reshape data to be labels by cells (padded) by features.
-
-    The padding ensures each label has the same number of cells, which helps
-    reduce the number of jit compilations that occur.
+    Parameters
+    ----------
+    D_chunk
+        Array of shape (n_chunk_samples, n_samples)
+        Precomputed distances for a chunk.
+    start
+        First index in the chunk.
+    labels
+        Array of shape (n_samples,)
+        Corresponding cluster labels, encoded as {0, ..., n_clusters-1}.
+    label_freqs
+        Distribution of cluster labels in ``labels``.
     """
-    # TODO(adamgayoso): Make this jittable
-    new_xs = []
-    cumulative_mask = []
-    _, largest_counts = np.unique(labels, return_counts=True)
-    largest_label_count = np.max(largest_counts)
-    original_inds = np.arange(X.shape[0])
-    remapped_inds = []
-    for l in np.unique(labels):
-        subset_x = X[labels == l]
-        new_x = np.zeros((largest_label_count, X.shape[1]))
-        new_x[: subset_x.shape[0], :] = subset_x
-        cumulative_mask += [True] * subset_x.shape[0] + [False] * (largest_label_count - subset_x.shape[0])
-        new_xs.append(new_x)
-        remapped_inds.append(original_inds[labels == l])
-    cumulative_mask = jnp.array(cumulative_mask)
-    remapped_inds = jnp.concatenate(remapped_inds)
-    # labels by cells by features
-    X = jnp.stack(new_xs)
+    # accumulate distances from each sample to each cluster
+    D_chunk_len = D_chunk.shape[0]
+    clust_dists = jnp.zeros((D_chunk_len, len(label_freqs)), dtype=D_chunk.dtype)
 
-    return X, cumulative_mask, remapped_inds
+    def _bincount(i, _data):
+        clust_dists, D_chunk, labels, label_freqs = _data
+        clust_dists = clust_dists.at[i].set(jnp.bincount(labels, weights=D_chunk[i], length=label_freqs.shape[0]))
+        return clust_dists, D_chunk, labels, label_freqs
 
+    clust_dists = jax.lax.fori_loop(
+        0, D_chunk_len, lambda i, _data: _bincount(i, _data), (clust_dists, D_chunk, labels, label_freqs)
+    )[0]
 
-@partial(jax.jit, donate_argnums=(1,))
-def _aggregate_inter_dists(i: int, inter_cluster_data: _InterClusterData) -> _InterClusterData:
-    """Aggregate inter-cluster distances."""
-    inter_dist_per_label = inter_cluster_data.inter_dist_per_label
-    inter_dist_a_b = inter_cluster_data.inter_dist_a_b
-    inter_dist_b_a = inter_cluster_data.inter_dist_b_a
-    indices_a = inter_cluster_data.indices_a
-    indices_b = inter_cluster_data.indices_b
-    dist_a = inter_dist_per_label[indices_a[i]]
-    dist_b = inter_dist_per_label[indices_b[i]]
-    inter_dist_per_label = inter_dist_per_label.at[indices_a[i]].set(jnp.minimum(dist_a, inter_dist_a_b[i]))
-    inter_dist_per_label = inter_dist_per_label.at[indices_b[i]].set(jnp.minimum(dist_b, inter_dist_b_a[i]))
-    inter_cluster_data.inter_dist_per_label = inter_dist_per_label
-    return inter_cluster_data
+    # intra_index selects intra-cluster distances within clust_dists
+    intra_index = (jnp.arange(D_chunk_len), jax.lax.dynamic_slice(labels, (start,), (D_chunk_len,)))
+    # intra_clust_dists are averaged over cluster size outside this function
+    intra_clust_dists = clust_dists[intra_index]
+    # of the remaining distances we normalise and extract the minimum
+    clust_dists = clust_dists.at[intra_index].set(jnp.inf)
+    clust_dists /= label_freqs
+    inter_clust_dists = clust_dists.min(axis=1)
+    return intra_clust_dists, inter_clust_dists
 
 
-def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
+def _pairwise_distances_chunked(X: jnp.ndarray, chunk_size: int, reduce_fn: callable) -> jnp.ndarray:
+    """Compute pairwise distances in chunks to reduce memory usage."""
+    n_samples = X.shape[0]
+    n_chunks = jnp.ceil(n_samples / chunk_size).astype(int)
+    intra_dists_all = []
+    inter_dists_all = []
+    for i in range(n_chunks):
+        start = i * chunk_size
+        end = min((i + 1) * chunk_size, n_samples)
+        intra_cluster_dists, inter_cluster_dists = reduce_fn(cdist(X[start:end], X), start=start)
+        intra_dists_all.append(intra_cluster_dists)
+        inter_dists_all.append(inter_cluster_dists)
+    return jnp.concatenate(intra_dists_all), jnp.concatenate(inter_dists_all)
+
+
+def silhouette_samples(X: np.ndarray, labels: np.ndarray, chunk_size: int = 256) -> np.ndarray:
     """Compute the Silhouette Coefficient for each observation.
-
-    Code inspired by:
-    https://github.com/maxschelski/pytorch-cluster-metrics/
 
     Implements :func:`sklearn.metrics.silhouette_samples`.
 
@@ -131,6 +83,8 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
     labels
         Array of shape (n_cells,) representing label values
         for each observation.
+    chunk_size
+        Number of samples to process at a time for distance computation.
 
     Returns
     -------
@@ -138,32 +92,15 @@ def silhouette_samples(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
     """
     if X.shape[0] != labels.shape[0]:
         raise ValueError("X and labels should have the same number of samples")
-    X, cumulative_mask, remapped_inds = _format_data(X, labels)
-    n_labels = X.shape[0]
+    labels = pd.Categorical(labels).codes
+    labels = jnp.asarray(labels)
+    label_freqs = jnp.bincount(labels)
+    reduce_fn = partial(_silhouette_reduce, labels=labels, label_freqs=label_freqs)
+    results = _pairwise_distances_chunked(X, chunk_size=chunk_size, reduce_fn=reduce_fn)
+    intra_clust_dists, inter_clust_dists = results
 
-    # Compute intra-cluster distances
-    intra_dist_shuffled = _intra_cluster_distances(X).ravel()[cumulative_mask]
-    # Now unshuffle it
-    intra_dist = jnp.zeros_like(intra_dist_shuffled)
-    intra_dist = intra_dist.at[remapped_inds].set(intra_dist_shuffled)
-
-    # Compute nearest-cluster distances
-    inter_dist_per_label = jnp.inf * jnp.ones((n_labels, X.shape[1]))
-    inter_inds = jnp.triu_indices(n_labels, k=1)
-    inter_dist_a_b, inter_dist_b_a = _nearest_cluster_distances(X, inter_inds)
-    del X
-    inter_cluster_data = _InterClusterData(
-        inter_dist_a_b=inter_dist_a_b,
-        inter_dist_b_a=inter_dist_b_a,
-        inter_dist_per_label=inter_dist_per_label,
-        indices_a=inter_inds[0],
-        indices_b=inter_inds[1],
-    )
-    # jax.lax.fori_loop is slow here
-    for i in range(inter_inds[0].shape[0]):
-        inter_cluster_data = _aggregate_inter_dists(i, inter_cluster_data)
-    inter_dist_shuffled = inter_cluster_data.inter_dist_per_label.ravel()[cumulative_mask]
-    inter_dist = jnp.zeros_like(inter_dist_shuffled)
-    inter_dist = inter_dist.at[remapped_inds].set(inter_dist_shuffled)
-
-    return np.array(jax.device_get((inter_dist - intra_dist) / jnp.maximum(intra_dist, inter_dist)))
+    denom = jnp.take(label_freqs - 1, labels, mode="clip")
+    intra_clust_dists /= denom
+    sil_samples = inter_clust_dists - intra_clust_dists
+    sil_samples /= jnp.maximum(intra_clust_dists, inter_clust_dists)
+    return get_ndarray(jnp.nan_to_num(sil_samples))

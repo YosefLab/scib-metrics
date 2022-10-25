@@ -46,12 +46,14 @@ def pdist_squareform(X: np.ndarray) -> jnp.ndarray:
     dist
         Array of shape (n_cells, n_cells)
     """
-    # TODO(adamgayoso): Figure out how to speed up something like this
-    # n_cells = X.shape[0]
-    # inds = jnp.triu_indices(n_cells)
-    # dist_mat = jnp.zeros((n_cells, n_cells))
-    # dist_mat = dist_mat.at[inds].set(
-    #     jax.vmap(lambda i, j, X: _euclidean_distance(X[i], X[j]), in_axes=(0, 0, None))(*inds, jnp.asarray(X))
-    # )
-    # dist_mat = jnp.maximum(dist_mat, dist_mat.T)
-    return cdist(X, X)
+    n_cells = X.shape[0]
+    inds = jnp.triu_indices(n_cells)
+
+    def _body_fn(X, i_j):
+        i, j = i_j
+        return X, _euclidean_distance(X[i], X[j])
+
+    dist_mat = jnp.zeros((n_cells, n_cells))
+    dist_mat = dist_mat.at[inds].set(jax.lax.scan(_body_fn, X, (inds[0], inds[1]))[1])
+    dist_mat = jnp.maximum(dist_mat, dist_mat.T)
+    return dist_mat

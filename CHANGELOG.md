@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.0.6 (2022-10-27)
+
+-   Reimplement silhouette in a memory constant way, pdist using lax scan ([#42][])
+
+[#42]: https://github.com/YosefLab/scib-metrics/pull/42
+
 ## 0.0.5 (2022-10-24)
 
 ### Added

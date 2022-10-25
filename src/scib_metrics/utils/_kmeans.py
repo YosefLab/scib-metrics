@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.utils import check_array
 
 from .._types import IntOrKey
-from ._dist import cdist
+from ._dist import cdist, pdist_squareform
 from ._utils import get_ndarray, validate_seed
 
 
@@ -46,7 +46,7 @@ def _initialize_plus_plus(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyAr
         _, mask, _ = state
         return jnp.sum(mask) < n_clusters
 
-    dists = cdist(X, X)
+    dists = pdist_squareform(X)
     n_obs = X.shape[0]
     centroids, _, _ = jax.lax.while_loop(_convergence, _step, _init(key))
     return X[centroids]

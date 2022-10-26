@@ -25,7 +25,7 @@ def test_pcr(n_obs, n_vars, categorical):
             pd.Categorical(get_ndarray(covariate)) if categorical else get_ndarray(covariate),
             n_comps=n_components,
         )
-        pcr = scib_metrics.principal_component_regression(
+        pcr = scib_metrics.utils.principal_component_regression(
             X,
             covariate,
             categorical=categorical,

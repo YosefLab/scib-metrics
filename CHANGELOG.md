@@ -11,8 +11,10 @@ and this project adheres to [Semantic Versioning][].
 ## 0.0.7 (2022-10-25)
 
 -   Fix memory issue in `KMeansJax` by using `_kmeans_full_run` with `map` instead of `vmap` ([#45][])
+-   Move PCR to utils module in favor of PCR comparison ([#46][])
 
 [#45]: https://github.com/YosefLab/scib-metrics/pull/45
+[#46]: https://github.com/YosefLab/scib-metrics/pull/46
 
 ## 0.0.6 (2022-10-25)
 

@@ -12,6 +12,7 @@
     isolated_labels
     nmi_ari_cluster_labels_kmeans
     nmi_ari_cluster_labels_leiden
+    pcr_comparison
     silhouette_label
     silhouette_batch
     ilisi_knn
@@ -28,8 +29,13 @@
     :toctree: generated
 
     utils.cdist
+    utils.pdist_squareform
     utils.silhouette_samples
     utils.KMeansJax
+    utils.pca
+    utils.principal_component_regression
+    utils.one_hot
+    utils.compute_simpson_index
 ```
 
 ## Settings

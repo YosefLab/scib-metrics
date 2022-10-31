@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## 0.0.7 (2022-10-25)
+## 0.0.7 (2022-10-31)
 
 -   Fix memory issue in `KMeansJax` by using `_kmeans_full_run` with `map` instead of `vmap` ([#45][])
 -   Move PCR to utils module in favor of PCR comparison ([#46][])

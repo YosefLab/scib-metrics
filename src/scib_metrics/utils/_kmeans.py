@@ -131,6 +131,7 @@ class KMeansJax:
         self.inertia_ = get_ndarray(all_inertias[i])
         _, labels = _get_dist_labels(X, self.cluster_centroids_)
         self.labels_ = get_ndarray(labels)
+        del self._pdists
 
     @partial(jax.jit, static_argnums=(0,))
     def _kmeans_full_run(self, X: jnp.ndarray, key: jnp.ndarray) -> jnp.ndarray:

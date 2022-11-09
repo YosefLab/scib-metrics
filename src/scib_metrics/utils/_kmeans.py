@@ -11,7 +11,7 @@ from ._dist import cdist, pdist_squareform
 from ._utils import get_ndarray, validate_seed
 
 
-def _initialize_random(X: jnp.ndarray, n_clusters: int, p_dists: jnp.ndarray, key: jax.random.KeyArray) -> jnp.ndarray:
+def _initialize_random(X: jnp.ndarray, n_clusters: int, pdists: jnp.ndarray, key: jax.random.KeyArray) -> jnp.ndarray:
     """Initialize cluster centroids randomly."""
     n_obs = X.shape[0]
     indices = jax.random.choice(key, n_obs, (n_clusters,), replace=False)

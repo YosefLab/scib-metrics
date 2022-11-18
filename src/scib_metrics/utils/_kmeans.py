@@ -91,7 +91,7 @@ class KMeansJax:
     def __init__(
         self,
         n_clusters: int = 8,
-        init: Literal["k-means++", "random"] = "k-means++",
+        init: Literal["k-means++", "random"] = "random",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-4,

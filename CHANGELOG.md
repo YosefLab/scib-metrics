@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning][].
 [#54]: https://github.com/YosefLab/scib-metrics/pull/54
 [#49]: https://github.com/YosefLab/scib-metrics/pull/49
 
-
 ## 0.0.7 (2022-10-31)
 
 -   Fix memory issue in `KMeansJax` by using `_kmeans_full_run` with `map` instead of `vmap` ([#45][])

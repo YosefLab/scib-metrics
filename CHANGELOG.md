@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.0.8 (2022-11-18)
+
+-   Switch to random kmeans initialization due to kmeans++ complexity issues ([#54][])
+-   Begin fixes to make kmeans++ initialization faster ([#49][])
+
+[#54]: https://github.com/YosefLab/scib-metrics/pull/54
+[#49]: https://github.com/YosefLab/scib-metrics/pull/49
+
 ## 0.0.7 (2022-10-31)
 
 -   Fix memory issue in `KMeansJax` by using `_kmeans_full_run` with `map` instead of `vmap` ([#45][])

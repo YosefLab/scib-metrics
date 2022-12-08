@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from scipy.sparse import csr_matrix
 
 from scib_metrics.utils import compute_simpson_index, convert_knn_graph_to_idx
@@ -24,6 +25,7 @@ def lisi_knn(X: csr_matrix, labels: np.ndarray, perplexity: float = None) -> np.
     lisi
         Array of shape (n_cells,) with the LISI score for each cell.
     """
+    labels = np.asarray(pd.Categorical(labels).codes)
     knn_dists, knn_idx = convert_knn_graph_to_idx(X)
 
     if perplexity is None:
@@ -59,6 +61,7 @@ def ilisi_knn(X: csr_matrix, batches: np.ndarray, perplexity: float = None, scal
     ilisi
         Array of shape (n_cells,) with the iLISI score for each cell.
     """
+    batches = np.asarray(pd.Categorical(batches).codes)
     lisi = lisi_knn(X, batches, perplexity=perplexity)
     ilisi = np.nanmedian(lisi)
     if scale:
@@ -91,6 +94,7 @@ def clisi_knn(X: csr_matrix, labels: np.ndarray, perplexity: float = None, scale
     clisi
         Array of shape (n_cells,) with the cLISI score for each cell.
     """
+    labels = np.asarray(pd.Categorical(labels).codes)
     lisi = lisi_knn(X, labels, perplexity=perplexity)
     clisi = np.nanmedian(lisi)
     if scale:

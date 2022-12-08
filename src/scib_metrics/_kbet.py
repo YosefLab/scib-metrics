@@ -1,18 +1,18 @@
+from functools import partial
 from typing import Union
 
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
-from scib.utils import get_ndarray
 from scipy.sparse import csr_matrix
 
-from scib_metrics.utils import convert_knn_graph_to_idx
+from scib_metrics.utils import convert_knn_graph_to_idx, get_ndarray
 
 from ._types import NdArray
 
 
-@jax.jit
 def _chi2_cdf(df: Union[int, NdArray], x: NdArray) -> float:
     """Chi2 cdf.
 
@@ -23,15 +23,14 @@ def _chi2_cdf(df: Union[int, NdArray], x: NdArray) -> float:
 
 
 @jax.jit
-def _kbet(neighbors: jnp.ndarray, batches: jnp.ndarray) -> float:
-    expected_freq = jnp.bincount(batches, length=neighbors.shape[0])
+def _kbet(neigh_batch_ids: jnp.ndarray, batches: jnp.ndarray) -> float:
+    expected_freq = jnp.bincount(batches, length=neigh_batch_ids.shape[0])
     expected_freq = expected_freq / jnp.sum(expected_freq)
     dof = len(expected_freq) - 1
 
-    neigh_batch_ids = batches[neighbors]
-    observed_counts = jax.vmap(jnp.bincount, in_axes=(0, None))(neigh_batch_ids, length=dof + 1)
-    expected_counts = expected_freq * neighbors.shape[1]
-    test_statistics = jnp.sum(jnp.square(observed_counts - expected_counts) / expected_counts)
+    observed_counts = jax.vmap(partial(jnp.bincount, length=dof + 1))(neigh_batch_ids)
+    expected_counts = expected_freq * neigh_batch_ids.shape[1]
+    test_statistics = jnp.sum(jnp.square(observed_counts - expected_counts) / expected_counts, axis=1)
     p_values = 1 - jax.vmap(_chi2_cdf, in_axes=(None, 0))(dof, test_statistics)
 
     return test_statistics, p_values
@@ -73,10 +72,13 @@ def kbet(X: csr_matrix, batches: np.ndarray, alpha: float = 0.05) -> float:
     """
     _, knn_idx = convert_knn_graph_to_idx(X)
     # Make sure self is included
-    knn_idx = jnp.concatenate([jnp.arange(knn_idx.shape[0])[:, None], knn_idx], axis=1)
-    batches = jnp.array(pd.Categorical(batches).codes)
-
-    test_statistics, p_values = _kbet(knn_idx, batches)
+    knn_idx = np.concatenate([np.arange(knn_idx.shape[0])[:, None], knn_idx], axis=1)
+    batches = np.asarray(pd.Categorical(batches).codes)
+    neigh_batch_ids = batches[knn_idx]
+    chex.assert_equal_shape([neigh_batch_ids, knn_idx])
+    test_statistics, p_values = _kbet(neigh_batch_ids, batches)
+    test_statistics = get_ndarray(test_statistics)
+    p_values = get_ndarray(p_values)
     acceptance_rate = (p_values >= alpha).mean()
 
-    return acceptance_rate, get_ndarray(test_statistics), get_ndarray(p_values)
+    return acceptance_rate, test_statistics, p_values

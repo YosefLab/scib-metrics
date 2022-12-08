@@ -82,8 +82,12 @@ def test_compute_simpson_index():
 
 
 def test_lisi_knn():
-    X, labels = dummy_x_labels(x_is_neighbors_graph=True)
-    lisi_res = scib_metrics.lisi_knn(X, labels, perplexity=10)
+    X, labels = dummy_x_labels()
+    dist_mat = csr_matrix(scib_metrics.utils.cdist(X, X))
+    nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
+    knn_graph = nbrs.kneighbors_graph(X)
+    knn_graph = knn_graph.multiply(dist_mat)
+    lisi_res = scib_metrics.lisi_knn(knn_graph, labels, perplexity=10)
     harmonypy_lisi_res = harmonypy_lisi(
         X, pd.DataFrame(labels, columns=["labels"]), label_colnames=["labels"], perplexity=10
     )[:, 0]
@@ -130,8 +134,8 @@ def test_kmeans():
 
 
 def test_kbet():
-    X, _, batch = dummy_x_labels_batch()
+    X, _, batch = dummy_x_labels_batch(x_is_neighbors_graph=True)
     acc_rate, stats, pvalues = scib_metrics.kbet(X, batch)
     assert isinstance(acc_rate, float)
-    assert len(stats) == len(X)
-    assert len(pvalues) == len(X)
+    assert len(stats) == X.shape[0]
+    assert len(pvalues) == X.shape[0]

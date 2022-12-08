@@ -17,6 +17,7 @@
     silhouette_batch
     ilisi_knn
     clisi_knn
+    kbet
 ```
 
 ## Utils

@@ -24,12 +24,13 @@ def _chi2_cdf(df: Union[int, NdArray], x: NdArray) -> float:
 
 @jax.jit
 def _kbet(neigh_batch_ids: jnp.ndarray, batches: jnp.ndarray) -> float:
-    expected_freq = jnp.bincount(batches, length=neigh_batch_ids.shape[0])
+    k = neigh_batch_ids.shape[1]
+    expected_freq = jnp.bincount(batches, length=k)
     expected_freq = expected_freq / jnp.sum(expected_freq)
     dof = len(expected_freq) - 1
 
     observed_counts = jax.vmap(partial(jnp.bincount, length=dof + 1))(neigh_batch_ids)
-    expected_counts = expected_freq * neigh_batch_ids.shape[1]
+    expected_counts = expected_freq * k
     test_statistics = jnp.sum(jnp.square(observed_counts - expected_counts) / expected_counts, axis=1)
     p_values = 1 - jax.vmap(_chi2_cdf, in_axes=(None, 0))(dof, test_statistics)
 

@@ -36,6 +36,8 @@
     utils.principal_component_regression
     utils.one_hot
     utils.compute_simpson_index
+    utils.convert_knn_graph_to_idx
+    utils.check_square
 ```
 
 ## Settings

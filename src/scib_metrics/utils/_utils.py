@@ -1,12 +1,15 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 from chex import ArrayDevice
 from jax import nn
+from scipy.sparse import csr_matrix
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import check_array
 
-from .._types import IntOrKey, NdArray
+from .._types import ArrayLike, IntOrKey, NdArray
 
 
 def get_ndarray(x: ArrayDevice) -> np.ndarray:
@@ -36,3 +39,24 @@ def one_hot(y: NdArray, n_classes: Optional[int] = None) -> jnp.ndarray:
 def validate_seed(seed: IntOrKey) -> jax.random.KeyArray:
     """Validate a seed and return a Jax random key."""
     return jax.random.PRNGKey(seed) if isinstance(seed, int) else seed
+
+
+def check_square(X: ArrayLike):
+    """Check if a matrix is square."""
+    if X.shape[0] != X.shape[1]:
+        raise ValueError("X must be a square matrix")
+
+
+def convert_knn_graph_to_idx(X: csr_matrix) -> Tuple[np.ndarray, np.ndarray]:
+    """Convert a kNN graph to indices and distances."""
+    check_array(X, accept_sparse="csr")
+    check_square(X)
+
+    n_neighbors = np.unique(X.nonzero()[0], return_counts=True)[1]
+    if len(np.unique(n_neighbors)) > 1:
+        raise ValueError("Each cell must have the same number of neighbors.")
+
+    n_neighbors = int(np.unique(n_neighbors)[0])
+
+    nn_obj = NearestNeighbors(n_neighbors=n_neighbors, metric="precomputed").fit(X)
+    return nn_obj.kneighbors(X)

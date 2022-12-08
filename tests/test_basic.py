@@ -17,17 +17,22 @@ scib_metrics.settings.jax_fix_no_kernel_image()
 sys.path.append("../src/")
 
 
-def dummy_x_labels(return_symmetric_positive=False):
+def dummy_x_labels(return_symmetric_positive=False, x_is_neighbors_graph=False):
     np.random.seed(1)
     X = np.random.normal(size=(100, 10))
     labels = np.random.randint(0, 2, size=(100,))
     if return_symmetric_positive:
         X = np.abs(X @ X.T)
+    if x_is_neighbors_graph:
+        dist_mat = csr_matrix(scib_metrics.utils.cdist(X, X))
+        nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
+        X = nbrs.kneighbors_graph(X)
+        X = X.multiply(dist_mat)
     return X, labels
 
 
-def dummy_x_labels_batch():
-    X, labels = dummy_x_labels()
+def dummy_x_labels_batch(x_is_neighbors_graph=False):
+    X, labels = dummy_x_labels(x_is_neighbors_graph=x_is_neighbors_graph)
     batch = np.random.randint(0, 2, size=(100,))
     return X, labels, batch
 
@@ -77,12 +82,8 @@ def test_compute_simpson_index():
 
 
 def test_lisi_knn():
-    X, labels = dummy_x_labels()
-    dist_mat = csr_matrix(scib_metrics.utils.cdist(X, X))
-    nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
-    knn_graph = nbrs.kneighbors_graph(X)
-    knn_graph = knn_graph.multiply(dist_mat)
-    lisi_res = scib_metrics.lisi_knn(knn_graph, labels, perplexity=10)
+    X, labels = dummy_x_labels(x_is_neighbors_graph=True)
+    lisi_res = scib_metrics.lisi_knn(X, labels, perplexity=10)
     harmonypy_lisi_res = harmonypy_lisi(
         X, pd.DataFrame(labels, columns=["labels"]), label_colnames=["labels"], perplexity=10
     )[:, 0]
@@ -90,13 +91,9 @@ def test_lisi_knn():
 
 
 def test_ilisi_clisi_knn():
-    X, labels, batches = dummy_x_labels_batch()
-    dist_mat = csr_matrix(scib_metrics.utils.cdist(X, X))
-    nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
-    knn_graph = nbrs.kneighbors_graph(X)
-    knn_graph = knn_graph.multiply(dist_mat)
-    scib_metrics.ilisi_knn(knn_graph, batches, perplexity=10)
-    scib_metrics.clisi_knn(knn_graph, labels, perplexity=10)
+    X, labels, batches = dummy_x_labels_batch(x_is_neighbors_graph=True)
+    scib_metrics.ilisi_knn(X, batches, perplexity=10)
+    scib_metrics.clisi_knn(X, labels, perplexity=10)
 
 
 def test_nmi_ari_cluster_labels_kmeans():
@@ -130,3 +127,11 @@ def test_kmeans():
     kmeans = scib_metrics.utils.KMeansJax(2)
     kmeans.fit(X)
     assert kmeans.labels_.shape == (X.shape[0],)
+
+
+def test_kbet():
+    X, _, batch = dummy_x_labels_batch()
+    acc_rate, stats, pvalues = scib_metrics.kbet(X, batch)
+    assert isinstance(acc_rate, float)
+    assert len(stats) == len(X)
+    assert len(pvalues) == len(X)

@@ -1,27 +1,7 @@
-from typing import Tuple
-
 import numpy as np
 from scipy.sparse import csr_matrix
-from sklearn.neighbors import NearestNeighbors
-from sklearn.utils import check_array
 
-from scib_metrics.utils import compute_simpson_index
-
-from ._utils import _check_square
-
-
-def _convert_knn_graph_to_idx(X: csr_matrix) -> Tuple[np.ndarray, np.ndarray]:
-    check_array(X, accept_sparse="csr")
-    _check_square(X)
-
-    n_neighbors = np.unique(X.nonzero()[0], return_counts=True)[1]
-    if len(np.unique(n_neighbors)) > 1:
-        raise ValueError("Each cell must have the same number of neighbors.")
-
-    n_neighbors = int(np.unique(n_neighbors)[0])
-
-    nn_obj = NearestNeighbors(n_neighbors=n_neighbors, metric="precomputed").fit(X)
-    return nn_obj.kneighbors(X)
+from scib_metrics.utils import compute_simpson_index, convert_knn_graph_to_idx
 
 
 def lisi_knn(X: csr_matrix, labels: np.ndarray, perplexity: float = None) -> np.ndarray:
@@ -44,7 +24,7 @@ def lisi_knn(X: csr_matrix, labels: np.ndarray, perplexity: float = None) -> np.
     lisi
         Array of shape (n_cells,) with the LISI score for each cell.
     """
-    knn_dists, knn_idx = _convert_knn_graph_to_idx(X)
+    knn_dists, knn_idx = convert_knn_graph_to_idx(X)
 
     if perplexity is None:
         perplexity = np.floor(knn_idx.shape[1] / 3)

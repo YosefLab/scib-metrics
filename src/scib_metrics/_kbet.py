@@ -22,15 +22,14 @@ def _chi2_cdf(df: Union[int, NdArray], x: NdArray) -> float:
     return jax.scipy.special.gammaincc(df / 2, x / 2)
 
 
-@jax.jit
-def _kbet(neigh_batch_ids: jnp.ndarray, batches: jnp.ndarray) -> float:
-    k = neigh_batch_ids.shape[1]
-    expected_freq = jnp.bincount(batches, length=k)
+@partial(jax.jit, static_argnums=2)
+def _kbet(neigh_batch_ids: jnp.ndarray, batches: jnp.ndarray, n_batches: int) -> float:
+    expected_freq = jnp.bincount(batches, length=n_batches)
     expected_freq = expected_freq / jnp.sum(expected_freq)
     dof = len(expected_freq) - 1
 
     observed_counts = jax.vmap(partial(jnp.bincount, length=dof + 1))(neigh_batch_ids)
-    expected_counts = expected_freq * k
+    expected_counts = expected_freq * neigh_batch_ids.shape[1]
     test_statistics = jnp.sum(jnp.square(observed_counts - expected_counts) / expected_counts, axis=1)
     p_values = 1 - jax.vmap(_chi2_cdf, in_axes=(None, 0))(dof, test_statistics)
 
@@ -77,7 +76,8 @@ def kbet(X: csr_matrix, batches: np.ndarray, alpha: float = 0.05) -> float:
     batches = np.asarray(pd.Categorical(batches).codes)
     neigh_batch_ids = batches[knn_idx]
     chex.assert_equal_shape([neigh_batch_ids, knn_idx])
-    test_statistics, p_values = _kbet(neigh_batch_ids, batches)
+    n_batches = jnp.unique(batches).shape[0]
+    test_statistics, p_values = _kbet(neigh_batch_ids, batches, n_batches)
     test_statistics = get_ndarray(test_statistics)
     p_values = get_ndarray(p_values)
     acceptance_rate = (p_values >= alpha).mean()

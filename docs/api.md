@@ -19,6 +19,7 @@
     clisi_knn
     kbet
     kbet_per_label
+    graph_connectivity
 ```
 
 ## Utils

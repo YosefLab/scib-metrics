@@ -145,3 +145,9 @@ def test_kbet_per_label():
     X, labels, batch = dummy_x_labels_batch(x_is_neighbors_graph=True)
     score = scib_metrics.kbet_per_label(X, batch, labels)
     assert isinstance(score, float)
+
+
+def test_graph_connectivity():
+    X, labels = dummy_x_labels(return_symmetric_positive=True)
+    metric = scib_metrics.graph_connectivity(X, labels)
+    assert isinstance(metric, float)

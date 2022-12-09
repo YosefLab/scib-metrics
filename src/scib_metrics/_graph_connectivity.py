@@ -10,7 +10,7 @@ def graph_connectivity(X: csr_matrix, labels: np.ndarray) -> float:
     The final score is the average for all cell type labels :math:`C`, according to the equation:
 
     .. math::
-        GC = \\frac {1} {|C|} \\sum_{c \\in C} \\frac {|{LCC(subgraph_c)}|} {|c|}
+        GC = \frac{1}{|C|}\sum_{c \in C}\frac{|{LCC(subgraph_c)}|}{|c|}
 
     where :math:`|LCC(subgraph_c)|` stands for all cells in the largest connected component and :math:`|c|` stands for all cells of
     cell type :math:`c`.

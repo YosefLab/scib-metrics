@@ -18,6 +18,7 @@
     ilisi_knn
     clisi_knn
     kbet
+    kbet_per_label
 ```
 
 ## Utils
@@ -39,6 +40,7 @@
     utils.compute_simpson_index
     utils.convert_knn_graph_to_idx
     utils.check_square
+    utils.diffusion_nn
 ```
 
 ## Settings

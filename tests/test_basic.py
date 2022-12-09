@@ -139,3 +139,9 @@ def test_kbet():
     assert isinstance(acc_rate, float)
     assert len(stats) == X.shape[0]
     assert len(pvalues) == X.shape[0]
+
+
+def test_kbet_per_label():
+    X, labels, batch = dummy_x_labels_batch(x_is_neighbors_graph=True)
+    score = scib_metrics.kbet_per_label(X, batch, labels)
+    assert isinstance(score, float)

@@ -4,7 +4,7 @@ from importlib.metadata import version
 from . import utils
 from ._ari_nmi import nmi_ari_cluster_labels_kmeans, nmi_ari_cluster_labels_leiden
 from ._isolated_labels import isolated_labels
-from ._kbet import kbet
+from ._kbet import kbet, kbet_per_label
 from ._lisi import clisi_knn, ilisi_knn, lisi_knn
 from ._pcr_comparison import pcr_comparison
 from ._settings import settings
@@ -18,9 +18,11 @@ __all__ = [
     "silhouette_batch",
     "ilisi_knn",
     "clisi_knn",
+    "lisi_knn",
     "nmi_ari_cluster_labels_kmeans",
     "nmi_ari_cluster_labels_leiden",
     "kbet",
+    "kbet_per_label",
 ]
 
 __version__ = version("scib-metrics")

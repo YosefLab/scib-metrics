@@ -1,3 +1,4 @@
+from ._diffusion_nn import diffusion_nn
 from ._dist import cdist, pdist_squareform
 from ._kmeans import KMeansJax
 from ._lisi import compute_simpson_index
@@ -18,4 +19,5 @@ __all__ = [
     "compute_simpson_index",
     "convert_knn_graph_to_idx",
     "check_square",
+    "diffusion_nn",
 ]

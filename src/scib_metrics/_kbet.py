@@ -1,6 +1,6 @@
 import logging
 from functools import partial
-from typing import Union
+from typing import Tuple, Union
 
 import chex
 import jax
@@ -23,14 +23,14 @@ def _chi2_cdf(df: Union[int, NdArray], x: NdArray) -> float:
     See https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.chdtr.html
     for explanation of gammaincc.
     """
-    return jax.scipy.special.gammaincc(df / 2, x / 2)
+    return jax.scipy.special.gammainc(df / 2, x / 2)
 
 
 @partial(jax.jit, static_argnums=2)
 def _kbet(neigh_batch_ids: jnp.ndarray, batches: jnp.ndarray, n_batches: int) -> float:
     expected_freq = jnp.bincount(batches, length=n_batches)
     expected_freq = expected_freq / jnp.sum(expected_freq)
-    dof = len(expected_freq) - 1
+    dof = n_batches - 1
 
     observed_counts = jax.vmap(partial(jnp.bincount, length=n_batches))(neigh_batch_ids)
     expected_counts = expected_freq * neigh_batch_ids.shape[1]
@@ -91,13 +91,20 @@ def kbet(X: csr_matrix, batches: np.ndarray, alpha: float = 0.05) -> float:
     return acceptance_rate, test_statistics, p_values
 
 
-def kbet_per_label(X: csr_matrix, batches: np.ndarray, labels: np.ndarray, alpha: float = 0.05):
+def kbet_per_label(
+    X: csr_matrix,
+    batches: np.ndarray,
+    labels: np.ndarray,
+    alpha: float = 0.05,
+    diffusion_n_comps: int = 50,
+    return_df: bool = False,
+) -> Union[float, Tuple[float, pd.DataFrame]]:
     """Compute kBET score per cell type label as in :cite:p:`luecken2022benchmarking`.
 
     This approximates the method used in the original scib package. Notably, the underlying
     kbet might have some inconsistencies with the R implementation. Furthermore, to equalize
     the neighbor graphs of cell type subsets we use diffusion distance approximated with diffusion
-    maps.
+    maps. Increasing `diffusion_n_comps` will increase the accuracy of the approximation.
 
     Parameters
     ----------
@@ -109,6 +116,10 @@ def kbet_per_label(X: csr_matrix, batches: np.ndarray, labels: np.ndarray, alpha
         for each cell.
     alpha
         Significance level for the statistical test.
+    diffusion_n_comps
+        Number of diffusion components to use for diffusion distance approximation.
+    return_df
+        Return dataframe of results in addition to score.
     """
     if len(batches) != X.shape[0]:
         raise ValueError("Length of batches does not match number of cells.")
@@ -117,7 +128,7 @@ def kbet_per_label(X: csr_matrix, batches: np.ndarray, labels: np.ndarray, alpha
     # set upper bound for k0
     size_max = 2**31 - 1
     batches = np.asarray(pd.Categorical(batches).codes)
-    labels = np.asarray(pd.Categorical(labels).codes)
+    labels = np.asarray(labels)
 
     # prepare call of kBET per cluster
     kbet_scores = {"cluster": [], "kBET": []}
@@ -125,6 +136,7 @@ def kbet_per_label(X: csr_matrix, batches: np.ndarray, labels: np.ndarray, alpha
         # subset by label
         mask = labels == clus
         X_sub = X[mask, :][:, mask]
+        X_sub.sort_indices()
         n_obs = X_sub.shape[0]
 
         # check if neighborhood size too small or only one batch in subset
@@ -142,11 +154,12 @@ def kbet_per_label(X: csr_matrix, batches: np.ndarray, labels: np.ndarray, alpha
 
             if n_comp == 1:  # a single component to compute kBET on
                 try:
-                    nn_graph_sub = diffusion_nn(X_sub, k=k0).astype("float")
+                    nn_graph_sub = diffusion_nn(X_sub, k=k0, n_comps=diffusion_n_comps).astype("float")
                     # call kBET
                     score, _, _ = kbet(
                         nn_graph_sub,
                         batches=batches[mask],
+                        alpha=alpha,
                     )
                 except RuntimeError:
                     print("Not enough neighbours")
@@ -163,15 +176,15 @@ def kbet_per_label(X: csr_matrix, batches: np.ndarray, labels: np.ndarray, alpha
                 if len(idx_nonan) / len(labs) >= 0.75:
                     # create another subset of components, assume they are not visited in a diffusion process
                     X_sub_sub = X_sub[idx_nonan, :][:, idx_nonan]
-                    # nn_index_tmp = np.empty(shape=(n_obs, k0))
-                    # nn_index_tmp[:] = np.nan
+                    X_sub_sub.sort_indices()
 
                     try:
-                        nn_graph_sub_sub = diffusion_nn(X_sub_sub, k=k0).astype("float")
+                        nn_graph_sub_sub = diffusion_nn(X_sub_sub, k=k0, n_comps=diffusion_n_comps).astype("float")
                         # call kBET
                         score, _, _ = kbet(
                             nn_graph_sub_sub,
                             batches=batches[mask][idx_nonan],
+                            alpha=alpha,
                         )
                     except RuntimeError:
                         print("Not enough neighbors")
@@ -186,4 +199,7 @@ def kbet_per_label(X: csr_matrix, batches: np.ndarray, labels: np.ndarray, alpha
     kbet_scores = kbet_scores.reset_index(drop=True)
 
     final_score = np.nanmean(kbet_scores["kBET"])
-    return final_score
+    if not return_df:
+        return final_score
+    else:
+        return final_score, kbet_scores

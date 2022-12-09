@@ -14,6 +14,7 @@ def _compute_transitions(X: csr_matrix, density_normalize: bool = True):
 
     https://github.com/scverse/scanpy/blob/2e98705347ea484c36caa9ba10de1987b09081bf/scanpy/neighbors/__init__.py#L899
     """
+    # TODO(adamgayoso): Refactor this with Jax
     # density normalization as of Coifman et al. (2005)
     # ensures that kernel matrix is independent of sampling density
     if density_normalize:
@@ -48,6 +49,7 @@ def _compute_eigen(
 
     https://github.com/scverse/scanpy/blob/2e98705347ea484c36caa9ba10de1987b09081bf/scanpy/neighbors/__init__.py
     """
+    # TODO(adamgayoso): Refactor this with Jax
     matrix = transitions_sym
     # compute the spectrum
     if n_comps == 0:
@@ -87,7 +89,7 @@ def _get_sparse_matrix_from_indices_distances_numpy(indices, distances, n_obs, n
     return D
 
 
-def diffusion_nn(X: csr_matrix, k: int, n_comps: int = 30):
+def diffusion_nn(X: csr_matrix, k: int, n_comps: int = 50):
     """Diffusion-based neighbors.
 
     This function generates a nearest neighbour list from a connectivities matrix.
@@ -113,9 +115,11 @@ def diffusion_nn(X: csr_matrix, k: int, n_comps: int = 30):
     """
     transitions = _compute_transitions(X)
     _, embedding = _compute_eigen(transitions, n_comps=n_comps)
-    nn_obj = pynndescent.NNDescent(embedding, n_neighbors=k)
+    nn_obj = pynndescent.NNDescent(embedding, n_neighbors=k + 1)
     neigh_inds, neigh_distances = nn_obj.neighbor_graph
+    # We purposely ignore the first neighbor as it is the cell itself
+    # It gets added back inside the kbet internal function
     neigh_graph = _get_sparse_matrix_from_indices_distances_numpy(
-        neigh_inds[:, 1:], neigh_distances[:, 1:], X.shape[0], k - 1
+        neigh_inds[:, 1:], neigh_distances[:, 1:], X.shape[0], k
     )
     return neigh_graph

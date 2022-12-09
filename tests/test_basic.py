@@ -130,3 +130,9 @@ def test_kmeans():
     kmeans = scib_metrics.utils.KMeansJax(2)
     kmeans.fit(X)
     assert kmeans.labels_.shape == (X.shape[0],)
+
+
+def test_graph_connectivity():
+    X, labels = dummy_x_labels(return_symmetric_positive=True)
+    metric = scib_metrics.graph_connectivity(X, labels)
+    assert isinstance(metric, float)

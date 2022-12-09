@@ -73,6 +73,10 @@ def kbet(X: csr_matrix, batches: np.ndarray, alpha: float = 0.05) -> float:
         Mean Kbet chi-square statistic over all cells.
     pvalue_mean
         Mean Kbet p-value over all cells.
+
+    Notes
+    -----
+    This function requires X to be cell-cell distances, not connectivies.
     """
     if len(batches) != X.shape[0]:
         raise ValueError("Length of batches does not match number of cells.")
@@ -110,7 +114,7 @@ def kbet_per_label(
     ----------
     X
         Array of shape (n_cells, n_cells) with non-zero values
-        representing distances to exactly each cell's k nearest neighbors.
+        representing connectivies to exactly each cell's k nearest neighbors.
     batches
         Array of shape (n_cells,) representing batch values
         for each cell.
@@ -120,6 +124,17 @@ def kbet_per_label(
         Number of diffusion components to use for diffusion distance approximation.
     return_df
         Return dataframe of results in addition to score.
+
+    Returns
+    -------
+    kbet_score
+        Kbet score over all cells.
+    df
+        Dataframe with kBET score per cell type label.
+
+    Notes
+    -----
+    This function requires X to be cell-cell connectivities, not distances.
     """
     if len(batches) != X.shape[0]:
         raise ValueError("Length of batches does not match number of cells.")

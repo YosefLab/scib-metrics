@@ -16,6 +16,7 @@ def graph_connectivity(X: csr_matrix, labels: np.ndarray) -> float:
         Array of shape (n_cells,) representing label values
         for each cell.
     """
+    # TODO(adamgayoso): Utils for validating inputs
     clust_res = []
 
     for label in np.unique(labels):

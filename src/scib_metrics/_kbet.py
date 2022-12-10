@@ -128,7 +128,7 @@ def kbet_per_label(
     Returns
     -------
     kbet_score
-        Kbet score over all cells.
+        Kbet score over all cells. Higher means more integrated, as in the kBET acceptance rate.
     df
         Dataframe with kBET score per cell type label.
 
@@ -155,7 +155,7 @@ def kbet_per_label(
         n_obs = X_sub.shape[0]
 
         # check if neighborhood size too small or only one batch in subset
-        if np.logical_or(n_obs < 10, len(np.unique(batches)) == 1):
+        if np.logical_or(n_obs < 10, len(np.unique(batches[mask])) == 1):
             logger.info(f"{clus} consists of a single batch or is too small. Skip.")
             score = np.nan
         else:
@@ -178,7 +178,7 @@ def kbet_per_label(
                         alpha=alpha,
                     )
                 except RuntimeError:
-                    print("Not enough neighbours")
+                    logger.info("Not enough neighbours")
                     score = 0  # i.e. 100% rejection
 
             else:
@@ -204,9 +204,9 @@ def kbet_per_label(
                             alpha=alpha,
                         )
                     except RuntimeError:
-                        print("Not enough neighbors")
+                        logger.info("Not enough neighbors")
                         score = 0  # i.e. 100% rejection
-                else:  # if there are too many too small connected components, set kBET score to 1
+                else:  # if there are too many too small connected components, set kBET score to 0
                     score = 0  # i.e. 100% rejection
 
         kbet_scores["cluster"].append(clus)

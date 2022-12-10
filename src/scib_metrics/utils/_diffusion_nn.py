@@ -44,7 +44,6 @@ def _compute_eigen(
     transitions_sym: csr_matrix,
     n_comps: int = 15,
     sort: Literal["decrease", "increase"] = "decrease",
-    seed: int = 0,
 ):
     """Compute eigen decomposition of transition matrix.
 
@@ -63,9 +62,6 @@ def _compute_eigen(
         # it pays off to increase the stability with a bit more precision
         matrix = matrix.astype(np.float64)
 
-        # Setting the random initial vector
-        # random_state = np.random.RandomState(seed)
-        # v0 = random_state.standard_normal(matrix.shape[0])
         evals, evecs = scipy.sparse.linalg.eigsh(matrix, k=n_comps, which=which, ncv=ncv)
         evals, evecs = evals.astype(np.float32), evecs.astype(np.float32)
     if sort == "decrease":

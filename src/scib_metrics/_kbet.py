@@ -100,7 +100,7 @@ def kbet_per_label(
     batches: np.ndarray,
     labels: np.ndarray,
     alpha: float = 0.05,
-    diffusion_n_comps: int = 50,
+    diffusion_n_comps: int = 100,
     return_df: bool = False,
 ) -> Union[float, Tuple[float, pd.DataFrame]]:
     """Compute kBET score per cell type label as in :cite:p:`luecken2022benchmarking`.
@@ -169,6 +169,7 @@ def kbet_per_label(
 
             if n_comp == 1:  # a single component to compute kBET on
                 try:
+                    diffusion_n_comps = np.min([diffusion_n_comps, n_obs - 1])
                     nn_graph_sub = diffusion_nn(X_sub, k=k0, n_comps=diffusion_n_comps).astype("float")
                     # call kBET
                     score, _, _ = kbet(
@@ -194,6 +195,7 @@ def kbet_per_label(
                     X_sub_sub.sort_indices()
 
                     try:
+                        diffusion_n_comps = np.min([diffusion_n_comps, X_sub_sub.shape[0] - 1])
                         nn_graph_sub_sub = diffusion_nn(X_sub_sub, k=k0, n_comps=diffusion_n_comps).astype("float")
                         # call kBET
                         score, _, _ = kbet(

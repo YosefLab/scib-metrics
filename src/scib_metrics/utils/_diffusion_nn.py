@@ -89,7 +89,7 @@ def _get_sparse_matrix_from_indices_distances_numpy(indices, distances, n_obs, n
     return D
 
 
-def diffusion_nn(X: csr_matrix, k: int, n_comps: int = 50):
+def diffusion_nn(X: csr_matrix, k: int, n_comps: int = 100):
     """Diffusion-based neighbors.
 
     This function generates a nearest neighbour list from a connectivities matrix.

@@ -51,8 +51,8 @@ def kbet(X: csr_matrix, batches: np.ndarray, alpha: float = 0.05) -> float:
     `adapt` option.
 
     Note that this is also not equivalent to the kbet used in the original scib package,
-    as that one computes kbet for each cell type label. To acheieve this, you can use this
-    function in a for loop where X would be a kNN graph for each cell type label.
+    as that one computes kbet for each cell type label. To acheieve this, use
+    :func:`scib_metrics.kbet_per_label`.
 
     Parameters
     ----------

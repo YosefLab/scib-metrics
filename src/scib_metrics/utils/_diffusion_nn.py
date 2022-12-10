@@ -44,6 +44,7 @@ def _compute_eigen(
     transitions_sym: csr_matrix,
     n_comps: int = 15,
     sort: Literal["decrease", "increase"] = "decrease",
+    seed: int = 0,
 ):
     """Compute eigen decomposition of transition matrix.
 
@@ -63,8 +64,9 @@ def _compute_eigen(
         matrix = matrix.astype(np.float64)
 
         # Setting the random initial vector
-        v0 = np.random.standard_normal(matrix.shape[0])
-        evals, evecs = scipy.sparse.linalg.eigsh(matrix, k=n_comps, which=which, ncv=ncv, v0=v0)
+        # random_state = np.random.RandomState(seed)
+        # v0 = random_state.standard_normal(matrix.shape[0])
+        evals, evecs = scipy.sparse.linalg.eigsh(matrix, k=n_comps, which=which, ncv=ncv)
         evals, evecs = evals.astype(np.float32), evecs.astype(np.float32)
     if sort == "decrease":
         evals = evals[::-1]
@@ -86,6 +88,7 @@ def _get_sparse_matrix_from_indices_distances_numpy(indices, distances, n_obs, n
         shape=(n_obs, n_obs),
     )
     D.eliminate_zeros()
+    D.sort_indices()
     return D
 
 

@@ -153,13 +153,14 @@ def kbet_per_label(
         X_sub = X[mask, :][:, mask]
         X_sub.sort_indices()
         n_obs = X_sub.shape[0]
+        batches_sub = batches[mask]
 
         # check if neighborhood size too small or only one batch in subset
-        if np.logical_or(n_obs < 10, len(np.unique(batches[mask])) == 1):
+        if np.logical_or(n_obs < 10, len(np.unique(batches_sub)) == 1):
             logger.info(f"{clus} consists of a single batch or is too small. Skip.")
             score = np.nan
         else:
-            quarter_mean = np.floor(np.mean(pd.Series(batches).value_counts()) / 4).astype("int")
+            quarter_mean = np.floor(np.mean(pd.Series(batches_sub).value_counts()) / 4).astype("int")
             k0 = np.min([70, np.max([10, quarter_mean])])
             # check k0 for reasonability
             if k0 * n_obs >= size_max:
@@ -174,11 +175,11 @@ def kbet_per_label(
                     # call kBET
                     score, _, _ = kbet(
                         nn_graph_sub,
-                        batches=batches[mask],
+                        batches=batches_sub,
                         alpha=alpha,
                     )
                 except RuntimeError:
-                    logger.info("Not enough neighbours")
+                    logger.info("Not enough neighbors")
                     score = 0  # i.e. 100% rejection
 
             else:
@@ -200,7 +201,7 @@ def kbet_per_label(
                         # call kBET
                         score, _, _ = kbet(
                             nn_graph_sub_sub,
-                            batches=batches[mask][idx_nonan],
+                            batches=batches_sub[idx_nonan],
                             alpha=alpha,
                         )
                     except RuntimeError:

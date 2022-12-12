@@ -21,7 +21,7 @@ def _chi2_cdf(df: Union[int, NdArray], x: NdArray) -> float:
     """Chi2 cdf.
 
     See https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.chdtr.html
-    for explanation of gammaincc.
+    for explanation of gammainc.
     """
     return jax.scipy.special.gammainc(df / 2, x / 2)
 

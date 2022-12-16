@@ -30,6 +30,7 @@ dependencies = [
     "scikit-learn",
     "scanpy",
     "rich",
+    "pynndescent",
     "igraph>0.9.0"
 ]
 

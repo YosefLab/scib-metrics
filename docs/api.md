@@ -17,6 +17,8 @@
     silhouette_batch
     ilisi_knn
     clisi_knn
+    kbet
+    kbet_per_label
     graph_connectivity
 ```
 
@@ -37,6 +39,9 @@
     utils.principal_component_regression
     utils.one_hot
     utils.compute_simpson_index
+    utils.convert_knn_graph_to_idx
+    utils.check_square
+    utils.diffusion_nn
 ```
 
 ## Settings

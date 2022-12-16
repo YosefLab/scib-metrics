@@ -7,8 +7,7 @@ from scipy.sparse import spmatrix
 from sklearn.metrics.cluster import adjusted_rand_score, normalized_mutual_info_score
 from sklearn.utils import check_array
 
-from ._utils import _check_square
-from .utils import KMeansJax
+from .utils import KMeansJax, check_square
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +101,7 @@ def nmi_ari_cluster_labels_leiden(
         Adjusted rand index score
     """
     X = check_array(X, accept_sparse=True, ensure_2d=True)
-    _check_square(X)
+    check_square(X)
     labels = check_array(labels, accept_sparse=False, ensure_2d=False)
     if optimize_resolution:
         n = 10

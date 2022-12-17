@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.0.9 (2022-12-16)
+
+-   Add kbet ([#60][])
+-   Add graph connectivty metric ([#61][])
+
+[#60]: https://github.com/YosefLab/scib-metrics/pull/60
+[#61]: https://github.com/YosefLab/scib-metrics/pull/61
+
 ## 0.0.8 (2022-11-18)
 
 -   Switch to random kmeans initialization due to kmeans++ complexity issues ([#54][])

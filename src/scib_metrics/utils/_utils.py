@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional, Tuple
 
 import jax
@@ -57,6 +58,8 @@ def convert_knn_graph_to_idx(X: csr_matrix) -> Tuple[np.ndarray, np.ndarray]:
         raise ValueError("Each cell must have the same number of neighbors.")
 
     n_neighbors = int(np.unique(n_neighbors)[0])
-
-    nn_obj = NearestNeighbors(n_neighbors=n_neighbors, metric="precomputed").fit(X)
-    return nn_obj.kneighbors(X)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Precomputed sparse input")
+        nn_obj = NearestNeighbors(n_neighbors=n_neighbors, metric="precomputed").fit(X)
+        kneighbors = nn_obj.kneighbors(X)
+    return kneighbors

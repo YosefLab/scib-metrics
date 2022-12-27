@@ -11,5 +11,5 @@ changelog.md
 developer_docs.md
 references.md
 
-notebooks/example
+notebooks/lung_example
 ```

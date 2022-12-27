@@ -58,7 +58,6 @@ def nmi_ari_cluster_labels_kmeans(X: np.ndarray, labels: np.ndarray) -> Tuple[fl
         Adjusted rand index score
     """
     X = check_array(X, accept_sparse=False, ensure_2d=True)
-    labels = check_array(labels, accept_sparse=False, ensure_2d=False)
     n_clusters = len(np.unique(labels))
     labels_pred = _compute_clustering_kmeans(X, n_clusters)
     nmi = normalized_mutual_info_score(labels, labels_pred, average_method="arithmetic")
@@ -102,7 +101,6 @@ def nmi_ari_cluster_labels_leiden(
     """
     X = check_array(X, accept_sparse=True, ensure_2d=True)
     check_square(X)
-    labels = check_array(labels, accept_sparse=False, ensure_2d=False)
     if optimize_resolution:
         n = 10
         resolutions = np.array([2 * x / n for x in range(1, n + 1)])

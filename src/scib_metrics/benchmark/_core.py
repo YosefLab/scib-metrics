@@ -11,6 +11,7 @@ import scib_metrics
 _LABELS = "labels"
 _BATCH = "batch"
 _X_PRE = "X_pre"
+_METRIC_TYPE = "Metric Type"
 
 
 @dataclass
@@ -45,15 +46,15 @@ class BatchCorrection:
 class MetricAnnDataAPI(Enum):
     """Specification of the AnnData API for a metric."""
 
-    isolated_labels: lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
-    nmi_ari_cluster_labels_leiden: lambda ad, fn: fn(ad.obsp["15_connectivities"], ad.obs[_LABELS])
-    nmi_ari_cluster_labels_kmeans: lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
-    silhouette_label: lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
-    clisi_knn: lambda ad, fn: fn(ad.obsp["90_distances"], ad.obs[_LABELS])
-    silhouette_batch: lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
-    pcr_comparison: lambda ad, fn: fn(ad.obsm[_X_PRE], ad.X, ad.obs[_BATCH], categorical=True)
-    ilisi_knn: lambda ad, fn: fn(ad.obsp["90_distances"], ad.obs[_BATCH])
-    kbet_per_label: lambda ad, fn: fn(ad.obsp["50_connectivities"], ad.obs[_BATCH], ad.obs[_LABELS])
+    isolated_labels = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
+    nmi_ari_cluster_labels_leiden = lambda ad, fn: fn(ad.obsp["15_connectivities"], ad.obs[_LABELS])
+    nmi_ari_cluster_labels_kmeans = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
+    silhouette_label = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
+    clisi_knn = lambda ad, fn: fn(ad.obsp["90_distances"], ad.obs[_LABELS])
+    silhouette_batch = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
+    pcr_comparison = lambda ad, fn: fn(ad.obsm[_X_PRE], ad.X, ad.obs[_BATCH], categorical=True)
+    ilisi_knn = lambda ad, fn: fn(ad.obsp["90_distances"], ad.obs[_BATCH])
+    kbet_per_label = lambda ad, fn: fn(ad.obsp["50_connectivities"], ad.obs[_BATCH], ad.obs[_LABELS])
 
 
 class Benchmarker:
@@ -98,15 +99,12 @@ class Benchmarker:
         self._pre_integrated_embedding_obsm_key = pre_integrated_embedding_obsm_key
         self._bio_conservation_metrics = bio_conservation_metrics if bio_conservation_metrics else BioConvervation()
         self._batch_correction_metrics = batch_correction_metrics if batch_correction_metrics else BatchCorrection()
-        self._results = pd.DataFrame(columns=self._embedding_obsm_keys)
+        self._results = pd.DataFrame(columns=list(self._embedding_obsm_keys) + [_METRIC_TYPE])
         self._emb_adatas = {}
         self._neighbor_values = (15, 50, 90)
         self._prepared = False
-
-        for emb_key in self._embedding_obsm_keys:
-            self._emb_adatas[emb_key] = AnnData(self._adata.obsm[emb_key], obs=self._adata.obs)
-            self._emb_adatas[emb_key].obs[_BATCH] = adata.obs[batch_key]
-            self._emb_adatas[emb_key].obs[_LABELS] = adata.obs[label_key]
+        self._batch_key = batch_key
+        self._label_key = label_key
 
     def prepare(self) -> None:
         """Prepare the data for benchmarking."""
@@ -120,12 +118,23 @@ class Benchmarker:
         # Compute PCA
         sc.tl.pca(self._adata)
 
+        for emb_key in self._embedding_obsm_keys:
+            self._emb_adatas[emb_key] = AnnData(self._adata.obsm[emb_key], obs=self._adata.obs)
+            self._emb_adatas[emb_key].obs[_BATCH] = self._adata.obs[self._batch_key]
+            self._emb_adatas[emb_key].obs[_LABELS] = self._adata.obs[self._label_key]
+            self._emb_adatas[emb_key].obsm[_X_PRE] = self._adata.obsm["X_pca"]
+
         self._prepared = True
 
     def benchmark(self) -> None:
         """Run the pipeline."""
+        if not self._prepared:
+            self.prepare()
         for emb_key, ad in self._emb_adatas.items():
-            for metric_collection in (self._bio_conservation_metrics, self._batch_correction_metrics):
+            for metric_type, metric_collection in {
+                "bio_conservation": self._bio_conservation_metrics,
+                "batch_correction": self._batch_correction_metrics,
+            }.items():
                 for metric_name, use_metric in asdict(metric_collection).items():
                     if use_metric:
                         if isinstance(metric_name, str):
@@ -133,5 +142,6 @@ class Benchmarker:
                         else:
                             # Callable in this case
                             metric_fn = use_metric
-                        metric_value = MetricAnnDataAPI[metric_name].value(ad, metric_fn)
+                        metric_value = getattr(MetricAnnDataAPI, metric_name)(ad, metric_fn)
                         self._results.loc[metric_name, emb_key] = metric_value
+                        self._results.loc[metric_name, _METRIC_TYPE] = metric_type

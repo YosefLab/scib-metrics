@@ -2,6 +2,7 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Callable, List, Optional, Union
 
+import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
@@ -108,21 +109,21 @@ class Benchmarker:
 
     def prepare(self) -> None:
         """Prepare the data for benchmarking."""
+        # Compute PCA
+        sc.tl.pca(self._adata)
+
+        for emb_key in self._embedding_obsm_keys:
+            self._emb_adatas[emb_key] = AnnData(self._adata.obsm[emb_key], obs=self._adata.obs)
+            self._emb_adatas[emb_key].obs[_BATCH] = np.asarray(self._adata.obs[self._batch_key].values)
+            self._emb_adatas[emb_key].obs[_LABELS] = np.asarray(self._adata.obs[self._label_key].values)
+            self._emb_adatas[emb_key].obsm[_X_PRE] = self._adata.obsm["X_pca"]
+
         # Compute neighbors
         # TODO: only compute largest n neighbors and subset
         # This will need to rerun the distances -> connectivies for each neighbor subset
         for ad in self._emb_adatas.values():
             for n in self._neighbor_values:
                 sc.pp.neighbors(ad, use_rep="X", n_neighbors=n, key_added=f"{n}")
-
-        # Compute PCA
-        sc.tl.pca(self._adata)
-
-        for emb_key in self._embedding_obsm_keys:
-            self._emb_adatas[emb_key] = AnnData(self._adata.obsm[emb_key], obs=self._adata.obs)
-            self._emb_adatas[emb_key].obs[_BATCH] = self._adata.obs[self._batch_key]
-            self._emb_adatas[emb_key].obs[_LABELS] = self._adata.obs[self._label_key]
-            self._emb_adatas[emb_key].obsm[_X_PRE] = self._adata.obsm["X_pca"]
 
         self._prepared = True
 
@@ -145,3 +146,8 @@ class Benchmarker:
                         metric_value = getattr(MetricAnnDataAPI, metric_name)(ad, metric_fn)
                         self._results.loc[metric_name, emb_key] = metric_value
                         self._results.loc[metric_name, _METRIC_TYPE] = metric_type
+
+    @property
+    def results(self) -> pd.DataFrame:
+        """Return the benchmarking results."""
+        return self._results

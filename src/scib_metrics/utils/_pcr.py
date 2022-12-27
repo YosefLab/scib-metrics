@@ -2,6 +2,8 @@ from typing import Optional
 
 import jax
 import jax.numpy as jnp
+import numpy as np
+import pandas as pd
 from jax import jit
 
 from .._types import NdArray
@@ -38,6 +40,10 @@ def principal_component_regression(
         raise ValueError("Dimension mismatch: X must be 2-dimensional.")
     if X.shape[0] != covariate.shape[0]:
         raise ValueError("Dimension mismatch: X and batch must have the same number of samples.")
+    if categorical:
+        covariate = np.asarray(pd.Categorical(covariate).codes)
+    else:
+        covariate = np.asarray(covariate)
 
     covariate = one_hot(covariate) if categorical else covariate.reshape((covariate.shape[0], 1))
 

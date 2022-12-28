@@ -248,7 +248,7 @@ class Benchmarker:
                 group=df.loc[_METRIC_TYPE, col],
                 formatter="{:.2f}",
             )
-            for col in score_cols
+            for col in df.columns
         ]
         plot_df = df.drop(_METRIC_TYPE, axis=0)
         tab = Table(
@@ -266,5 +266,4 @@ class Benchmarker:
             col_label_divider_kw={"linewidth": 1, "linestyle": "-"},
             column_border_kw={"linewidth": 1, "linestyle": "-"},
         )
-        plt.show()
         return tab

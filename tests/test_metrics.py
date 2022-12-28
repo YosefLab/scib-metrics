@@ -79,21 +79,24 @@ def test_ilisi_clisi_knn():
 
 def test_nmi_ari_cluster_labels_kmeans():
     X, labels = dummy_x_labels()
-    nmi, ari = scib_metrics.nmi_ari_cluster_labels_kmeans(X, labels)
+    out = scib_metrics.nmi_ari_cluster_labels_kmeans(X, labels)
+    nmi, ari = out["nmi"], out["ari"]
     assert isinstance(nmi, float)
     assert isinstance(ari, float)
 
 
 def test_nmi_ari_cluster_labels_leiden_parallel():
     X, labels = dummy_x_labels(return_symmetric_positive=True)
-    nmi, ari = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=True, n_jobs=2)
+    out = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=True, n_jobs=2)
+    nmi, ari = out["nmi"], out["ari"]
     assert isinstance(nmi, float)
     assert isinstance(ari, float)
 
 
 def test_nmi_ari_cluster_labels_leiden_single_resolution():
     X, labels = dummy_x_labels(return_symmetric_positive=True)
-    nmi, ari = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=False, resolution=0.1)
+    out = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=False, resolution=0.1)
+    nmi, ari = out["nmi"], out["ari"]
     assert isinstance(nmi, float)
     assert isinstance(ari, float)
 

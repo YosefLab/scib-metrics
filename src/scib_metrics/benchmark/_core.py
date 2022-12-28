@@ -45,7 +45,7 @@ class BioConvervation:
     """
 
     isolated_labels: Union[bool, Callable] = True
-    nmi_ari_cluster_labels_leiden: Union[bool, Callable] = False
+    nmi_ari_cluster_labels_leiden: Union[bool, Callable] = False  # TODO: support multi output methods
     nmi_ari_cluster_labels_kmeans: Union[bool, Callable] = False
     silhouette_label: Union[bool, Callable] = True
     clisi_knn: Union[bool, Callable] = True

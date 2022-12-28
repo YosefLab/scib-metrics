@@ -50,6 +50,7 @@ doc = [
     "sphinxcontrib-bibtex>=1.0.0",
     "scanpydoc[typehints]>=0.7.4",
     # For notebooks
+    "ipython",
     "ipykernel",
     "sphinx-copybutton",
 ]

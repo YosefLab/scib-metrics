@@ -253,7 +253,7 @@ class Benchmarker:
         num_embeds = len(self._embedding_obsm_keys)
         cmap_fn = lambda col_data: normed_cmap(col_data, cmap=matplotlib.cm.PRGn, num_stds=2.5)
         df = self.get_results(min_max_scale=min_max_scale)
-        # Don't want to plot what kind of metric it is
+        # Do not want to plot what kind of metric it is
         plot_df = df.drop(_METRIC_TYPE, axis=0)
         # Sort by total score
         plot_df = plot_df.sort_values(by="Total", ascending=False).astype(np.float64)

@@ -141,7 +141,9 @@ class Benchmarker:
         """Prepare the data for benchmarking."""
         # Compute PCA
         if self._pre_integrated_embedding_obsm_key is None:
-            sc.tl.pca(self._adata)
+            # This is how scib does it
+            # https://github.com/theislab/scib/blob/896f689e5fe8c57502cb012af06bed1a9b2b61d2/scib/metrics/pcr.py#L197
+            sc.tl.pca(self._adata, use_highly_variable=False)
             self._pre_integrated_embedding_obsm_key = "X_pca"
 
         for emb_key in self._embedding_obsm_keys:

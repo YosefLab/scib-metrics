@@ -1,3 +1,4 @@
+import os
 from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Callable, List, Optional, Union
@@ -8,8 +9,9 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
-from matplotlib.colors import LinearSegmentedColormap
 from plottable import ColumnDefinition, Table
+from plottable.cmap import normed_cmap
+from plottable.plots import bar
 from pynndescent import NNDescent
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
@@ -26,8 +28,10 @@ metric_name_cleaner = {
     "silhouette_label": "Silhouette label",
     "silhouette_batch": "Silhouette batch",
     "isolated_labels": "Isolated labels",
-    "nmi_ari_cluster_labels_leiden": "NMI ARI cluster labels (Leiden)",
-    "nmi_ari_cluster_labels_kmeans": "NMI ARI cluster labels (KMeans)",
+    "nmi_ari_cluster_labels_leiden_nmi": "Leiden NMI",
+    "nmi_ari_cluster_labels_leiden_ari": "Leiden ARI",
+    "nmi_ari_cluster_labels_kmeans_nmi": "KMeans NMI",
+    "nmi_ari_cluster_labels_kmeans_ari": "KMeans ARI",
     "clisi_knn": "cLISI",
     "ilisi_knn": "iLISI",
     "kbet_per_label": "KBET",
@@ -45,7 +49,7 @@ class BioConvervation:
     """
 
     isolated_labels: Union[bool, Callable] = True
-    nmi_ari_cluster_labels_leiden: Union[bool, Callable] = False  # TODO: support multi output methods
+    nmi_ari_cluster_labels_leiden: Union[bool, Callable] = True
     nmi_ari_cluster_labels_kmeans: Union[bool, Callable] = False
     silhouette_label: Union[bool, Callable] = True
     clisi_knn: Union[bool, Callable] = True
@@ -60,9 +64,10 @@ class BatchCorrection:
     """
 
     silhouette_batch: Union[bool, Callable] = True
-    pcr_comparison: Union[bool, Callable] = True
     ilisi_knn: Union[bool, Callable] = True
     kbet_per_label: Union[bool, Callable] = True
+    graph_connectivity: Union[bool, Callable] = True
+    pcr_comparison: Union[bool, Callable] = True
 
 
 class MetricAnnDataAPI(Enum):
@@ -73,6 +78,7 @@ class MetricAnnDataAPI(Enum):
     nmi_ari_cluster_labels_kmeans = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
     silhouette_label = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
     clisi_knn = lambda ad, fn: fn(ad.obsp["90_distances"], ad.obs[_LABELS])
+    graph_connectivity = lambda ad, fn: fn(ad.obsp["15_distances"], ad.obs[_LABELS])
     silhouette_batch = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
     pcr_comparison = lambda ad, fn: fn(ad.obsm[_X_PRE], ad.X, ad.obs[_BATCH], categorical=True)
     ilisi_knn = lambda ad, fn: fn(ad.obsp["90_distances"], ad.obs[_BATCH])
@@ -185,8 +191,14 @@ class Benchmarker:
                             # Callable in this case
                             metric_fn = use_metric
                         metric_value = getattr(MetricAnnDataAPI, metric_name)(ad, metric_fn)
-                        self._results.loc[metric_name, emb_key] = metric_value
-                        self._results.loc[metric_name, _METRIC_TYPE] = metric_type
+                        # nmi/ari metrics return a dict
+                        if isinstance(metric_value, dict):
+                            for k, v in metric_value.items():
+                                self._results.loc[f"{metric_name}_{k}", emb_key] = v
+                                self._results.loc[f"{metric_name}_{k}", _METRIC_TYPE] = metric_type
+                        else:
+                            self._results.loc[metric_name, emb_key] = metric_value
+                            self._results.loc[metric_name, _METRIC_TYPE] = metric_type
 
     def get_results(self, min_max_scale: bool = True, clean_names: bool = True) -> pd.DataFrame:
         """Return the benchmarking results.
@@ -219,53 +231,97 @@ class Benchmarker:
 
         # Compute scores
         per_class_score = df.groupby(_METRIC_TYPE).mean().transpose()
-        # per_class_score.columns = [f"{col} score" for col in per_class_score.columns]
         per_class_score["Total"] = 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
         df = pd.concat([df.transpose(), per_class_score], axis=1)
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE
         return df
 
-    def plot_results_table(self, min_max_scale: bool = True) -> Table:
-        """Plot the benchmarking results."""
+    def plot_results_table(
+        self, min_max_scale: bool = True, show: bool = True, save_dir: Optional[str] = None
+    ) -> Table:
+        """Plot the benchmarking results.
+
+        Parameters
+        ----------
+        min_max_scale
+            Whether to min max scale the results.
+        show
+            Whether to show the plot.
+        save_dir
+            The directory to save the plot to. If `None`, the plot is not saved.
+        """
         num_embeds = len(self._embedding_obsm_keys)
-        fig, ax = plt.subplots(figsize=(12, 3 + 0.3 * num_embeds))
-        cmap = LinearSegmentedColormap.from_list(
-            name="bugw", colors=["#ffffff", "#f2fbd2", "#c9ecb4", "#93d3ab", "#35b0ab"], N=256
-        )
+        cmap_fn = lambda col_data: normed_cmap(col_data, cmap=matplotlib.cm.PRGn, num_stds=2.5)
         df = self.get_results(min_max_scale=min_max_scale)
+        # Don't want to plot what kind of metric it is
+        plot_df = df.drop(_METRIC_TYPE, axis=0)
+        # Sort by total score
+        plot_df = plot_df.sort_values(by="Total", ascending=False).astype(np.float64)
+        plot_df["Method"] = plot_df.index
+
+        # Split columns by metric type, using df as it doesn't have the new method col
         score_cols = df.columns[df.loc[_METRIC_TYPE] == _AGGREGATE_SCORE]
+        other_cols = df.columns[df.loc[_METRIC_TYPE] != _AGGREGATE_SCORE]
         column_definitions = [
-            ColumnDefinition("index", textprops={"ha": "left"}),
+            ColumnDefinition("Method", width=1.5, textprops={"ha": "left", "weight": "bold"}),
         ]
+        # Circles for the metric values
         column_definitions += [
             ColumnDefinition(
                 col,
                 title=col.replace(" ", "\n", 1),
-                width=0.75,
+                width=1,
                 textprops={
                     "ha": "center",
-                    "bbox": {"boxstyle": "circle", "pad": 0.15},
+                    "bbox": {"boxstyle": "circle", "pad": 0.25},
                 },
-                cmap=matplotlib.cm.Blues if col in score_cols else cmap,
+                cmap=cmap_fn(plot_df[col]),
                 group=df.loc[_METRIC_TYPE, col],
                 formatter="{:.2f}",
             )
-            for col in df.columns
+            for i, col in enumerate(other_cols)
         ]
-        plot_df = df.drop(_METRIC_TYPE, axis=0)
-        tab = Table(
-            plot_df.astype(np.float64),
-            cell_kw={
-                "linewidth": 0,
-                "edgecolor": "k",
-            },
-            column_definitions=column_definitions,
-            ax=ax,
-            row_dividers=True,
-            footer_divider=True,
-            textprops={"fontsize": 10, "ha": "center"},
-            row_divider_kw={"linewidth": 1, "linestyle": (0, (1, 5))},
-            col_label_divider_kw={"linewidth": 1, "linestyle": "-"},
-            column_border_kw={"linewidth": 1, "linestyle": "-"},
-        )
+        # Bars for the aggregate scores
+        column_definitions += [
+            ColumnDefinition(
+                col,
+                width=1,
+                title=col.replace(" ", "\n", 1),
+                plot_fn=bar,
+                plot_kw={
+                    "cmap": matplotlib.cm.YlGnBu,
+                    "plot_bg_bar": False,
+                    "annotate": True,
+                    "height": 0.9,
+                    "formatter": "{:.2f}",
+                },
+                group=df.loc[_METRIC_TYPE, col],
+                border="left" if i == 0 else None,
+            )
+            for i, col in enumerate(score_cols)
+        ]
+        # Allow to manipulate text post-hoc (in illustrator)
+        with matplotlib.rc_context({"svg.fonttype": "none"}):
+            fig, ax = plt.subplots(figsize=(len(df.columns) * 1.25, 3 + 0.3 * num_embeds))
+            tab = Table(
+                plot_df,
+                cell_kw={
+                    "linewidth": 0,
+                    "edgecolor": "k",
+                },
+                column_definitions=column_definitions,
+                ax=ax,
+                row_dividers=True,
+                footer_divider=True,
+                textprops={"fontsize": 10, "ha": "center"},
+                row_divider_kw={"linewidth": 1, "linestyle": (0, (1, 5))},
+                col_label_divider_kw={"linewidth": 1, "linestyle": "-"},
+                column_border_kw={"linewidth": 1, "linestyle": "-"},
+                index_col="Method",
+            ).autoset_fontcolors(colnames=plot_df.columns)
+        if show:
+            plt.show()
+        if save_dir is not None:
+            fig.savefig(os.path.join(save_dir, "scib_results.svg"), facecolor=ax.get_facecolor(), dpi=300)
+
         return tab

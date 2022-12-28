@@ -114,7 +114,7 @@ def nmi_ari_cluster_labels_leiden(
         nmi_ari = np.array(out)
         nmi_ind = np.argmax(nmi_ari[:, 0])
         nmi, ari = nmi_ari[nmi_ind, :]
-        return nmi, ari
+        return {"nmi": nmi, "ari": ari}
     else:
         nmi, ari = _compute_nmi_ari_cluster_labels(X, labels, resolution)
 

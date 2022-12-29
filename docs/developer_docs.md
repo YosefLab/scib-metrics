@@ -190,7 +190,8 @@ In addition to the packages needed to _use_ this package, you need additional py
 the documentation_. It's easy to install them using `pip`:
 
 ```bash
-pip install "scib-metrics[dev,test,doc]"
+cd scib-metrics
+pip install -e ".[dev,test,doc]"
 ```
 
 ### Code-style

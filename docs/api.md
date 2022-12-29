@@ -1,5 +1,19 @@
 # API
 
+## Benchmarking pipeline
+
+```{eval-rst}
+.. module:: scib_metrics.benchmark
+.. currentmodule:: scib_metrics.benchmark
+
+.. autosummary::
+    :toctree: generated
+
+    benchmark.Benchmarker
+    benchmark.BioConvervation
+    benchmark.BatchCorrection
+```
+
 ## Metrics
 
 ```{eval-rst}

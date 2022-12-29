@@ -112,6 +112,10 @@ class Benchmarker:
     -----
     `adata.X` should contain a form of the data that is not integrated, but is normalized. The `prepare` method will
     use `adata.X` for PCA via :func:`~scanpy.tl.pca`, which also only uses features masked via `adata.var['highly_variable']`.
+
+    See further usage examples in the following tutorial:
+
+    1. :doc:`/notebooks/lung_example`
     """
 
     def __init__(

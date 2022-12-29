@@ -68,6 +68,7 @@ parallel = [
     "joblib"
 ]
 tutorial = [
+    "rich",
     "scanorama",
     "harmony-pytorch",
     "scvi-tools",

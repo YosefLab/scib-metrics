@@ -181,9 +181,15 @@ class Benchmarker:
         """Run the pipeline."""
         if not self._prepared:
             self.prepare()
-        for emb_key, ad in tqdm(self._emb_adatas.items(), desc="Embeddings", position=0):
+
+        num_metrics = sum(
+            [sum([v is not False for v in asdict(met_col)]) for met_col in self._metric_collection_dict.values()]
+        )
+
+        for emb_key, ad in tqdm(self._emb_adatas.items(), desc="Embeddings", position=0, colour="green"):
+            pbar = tqdm(total=num_metrics, desc="Metrics", position=1, leave=False, colour="blue")
             for metric_type, metric_collection in self._metric_collection_dict.items():
-                for metric_name, use_metric in tqdm(asdict(metric_collection).items(), desc="Metrics", position=1):
+                for metric_name, use_metric in asdict(metric_collection).items():
                     if use_metric:
                         if isinstance(metric_name, str):
                             metric_fn = getattr(scib_metrics, metric_name)
@@ -199,6 +205,7 @@ class Benchmarker:
                         else:
                             self._results.loc[metric_name, emb_key] = metric_value
                             self._results.loc[metric_name, _METRIC_TYPE] = metric_type
+                        pbar.update(1)
 
     def get_results(self, min_max_scale: bool = True, clean_names: bool = True) -> pd.DataFrame:
         """Return the benchmarking results.

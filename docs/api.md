@@ -9,9 +9,9 @@
 .. autosummary::
     :toctree: generated
 
-    benchmark.Benchmarker
-    benchmark.BioConservation
-    benchmark.BatchCorrection
+    Benchmarker
+    BioConservation
+    BatchCorrection
 ```
 
 ## Metrics

@@ -41,7 +41,7 @@ metric_name_cleaner = {
 
 
 @dataclass
-class BioConvervation:
+class BioConservation:
     """Specification of bio conservation metrics to run in the pipeline.
 
     Metrics can be included using a boolean flag. Custom keyword args can be
@@ -124,7 +124,7 @@ class Benchmarker:
         batch_key: str,
         label_key: str,
         embedding_obsm_keys: List[str],
-        bio_conservation_metrics: Optional[BioConvervation] = None,
+        bio_conservation_metrics: Optional[BioConservation] = None,
         batch_correction_metrics: Optional[BatchCorrection] = None,
         pre_integrated_embedding_obsm_key: Optional[str] = None,
         n_jobs: int = 1,
@@ -132,7 +132,7 @@ class Benchmarker:
         self._adata = adata
         self._embedding_obsm_keys = embedding_obsm_keys
         self._pre_integrated_embedding_obsm_key = pre_integrated_embedding_obsm_key
-        self._bio_conservation_metrics = bio_conservation_metrics if bio_conservation_metrics else BioConvervation()
+        self._bio_conservation_metrics = bio_conservation_metrics if bio_conservation_metrics else BioConservation()
         self._batch_correction_metrics = batch_correction_metrics if batch_correction_metrics else BatchCorrection()
         self._results = pd.DataFrame(columns=list(self._embedding_obsm_keys) + [_METRIC_TYPE])
         self._emb_adatas = {}

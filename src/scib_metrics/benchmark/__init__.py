@@ -1,3 +1,3 @@
-from ._core import BatchCorrection, Benchmarker, BioConvervation
+from ._core import BatchCorrection, Benchmarker, BioConservation
 
-__all__ = ["Benchmarker", "BioConvervation", "BatchCorrection"]
+__all__ = ["Benchmarker", "BioConservation", "BatchCorrection"]

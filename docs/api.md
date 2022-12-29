@@ -10,7 +10,7 @@
     :toctree: generated
 
     benchmark.Benchmarker
-    benchmark.BioConvervation
+    benchmark.BioConservation
     benchmark.BatchCorrection
 ```
 

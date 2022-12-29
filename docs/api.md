@@ -10,14 +10,14 @@ from scib_metrics.benchmark import Benchmarker
 
 ```{eval-rst}
 .. module:: scib_metrics.benchmark
-.. currentmodule:: scib_metrics.benchmark
+.. currentmodule:: scib_metrics
 
 .. autosummary::
     :toctree: generated
 
-    Benchmarker
-    BioConservation
-    BatchCorrection
+    benchmark.Benchmarker
+    benchmark.BioConservation
+    benchmark.BatchCorrection
 ```
 
 ## Metrics

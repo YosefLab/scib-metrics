@@ -64,6 +64,9 @@ parallel = [
     "joblib"
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ['src/scib_metrics']
+
 [tool.coverage.run]
 source = ["scib_metrics"]
 omit = [

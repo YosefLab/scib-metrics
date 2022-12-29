@@ -2,6 +2,12 @@
 
 ## Benchmarking pipeline
 
+Import as:
+
+```
+from scib_metrics.benchmark import Benchmarker
+```
+
 ```{eval-rst}
 .. module:: scib_metrics.benchmark
 .. currentmodule:: scib_metrics.benchmark
@@ -15,6 +21,13 @@
 ```
 
 ## Metrics
+
+Import as:
+
+```
+import scib_metrics
+scib_metrics.ilisi_knn(...)
+```
 
 ```{eval-rst}
 .. module:: scib_metrics

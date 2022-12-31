@@ -1,7 +1,9 @@
 import os
+import warnings
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Callable, List, Optional, Union
+from functools import partial
+from typing import Any, Dict, List, Optional, Union
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -18,12 +20,16 @@ from tqdm import tqdm
 
 import scib_metrics
 
+Kwargs = Dict[str, Any]
+MetricType = Union[bool, Kwargs]
+
 _LABELS = "labels"
 _BATCH = "batch"
 _X_PRE = "X_pre"
 _METRIC_TYPE = "Metric Type"
 _AGGREGATE_SCORE = "Aggregate score"
 
+# Mapping of metric fn names to clean DataFrame column names
 metric_name_cleaner = {
     "silhouette_label": "Silhouette label",
     "silhouette_batch": "Silhouette batch",
@@ -40,34 +46,36 @@ metric_name_cleaner = {
 }
 
 
-@dataclass
+@dataclass(frozen=True)
 class BioConservation:
     """Specification of bio conservation metrics to run in the pipeline.
 
     Metrics can be included using a boolean flag. Custom keyword args can be
-    used by passing a partial callable of that metric here.
+    used by passing a dictionary here. Keyword args should not set data-related
+    parameters, such as `X` or `labels`.
     """
 
-    isolated_labels: Union[bool, Callable] = True
-    nmi_ari_cluster_labels_leiden: Union[bool, Callable] = True
-    nmi_ari_cluster_labels_kmeans: Union[bool, Callable] = False
-    silhouette_label: Union[bool, Callable] = True
-    clisi_knn: Union[bool, Callable] = True
+    isolated_labels: MetricType = True
+    nmi_ari_cluster_labels_leiden: MetricType = True
+    nmi_ari_cluster_labels_kmeans: MetricType = False
+    silhouette_label: MetricType = True
+    clisi_knn: MetricType = True
 
 
-@dataclass
+@dataclass(frozen=True)
 class BatchCorrection:
     """Specification of which batch correction metrics to run in the pipeline.
 
     Metrics can be included using a boolean flag. Custom keyword args can be
-    used by passing a partial callable of that metric here.
+    used by passing a dictionary here. Keyword args should not set data-related
+    parameters, such as `X` or `labels`.
     """
 
-    silhouette_batch: Union[bool, Callable] = True
-    ilisi_knn: Union[bool, Callable] = True
-    kbet_per_label: Union[bool, Callable] = True
-    graph_connectivity: Union[bool, Callable] = True
-    pcr_comparison: Union[bool, Callable] = True
+    silhouette_batch: MetricType = True
+    ilisi_knn: MetricType = True
+    kbet_per_label: MetricType = True
+    graph_connectivity: MetricType = True
+    pcr_comparison: MetricType = True
 
 
 class MetricAnnDataAPI(Enum):
@@ -138,6 +146,7 @@ class Benchmarker:
         self._emb_adatas = {}
         self._neighbor_values = (15, 50, 90)
         self._prepared = False
+        self._benchmarked = False
         self._batch_key = batch_key
         self._label_key = label_key
         self._n_jobs = n_jobs
@@ -183,6 +192,12 @@ class Benchmarker:
 
     def benchmark(self) -> None:
         """Run the pipeline."""
+        if self._benchmarked:
+            warnings.warn(
+                "The benchmark has already been run. Running it again will overwrite the previous results.",
+                UserWarning,
+            )
+
         if not self._prepared:
             self.prepare()
 
@@ -193,13 +208,12 @@ class Benchmarker:
         for emb_key, ad in tqdm(self._emb_adatas.items(), desc="Embeddings", position=0, colour="green"):
             pbar = tqdm(total=num_metrics, desc="Metrics", position=1, leave=False, colour="blue")
             for metric_type, metric_collection in self._metric_collection_dict.items():
-                for metric_name, use_metric in asdict(metric_collection).items():
-                    if use_metric:
-                        if isinstance(metric_name, str):
-                            metric_fn = getattr(scib_metrics, metric_name)
-                        else:
-                            # Callable in this case
-                            metric_fn = use_metric
+                for metric_name, use_metric_or_kwargs in asdict(metric_collection).items():
+                    if use_metric_or_kwargs:
+                        metric_fn = getattr(scib_metrics, metric_name)
+                        if isinstance(use_metric_or_kwargs, dict):
+                            # Kwargs in this case
+                            metric_fn = partial(metric_fn, **use_metric_or_kwargs)
                         metric_value = getattr(MetricAnnDataAPI, metric_name)(ad, metric_fn)
                         # nmi/ari metrics return a dict
                         if isinstance(metric_value, dict):
@@ -210,6 +224,8 @@ class Benchmarker:
                             self._results.loc[metric_name, emb_key] = metric_value
                             self._results.loc[metric_name, _METRIC_TYPE] = metric_type
                         pbar.update(1)
+
+        self._benchmarked = True
 
     def get_results(self, min_max_scale: bool = True, clean_names: bool = True) -> pd.DataFrame:
         """Return the benchmarking results.
@@ -242,6 +258,7 @@ class Benchmarker:
 
         # Compute scores
         per_class_score = df.groupby(_METRIC_TYPE).mean().transpose()
+        # This is the default scIB weighting from the manuscript
         per_class_score["Total"] = 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
         df = pd.concat([df.transpose(), per_class_score], axis=1)
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE

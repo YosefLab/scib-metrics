@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.1.0 (2022-01-03)
+
+-   Add benchmarking pipeline with plotting ([#52][])
+
+[#52]: https://github.com/YosefLab/scib-metrics/pull/52
+
 ## 0.0.9 (2022-12-16)
 
 -   Add kbet ([#60][])

@@ -31,7 +31,10 @@ dependencies = [
     "scanpy",
     "rich",
     "pynndescent",
-    "igraph>0.9.0"
+    "igraph>0.9.0",
+    "matplotlib",
+    "plottable",
+    "tqdm",
 ]
 
 [project.optional-dependencies]
@@ -47,6 +50,7 @@ doc = [
     "sphinxcontrib-bibtex>=1.0.0",
     "scanpydoc[typehints]>=0.7.4",
     # For notebooks
+    "ipython!=8.7.0", # code highlighting issue
     "ipykernel",
     "sphinx-copybutton",
 ]
@@ -62,6 +66,18 @@ test = [
 ]
 parallel = [
     "joblib"
+]
+tutorial = [
+    "rich",
+    "scanorama",
+    "harmony-pytorch",
+    "scvi-tools",
+    "pyliger",
+    "numexpr", # missing liger dependency
+    "plotnine", # missing liger dependency
+    "mygene", # missing liger dependency
+    "goatools", # missing liger dependency
+    "adjustText", # missing liger dependency
 ]
 
 [tool.hatch.build.targets.wheel]

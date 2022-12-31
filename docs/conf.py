@@ -105,6 +105,7 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable/", None),
     "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
     "jax": ("https://jax.readthedocs.io/en/latest/", None),
+    "plottable": ("https://plottable.readthedocs.io/en/latest/", None),
 }
 
 # List of patterns, relative to source directory, that match files and

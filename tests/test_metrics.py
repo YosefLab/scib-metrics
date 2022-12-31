@@ -1,5 +1,3 @@
-import sys
-
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
@@ -11,30 +9,9 @@ from sklearn.metrics import silhouette_samples as sk_silhouette_samples
 from sklearn.neighbors import NearestNeighbors
 
 import scib_metrics
+from tests.utils.data import dummy_x_labels, dummy_x_labels_batch
 
 scib_metrics.settings.jax_fix_no_kernel_image()
-
-sys.path.append("../src/")
-
-
-def dummy_x_labels(return_symmetric_positive=False, x_is_neighbors_graph=False):
-    np.random.seed(1)
-    X = np.random.normal(size=(100, 10))
-    labels = np.random.randint(0, 2, size=(100,))
-    if return_symmetric_positive:
-        X = np.abs(X @ X.T)
-    if x_is_neighbors_graph:
-        dist_mat = csr_matrix(scib_metrics.utils.cdist(X, X))
-        nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
-        X = nbrs.kneighbors_graph(X)
-        X = X.multiply(dist_mat)
-    return X, labels
-
-
-def dummy_x_labels_batch(x_is_neighbors_graph=False):
-    X, labels = dummy_x_labels(x_is_neighbors_graph=x_is_neighbors_graph)
-    batch = np.random.randint(0, 2, size=(100,))
-    return X, labels, batch
 
 
 def test_package_has_version():
@@ -102,21 +79,24 @@ def test_ilisi_clisi_knn():
 
 def test_nmi_ari_cluster_labels_kmeans():
     X, labels = dummy_x_labels()
-    nmi, ari = scib_metrics.nmi_ari_cluster_labels_kmeans(X, labels)
+    out = scib_metrics.nmi_ari_cluster_labels_kmeans(X, labels)
+    nmi, ari = out["nmi"], out["ari"]
     assert isinstance(nmi, float)
     assert isinstance(ari, float)
 
 
 def test_nmi_ari_cluster_labels_leiden_parallel():
     X, labels = dummy_x_labels(return_symmetric_positive=True)
-    nmi, ari = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=True, n_jobs=2)
+    out = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=True, n_jobs=2)
+    nmi, ari = out["nmi"], out["ari"]
     assert isinstance(nmi, float)
     assert isinstance(ari, float)
 
 
 def test_nmi_ari_cluster_labels_leiden_single_resolution():
     X, labels = dummy_x_labels(return_symmetric_positive=True)
-    nmi, ari = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=False, resolution=0.1)
+    out = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=False, resolution=0.1)
+    nmi, ari = out["nmi"], out["ari"]
     assert isinstance(nmi, float)
     assert isinstance(ari, float)
 

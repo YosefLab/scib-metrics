@@ -46,6 +46,7 @@ rst-roles =
     class,
     func,
     ref,
+    doc,
     cite:p,
     cite:t,
 rst-directives =

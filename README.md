@@ -55,10 +55,23 @@ If you found a bug, please use the [issue tracker][issue-tracker].
 
 ## Citation
 
-> t.b.a
+References for individual metrics can be found in the corresponding documentation. This package is heavily inspired by the single-cell integration benchmarking work:
+
+```
+@article{luecken2022benchmarking,
+  title={Benchmarking atlas-level data integration in single-cell genomics},
+  author={Luecken, Malte D and B{\"u}ttner, Maren and Chaichoompu, Kridsadakorn and Danese, Anna and Interlandi, Marta and M{\"u}ller, Michaela F and Strobl, Daniel C and Zappia, Luke and Dugas, Martin and Colom{\'e}-Tatch{\'e}, Maria and others},
+  journal={Nature methods},
+  volume={19},
+  number={1},
+  pages={41--50},
+  year={2022},
+  publisher={Nature Publishing Group}
+}
+```
 
 [scverse-discourse]: https://discourse.scverse.org/
-[issue-tracker]: https://github.com/adamgayoso/scib-metrics/issues
+[issue-tracker]: https://github.com/yoseflab/scib-metrics/issues
 [changelog]: https://scib-metrics.readthedocs.io/latest/changelog.html
 [link-docs]: https://scib-metrics.readthedocs.io
 [link-api]: https://scib-metrics.readthedocs.io/latest/api.html

@@ -10,9 +10,12 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.1.0 (2022-01-03)
 
--   Add benchmarking pipeline with plotting ([#52][])
+-   Add benchmarking pipeline with plotting ([#52][] and [#69][])
+-   Fix diffusion distance computation, affecting kbet ([#70][])
 
 [#52]: https://github.com/YosefLab/scib-metrics/pull/52
+[#69]: https://github.com/YosefLab/scib-metrics/pull/69
+[#70]: https://github.com/YosefLab/scib-metrics/pull/70
 
 ## 0.0.9 (2022-12-16)
 

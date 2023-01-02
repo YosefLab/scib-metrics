@@ -113,7 +113,12 @@ def diffusion_nn(X: csr_matrix, k: int, n_comps: int = 100):
     Neighbors graph
     """
     transitions = _compute_transitions(X)
-    _, embedding = _compute_eigen(transitions, n_comps=n_comps)
+    evals, evecs = _compute_eigen(transitions, n_comps=n_comps)
+    evals += 1e-8  # Avoid division by zero
+    # Multiscale such that the number of steps t gets "integrated out"
+    # First eigenvalue is 1, so we start at the second one
+    embedding = evecs
+    embedding[:, 1:] = (evals[1:] / (1 - evals[1:])) * embedding[:, 1:]
     nn_obj = pynndescent.NNDescent(embedding, n_neighbors=k + 1)
     neigh_inds, neigh_distances = nn_obj.neighbor_graph
     # We purposely ignore the first neighbor as it is the cell itself

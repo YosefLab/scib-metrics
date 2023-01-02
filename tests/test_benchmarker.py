@@ -1,8 +1,5 @@
-from functools import partial
-
 import pandas as pd
 
-from scib_metrics import clisi_knn
 from scib_metrics.benchmark import BatchCorrection, Benchmarker, BioConservation
 from tests.utils.data import dummy_benchmarker_adata
 
@@ -36,7 +33,7 @@ def test_benchmarker_custom_metric_booleans():
 
 
 def test_benchmarker_custom_metric_callable():
-    bioc = BioConservation(clisi_knn=partial(clisi_knn, perplexity=10))
+    bioc = BioConservation(clisi_knn={"perplexity": 10})
     ad, emb_keys, batch_key, labels_key = dummy_benchmarker_adata()
     bm = Benchmarker(ad, batch_key, labels_key, emb_keys, bio_conservation_metrics=bioc)
     bm.benchmark()

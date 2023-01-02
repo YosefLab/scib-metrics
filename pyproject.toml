@@ -44,7 +44,7 @@ dev = [
     "pre-commit"
 ]
 doc = [
-    "sphinx>=4",
+    "sphinx>=4,<5.3",
     "sphinx-book-theme",
     "myst-nb",
     "sphinxcontrib-bibtex>=1.0.0",

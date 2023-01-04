@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.1.1 (2022-01-04)
+
+-   Add new tutorial and fix scalability of lisi ([#71][])
+
+[#71]: https://github.com/YosefLab/scib-metrics/pull/71
+
 ## 0.1.0 (2022-01-03)
 
 -   Add benchmarking pipeline with plotting ([#52][] and [#69][])

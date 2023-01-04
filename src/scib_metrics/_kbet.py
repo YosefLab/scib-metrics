@@ -178,8 +178,8 @@ def kbet_per_label(
                         batches=batches_sub,
                         alpha=alpha,
                     )
-                except RuntimeError:
-                    logger.info("Not enough neighbors")
+                except ValueError:
+                    logger.info("Diffusion distance failed. Skip.")
                     score = 0  # i.e. 100% rejection
 
             else:
@@ -204,8 +204,8 @@ def kbet_per_label(
                             batches=batches_sub[idx_nonan],
                             alpha=alpha,
                         )
-                    except RuntimeError:
-                        logger.info("Not enough neighbors")
+                    except ValueError:
+                        logger.info("Diffusion distance failed. Skip.")
                         score = 0  # i.e. 100% rejection
                 else:  # if there are too many too small connected components, set kBET score to 0
                     score = 0  # i.e. 100% rejection

@@ -173,12 +173,22 @@ class Benchmarker:
 
         # Compute neighbors
         for ad in tqdm(self._emb_adatas.values(), desc="Computing neighbors"):
+            # Variables from umap (https://github.com/lmcinnes/umap/blob/3f19ce19584de4cf99e3d0ae779ba13a57472cd9/umap/umap_.py#LL326-L327)
+            # which is used by scanpy under the hood
+            n_trees = min(64, 5 + int(round((ad.X.shape[0]) ** 0.5 / 20.0)))
+            n_iters = max(5, int(round(np.log2(ad.X.shape[0]))))
+            max_candidates = 60
+
             knn_search_index = NNDescent(
                 ad.X,
                 n_neighbors=max(self._neighbor_values),
                 random_state=0,
                 low_memory=True,
                 n_jobs=self._n_jobs,
+                compressed=False,
+                n_trees=n_trees,
+                n_iters=n_iters,
+                max_candidates=max_candidates,
             )
             indices, distances = knn_search_index.neighbor_graph
             for n in self._neighbor_values:

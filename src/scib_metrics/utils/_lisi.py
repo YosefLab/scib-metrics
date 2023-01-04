@@ -1,9 +1,12 @@
+from functools import partial
 from typing import Tuple, Union
 
 import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
+
+from ._utils import get_ndarray
 
 NdArray = Union[np.ndarray, jnp.ndarray]
 
@@ -68,15 +71,13 @@ def _get_neighbor_probability(
 
 
 def _compute_simpson_index_cell(
-    knn_dists_row: jnp.ndarray, knn_row: jnp.ndarray, labels: jnp.ndarray, n_batches: int, perplexity: float, tol: float
+    knn_dists_row: jnp.ndarray, knn_labels_row: jnp.ndarray, n_batches: int, perplexity: float, tol: float
 ) -> jnp.ndarray:
     H, P = _get_neighbor_probability(knn_dists_row, perplexity, tol)
 
     def _non_zero_H_simpson():
-        knn_labels = jnp.take(labels, knn_row)
-        L = jax.nn.one_hot(knn_labels, n_batches)
-        sumP = P @ L
-        return jnp.where(knn_labels.shape[0] == P.shape[0], jnp.dot(sumP, sumP), 1)
+        sumP = jnp.bincount(knn_labels_row, weights=P, length=n_batches)
+        return jnp.where(knn_labels_row.shape[0] == P.shape[0], jnp.dot(sumP, sumP), 1)
 
     return jnp.where(H == 0, -1, _non_zero_H_simpson())
 
@@ -114,9 +115,7 @@ def compute_simpson_index(
     knn_dists = jnp.array(knn_dists)
     knn_idx = jnp.array(knn_idx)
     labels = jnp.array(labels)
-    n = knn_dists.shape[0]
-    return jax.device_get(
-        jax.vmap(
-            lambda i: _compute_simpson_index_cell(knn_dists[i, :], knn_idx[i, :], labels, n_labels, perplexity, tol)
-        )(jnp.arange(n))
-    )
+    knn_labels = labels[knn_idx]
+    simpson_fn = partial(_compute_simpson_index_cell, n_batches=n_labels, perplexity=perplexity, tol=tol)
+    out = jax.vmap(simpson_fn)(knn_dists, knn_labels)
+    return get_ndarray(out)

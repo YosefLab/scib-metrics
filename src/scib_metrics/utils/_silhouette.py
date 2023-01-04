@@ -33,16 +33,19 @@ def _silhouette_reduce(
     """
     # accumulate distances from each sample to each cluster
     D_chunk_len = D_chunk.shape[0]
-    clust_dists = jnp.zeros((D_chunk_len, len(label_freqs)), dtype=D_chunk.dtype)
 
-    def _bincount(i, _data):
-        clust_dists, D_chunk, labels, label_freqs = _data
-        clust_dists = clust_dists.at[i].set(jnp.bincount(labels, weights=D_chunk[i], length=label_freqs.shape[0]))
-        return clust_dists, D_chunk, labels, label_freqs
+    # If running into memory issues, use fori_loop instead of vmap
+    # clust_dists = jnp.zeros((D_chunk_len, len(label_freqs)), dtype=D_chunk.dtype)
+    # def _bincount(i, _data):
+    #     clust_dists, D_chunk, labels, label_freqs = _data
+    #     clust_dists = clust_dists.at[i].set(jnp.bincount(labels, weights=D_chunk[i], length=label_freqs.shape[0]))
+    #     return clust_dists, D_chunk, labels, label_freqs
 
-    clust_dists = jax.lax.fori_loop(
-        0, D_chunk_len, lambda i, _data: _bincount(i, _data), (clust_dists, D_chunk, labels, label_freqs)
-    )[0]
+    # clust_dists = jax.lax.fori_loop(
+    #     0, D_chunk_len, lambda i, _data: _bincount(i, _data), (clust_dists, D_chunk, labels, label_freqs)
+    # )[0]
+
+    clust_dists = jax.vmap(partial(jnp.bincount, length=label_freqs.shape[0]), in_axes=(None, 0))(labels, D_chunk)
 
     # intra_index selects intra-cluster distances within clust_dists
     intra_index = (jnp.arange(D_chunk_len), jax.lax.dynamic_slice(labels, (start,), (D_chunk_len,)))

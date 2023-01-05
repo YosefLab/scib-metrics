@@ -43,15 +43,15 @@ def _kbet(neigh_batch_ids: jnp.ndarray, batches: jnp.ndarray, n_batches: int) ->
 def kbet(X: csr_matrix, batches: np.ndarray, alpha: float = 0.05) -> float:
     """Compute kbet :cite:p:`buttner2018`.
 
-    This implemenation is inspired by the implementation in Pegasus:
+    This implementation is inspired by the implementation in Pegasus:
     https://pegasus.readthedocs.io/en/stable/index.html
 
-    A higher acceptance rate means more mixing of batches. This implemenation does
+    A higher acceptance rate means more mixing of batches. This implementation does
     not exactly mirror the default original implementation, as there is currently no
     `adapt` option.
 
     Note that this is also not equivalent to the kbet used in the original scib package,
-    as that one computes kbet for each cell type label. To acheieve this, use
+    as that one computes kbet for each cell type label. To achieve this, use
     :func:`scib_metrics.kbet_per_label`.
 
     Parameters

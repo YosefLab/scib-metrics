@@ -2,7 +2,7 @@ diff a/docs/template_usage.md b/docs/template_usage.md	(rejected hunks)
 @@ -270,91 +292,20 @@ The following hints may be useful to work with the template sync:
  [cruft]: https://cruft.github.io/cruft/
  [cruft-update-project]: https://cruft.github.io/cruft/#updating-a-project
- 
+
 -### Making a release
 -
 -#### Updating the version number
@@ -55,7 +55,7 @@ diff a/docs/template_usage.md b/docs/template_usage.md	(rejected hunks)
 --   Jupyter notebooks as tutorials through [myst-nb][] (See [Tutorials with myst-nb](#tutorials-with-myst-nb-and-jupyter-notebooks))
 --   [Sphinx autodoc typehints][], to automatically reference annotated input and output types
 +## Moving forward
- 
+
 -See the [scanpy developer docs](https://scanpy.readthedocs.io/en/latest/dev/documentation.html) for more information
 -on how to write documentation.
 -
@@ -85,9 +85,9 @@ diff a/docs/template_usage.md b/docs/template_usage.md	(rejected hunks)
 -```
 +You have reached the end of this document. Congratulations! You have successfully set up your project and are ready to start.
 +For everything else related to documentation, code style, testing and publishing your project ot pypi, please refer to the [contributing docs](contributing.md#contributing-guide).
- 
+
  <!-- Links -->
- 
+
  [scanpy developer guide]: https://scanpy.readthedocs.io/en/latest/dev/index.html
 +[cookiecutter-scverse-instance]: https://cookiecutter-scverse-instance.readthedocs.io/en/latest/template_usage.html
 +[github quickstart guide]: https://docs.github.com/en/get-started/quickstart/create-a-repo?tool=webui

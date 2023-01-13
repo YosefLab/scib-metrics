@@ -9,6 +9,7 @@
 api.md
 tutorials.md
 changelog.md
-developer_docs.md
+template_usage.md
+contributing.md
 references.md
 ```

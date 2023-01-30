@@ -3,7 +3,7 @@
 [![Tests][badge-tests]][link-tests]
 [![Documentation][badge-docs]][link-docs]
 
-[badge-tests]: https://img.shields.io/github/actions/workflow/status/scverse/scvi-tools/test.yml?branch=main
+[badge-tests]: https://img.shields.io/github/actions/workflow/status/yoseflab/scib-metrics/test.yaml?branch=main
 [link-tests]: https://github.com/yoseflab/scib-metrics/actions/workflows/test.yml
 [badge-docs]: https://img.shields.io/readthedocs/scib-metrics
 

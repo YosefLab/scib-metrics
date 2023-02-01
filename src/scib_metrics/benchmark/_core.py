@@ -3,7 +3,7 @@ import warnings
 from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import partial
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -14,11 +14,11 @@ from anndata import AnnData
 from plottable import ColumnDefinition, Table
 from plottable.cmap import normed_cmap
 from plottable.plots import bar
-from pynndescent import NNDescent
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
 
 import scib_metrics
+from scib_metrics.utils.nearest_neighbors import NeighborsOutput, pynndescent
 
 Kwargs = Dict[str, Any]
 MetricType = Union[bool, Kwargs]
@@ -156,8 +156,17 @@ class Benchmarker:
             "Batch correction": self._batch_correction_metrics,
         }
 
-    def prepare(self) -> None:
-        """Prepare the data for benchmarking."""
+    def prepare(self, neighbor_computer: Optional[Callable[[np.ndarray, int], NeighborsOutput]] = None) -> None:
+        """Prepare the data for benchmarking.
+
+        Parameters
+        ----------
+        neighbor_computer
+            Function that computes the neighbors of the data. If `None`, the neighbors will be computed
+            with :func:`~scib_metrics.utils.nearest_neighbors.pynndescent`. The function should take as input
+            the data and the number of neighbors to compute and return a :class:`~scib_metrics.utils.nearest_neighbors.NeighborsOutput`
+            object.
+        """
         # Compute PCA
         if self._pre_integrated_embedding_obsm_key is None:
             # This is how scib does it
@@ -173,24 +182,13 @@ class Benchmarker:
 
         # Compute neighbors
         for ad in tqdm(self._emb_adatas.values(), desc="Computing neighbors"):
-            # Variables from umap (https://github.com/lmcinnes/umap/blob/3f19ce19584de4cf99e3d0ae779ba13a57472cd9/umap/umap_.py#LL326-L327)
-            # which is used by scanpy under the hood
-            n_trees = min(64, 5 + int(round((ad.X.shape[0]) ** 0.5 / 20.0)))
-            n_iters = max(5, int(round(np.log2(ad.X.shape[0]))))
-            max_candidates = 60
-
-            knn_search_index = NNDescent(
-                ad.X,
-                n_neighbors=max(self._neighbor_values),
-                random_state=0,
-                low_memory=True,
-                n_jobs=self._n_jobs,
-                compressed=False,
-                n_trees=n_trees,
-                n_iters=n_iters,
-                max_candidates=max_candidates,
-            )
-            indices, distances = knn_search_index.neighbor_graph
+            if neighbor_computer is not None:
+                neigh_output = neighbor_computer(ad.X, max(self._neighbor_values))
+            else:
+                neigh_output = pynndescent(
+                    ad.X, n_neighbors=max(self._neighbor_values), random_state=0, n_jobs=self._n_jobs
+                )
+            indices, distances = neigh_output.indices, neigh_output.distances
             for n in self._neighbor_values:
                 sp_distances, sp_conns = sc.neighbors._compute_connectivities_umap(
                     indices[:, :n], distances[:, :n], ad.n_obs, n_neighbors=n

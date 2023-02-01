@@ -71,6 +71,20 @@ scib_metrics.ilisi_knn(...)
     utils.diffusion_nn
 ```
 
+### Nearest neighbors
+
+```{eval-rst}
+.. module:: scib_metrics.utils
+.. currentmodule:: scib_metrics
+
+.. autosummary::
+    :toctree: generated
+
+    utils.nearest_neighbors.pynndescent
+    utils.nearest_neighbors.jax_approx_min_k
+    utils.nearest_neighbors.NeighborsOutput
+```
+
 ## Settings
 
 An instance of the {class}`~scib_metrics._settings.ScibConfig` is available as `scib_metrics.settings` and allows configuring scib_metrics.

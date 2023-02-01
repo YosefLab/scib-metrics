@@ -43,10 +43,9 @@ def test_benchmarker_custom_metric_callable():
 
 
 def test_benchmarker_custom_near_neighs():
-    nn_computer = jax_approx_min_k
     ad, emb_keys, batch_key, labels_key = dummy_benchmarker_adata()
     bm = Benchmarker(ad, batch_key, labels_key, emb_keys)
-    bm.prepare(nn_computer=nn_computer)
+    bm.prepare(neighbor_computer=jax_approx_min_k)
     bm.benchmark()
     results = bm.get_results()
     assert isinstance(results, pd.DataFrame)

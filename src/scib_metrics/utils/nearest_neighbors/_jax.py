@@ -4,8 +4,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from scib_metrics.utils import get_ndarray
-
 from ._dataclass import NeighborsOutput
 
 
@@ -13,6 +11,13 @@ from ._dataclass import NeighborsOutput
 def _l2_ann(qy, db, half_db_norms, k=10, recall_target=0.95):
     dists = half_db_norms - jax.lax.dot(qy, db.transpose())
     return jax.lax.approx_min_k(dists, k=k, recall_target=recall_target)
+
+
+def _get_ndarray(x):
+    if isinstance(x, jnp.ndarray):
+        return np.asarray(jax.device_get(x))
+    else:
+        return x
 
 
 def jax_approx_min_k(
@@ -45,4 +50,4 @@ def jax_approx_min_k(
         dists.append(dist)
     neighbors = jnp.concatenate(neighbors, axis=0)
     dists = jnp.concatenate(dists, axis=0)
-    return NeighborsOutput(indices=get_ndarray(neighbors), distances=get_ndarray(jnp.sqrt(dists)))
+    return NeighborsOutput(indices=_get_ndarray(neighbors), distances=_get_ndarray(jnp.sqrt(dists)))

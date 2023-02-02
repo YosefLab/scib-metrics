@@ -34,7 +34,7 @@ def jax_approx_min_k(
     chunk_size
         Number of query points to search for at once.
     """
-    db = X
+    db = jnp.asarray(X)
     # Loop over query points in chunks
     neighbors = []
     dists = []

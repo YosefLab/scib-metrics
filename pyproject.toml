@@ -99,6 +99,11 @@ multi_line_output = 3
 profile = "black"
 skip_glob = ["docs/*"]
 
+[tool.ruff]
+line-length = 88
+exclude = [".git","__pycache__","build","docs/","_build","dist"]
+ignore = ["E402","E501", "F821", "E741"]
+
 [tool.black]
 line-length = 120
 target-version = ['py38']

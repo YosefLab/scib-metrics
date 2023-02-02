@@ -10,14 +10,14 @@ from ._dataclass import NeighborsOutput
 
 
 @functools.partial(jax.jit, static_argnames=["k", "recall_target"])
-def _euclidean_ann(qy: jnp.ndarray, db: jnp.ndarray, k=10, recall_target=0.95):
+def _euclidean_ann(qy: jnp.ndarray, db: jnp.ndarray, k: int, recall_target: float = 0.95):
     """Compute half squared L2 distance between query points and database points."""
     dists = cdist(qy, db)
     return jax.lax.approx_min_k(dists, k=k, recall_target=recall_target)
 
 
 def jax_approx_min_k(
-    X: np.ndarray, n_neighbors: int, recall_target: float = 0.95, chunk_size: int = 1024
+    X: np.ndarray, n_neighbors: int, recall_target: float = 0.95, chunk_size: int = 2048
 ) -> NeighborsOutput:
     """Run approximate nearest neighbor search using jax.
 

@@ -1,7 +1,7 @@
 import pandas as pd
 
 from scib_metrics.benchmark import BatchCorrection, Benchmarker, BioConservation
-from scib_metrics.utils.nearest_neighbors import jax_approx_min_k
+from scib_metrics.nearest_neighbors import jax_approx_min_k
 from tests.utils.data import dummy_benchmarker_adata
 
 

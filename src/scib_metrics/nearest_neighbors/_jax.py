@@ -4,20 +4,16 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from scib_metrics.utils import cdist, get_ndarray
+
 from ._dataclass import NeighborsOutput
 
 
 @functools.partial(jax.jit, static_argnames=["k", "recall_target"])
-def _l2_ann(qy, db, half_db_norms, k=10, recall_target=0.95):
-    dists = half_db_norms - jax.lax.dot(qy, db.transpose())
+def _euclidean_ann(qy: jnp.ndarray, db: jnp.ndarray, k=10, recall_target=0.95):
+    """Compute half squared L2 distance between query points and database points."""
+    dists = cdist(qy, db)
     return jax.lax.approx_min_k(dists, k=k, recall_target=recall_target)
-
-
-def _get_ndarray(x):
-    if isinstance(x, jnp.ndarray):
-        return np.asarray(jax.device_get(x))
-    else:
-        return x
 
 
 def jax_approx_min_k(
@@ -39,15 +35,16 @@ def jax_approx_min_k(
         Number of query points to search for at once.
     """
     db = X
-    half_db_norm_sq = jnp.linalg.norm(db, axis=1) ** 2 / 2
     # Loop over query points in chunks
     neighbors = []
     dists = []
     for i in range(0, db.shape[0], chunk_size):
-        qy = db[i : i + chunk_size]
-        dist, neighbor = _l2_ann(qy, db, half_db_norm_sq, k=n_neighbors, recall_target=recall_target)
+        start = i
+        end = min(i + chunk_size, db.shape[0])
+        qy = db[start:end]
+        dist, neighbor = _euclidean_ann(qy, db, k=n_neighbors, recall_target=recall_target)
         neighbors.append(neighbor)
         dists.append(dist)
     neighbors = jnp.concatenate(neighbors, axis=0)
     dists = jnp.concatenate(dists, axis=0)
-    return NeighborsOutput(indices=_get_ndarray(neighbors), distances=_get_ndarray(jnp.sqrt(dists)))
+    return NeighborsOutput(indices=get_ndarray(neighbors), distances=get_ndarray(dists))

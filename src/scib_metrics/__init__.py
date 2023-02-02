@@ -1,7 +1,7 @@
 import logging
 from importlib.metadata import version
 
-from . import utils
+from . import nearest_neighbors, utils
 from ._graph_connectivity import graph_connectivity
 from ._isolated_labels import isolated_labels
 from ._kbet import kbet, kbet_per_label
@@ -13,6 +13,7 @@ from ._silhouette import silhouette_batch, silhouette_label
 
 __all__ = [
     "utils",
+    "nearest_neighbors",
     "isolated_labels",
     "pcr_comparison",
     "silhouette_label",

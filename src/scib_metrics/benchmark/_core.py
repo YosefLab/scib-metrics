@@ -18,7 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
 
 import scib_metrics
-from scib_metrics.utils.nearest_neighbors import NeighborsOutput, pynndescent
+from scib_metrics.nearest_neighbors import NeighborsOutput, pynndescent
 
 Kwargs = Dict[str, Any]
 MetricType = Union[bool, Kwargs]

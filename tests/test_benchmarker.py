@@ -1,6 +1,7 @@
 import pandas as pd
 
 from scib_metrics.benchmark import BatchCorrection, Benchmarker, BioConservation
+from scib_metrics.nearest_neighbors import jax_approx_min_k
 from tests.utils.data import dummy_benchmarker_adata
 
 
@@ -39,3 +40,13 @@ def test_benchmarker_custom_metric_callable():
     bm.benchmark()
     results = bm.get_results(clean_names=False)
     assert "clisi_knn" in results.columns
+
+
+def test_benchmarker_custom_near_neighs():
+    ad, emb_keys, batch_key, labels_key = dummy_benchmarker_adata()
+    bm = Benchmarker(ad, batch_key, labels_key, emb_keys)
+    bm.prepare(neighbor_computer=jax_approx_min_k)
+    bm.benchmark()
+    results = bm.get_results()
+    assert isinstance(results, pd.DataFrame)
+    bm.plot_results_table()

@@ -77,3 +77,31 @@ repos:
                 Fix the merge conflicts manually and remove the .rej files.
             language: fail
             files: '.*\.rej$'
+    - repo: https://github.com/nbQA-dev/nbQA
+      rev: 1.6.1
+      hooks:
+          - id: nbqa-pyupgrade
+            args: [--py38-plus]
+          - id: nbqa-black
+          - id: nbqa-isort
+          - id: nbqa-ruff
+            args: [--fix]
+          - id: nbqa
+            entry: nbqa blacken-docs
+            name: nbqa-blacken-docs
+            alias: nbqa-blacken-docs
+            additional_dependencies: [blacken-docs]
+            args: [--nbqa-md]
+          - id: nbqa
+            entry: nbqa mdformat
+            name: nbqa-mdformat
+            alias: nbqa-mdformat
+            additional_dependencies:
+                [
+                    mdformat,
+                    mdformat-black,
+                    mdformat-frontmatter,
+                    mdformat-web,
+                    mdformat-myst,
+                ]
+            args: [--nbqa-md]

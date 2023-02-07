@@ -29,7 +29,6 @@ class ScibConfig:
         progress_bar_style: Literal["rich", "tqdm"] = "tqdm",
         jax_preallocate_gpu_memory: bool = False,
     ):
-
         if progress_bar_style not in ["rich", "tqdm"]:
             raise ValueError("Progress bar style must be in ['rich', 'tqdm']")
         self.progress_bar_style = progress_bar_style

@@ -1,4 +1,5 @@
 import logging
+import warnings
 from typing import Dict, Tuple
 
 import numpy as np
@@ -109,7 +110,7 @@ def nmi_ari_cluster_labels_leiden(
 
             out = Parallel(n_jobs=n_jobs)(delayed(_compute_nmi_ari_cluster_labels)(X, labels, r) for r in resolutions)
         except ImportError:
-            logger.info("Using for loop over resolutions. pip install joblib for parallelization.")
+            warnings.warn("Using for loop over clustering resolutions. `pip install joblib` for parallelization.")
             out = [_compute_nmi_ari_cluster_labels(X, labels, r) for r in resolutions]
         nmi_ari = np.array(out)
         nmi_ind = np.argmax(nmi_ari[:, 0])

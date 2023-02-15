@@ -218,6 +218,7 @@ class Benchmarker:
             for metric_type, metric_collection in self._metric_collection_dict.items():
                 for metric_name, use_metric_or_kwargs in asdict(metric_collection).items():
                     if use_metric_or_kwargs:
+                        pbar.set_postfix_str(f"{metric_type}: {metric_name}")
                         metric_fn = getattr(scib_metrics, metric_name)
                         if isinstance(use_metric_or_kwargs, dict):
                             # Kwargs in this case

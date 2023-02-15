@@ -21,28 +21,35 @@ def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray
 
 @partial(jax.jit, static_argnums=1)
 def _initialize_plus_plus(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
-    """Initialize cluster centroids with k-means++ algorithm.
-
-    Note that this uses 1 local trial, unlike scikit-learn.
-    """
+    """Initialize cluster centroids with k-means++ algorithm."""
     n_obs = X.shape[0]
-    initial_centroid_idx = jax.random.choice(key, n_obs, (1,), replace=False)
-    initial_centroid = X[initial_centroid_idx]
-    dist_sq = jnp.square(cdist(X, initial_centroid)).ravel()
-    initial_state = {"min_dist_sq": dist_sq, "centroid": initial_centroid}
+    key, subkey = jax.random.split(key)
+    initial_centroid_idx = jax.random.choice(subkey, n_obs, (1,), replace=False)
+    initial_centroid = X[initial_centroid_idx].ravel()
+    dist_sq = jnp.square(cdist(initial_centroid[jnp.newaxis, :], X)).ravel()
+    initial_state = {"min_dist_sq": dist_sq, "centroid": initial_centroid, "key": key}
+    n_local_trials = 2 + int(np.log(n_clusters))
 
     def _step(state, _):
         prob = state["min_dist_sq"] / jnp.sum(state["min_dist_sq"])
         # note that observations already chosen as centers will have 0 probability
         # and will not be chosen again
-        # TODO: use multiple candidates like scikit learn
-        next_centroid_idx = jax.random.choice(key, n_obs, (1,), replace=False, p=prob)
-        next_centroid = X[next_centroid_idx]
-        dist_sq = jnp.square(cdist(X, state["centroid"])).ravel()
-        min_dist_sq = jnp.minimum(state["min_dist_sq"], dist_sq)
-        state["min_dist_sq"] = min_dist_sq
-        state["centroid"] = next_centroid
-        return state, next_centroid
+        state["key"], subkey = jax.random.split(state["key"])
+        next_centroid_idx_candidates = jax.random.choice(subkey, n_obs, (n_local_trials,), replace=False, p=prob)
+        next_centroid_candidates = X[next_centroid_idx_candidates]
+        # candidates by observations
+        dist_sq_candidates = jnp.square(cdist(next_centroid_candidates, X))
+        dist_sq_candidates = jnp.minimum(state["min_dist_sq"][jnp.newaxis, :], dist_sq_candidates)
+        candidates_pot = dist_sq_candidates.sum(axis=1)
+
+        # Decide which candidate is the best
+        best_candidate = jnp.argmin(candidates_pot)
+        min_dist_sq = dist_sq_candidates[best_candidate]
+        best_candidate = next_centroid_idx_candidates[best_candidate]
+
+        state["min_dist_sq"] = min_dist_sq.ravel()
+        state["centroid"] = X[best_candidate].ravel()
+        return state, state["centroid"]
 
     _, centroids = jax.lax.scan(_step, initial_state, jnp.arange(n_clusters - 1))
     return centroids

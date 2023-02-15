@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.3.0 (2022-02-16)
 
--   Rename `KmeansJax` to `Kmeans` and fix ++ initialization ([#81][])
+-   Rename `KmeansJax` to `Kmeans` and fix ++ initialization, use Kmeans as default in benchmarker instead of Leiden ([#81][])
 -   Warn about joblib, add progress bar postfix str ([#80][])
 
 [#81]: https://github.com/YosefLab/scib-metrics/pull/81

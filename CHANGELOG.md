@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning][].
 
 -   Allow custom nearest neighbors methods in Benchmarker ([#78][])
 
+[#78]: https://github.com/YosefLab/scib-metrics/pull/71
+
 ## 0.1.1 (2022-01-04)
 
 -   Add new tutorial and fix scalability of lisi ([#71][])

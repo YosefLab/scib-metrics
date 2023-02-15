@@ -108,7 +108,7 @@ def test_isolated_labels():
 
 def test_kmeans():
     X, _ = dummy_x_labels()
-    kmeans = scib_metrics.utils.KMeansJax(2)
+    kmeans = scib_metrics.utils.KMeans(2)
     kmeans.fit(X)
     assert kmeans.labels_.shape == (X.shape[0],)
 

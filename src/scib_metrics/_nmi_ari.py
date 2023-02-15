@@ -8,13 +8,13 @@ from scipy.sparse import spmatrix
 from sklearn.metrics.cluster import adjusted_rand_score, normalized_mutual_info_score
 from sklearn.utils import check_array
 
-from .utils import KMeansJax, check_square
+from .utils import KMeans, check_square
 
 logger = logging.getLogger(__name__)
 
 
 def _compute_clustering_kmeans(X: np.ndarray, n_clusters: int) -> np.ndarray:
-    kmeans = KMeansJax(n_clusters)
+    kmeans = KMeans(n_clusters)
     kmeans.fit(X)
     return kmeans.labels_
 

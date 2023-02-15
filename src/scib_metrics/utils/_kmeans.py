@@ -7,11 +7,11 @@ import numpy as np
 from sklearn.utils import check_array
 
 from .._types import IntOrKey
-from ._dist import cdist, pdist_squareform
+from ._dist import cdist
 from ._utils import get_ndarray, validate_seed
 
 
-def _initialize_random(X: jnp.ndarray, n_clusters: int, pdists: jnp.ndarray, key: jax.random.KeyArray) -> jnp.ndarray:
+def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
     """Initialize cluster centroids randomly."""
     n_obs = X.shape[0]
     indices = jax.random.choice(key, n_obs, (n_clusters,), replace=False)
@@ -20,38 +20,32 @@ def _initialize_random(X: jnp.ndarray, n_clusters: int, pdists: jnp.ndarray, key
 
 
 @partial(jax.jit, static_argnums=1)
-def _initialize_plus_plus(
-    X: jnp.ndarray, n_clusters: int, pdists: jnp.ndarray, key: jax.random.KeyArray
-) -> jnp.ndarray:
-    """Initialize cluster centroids with k-means++ algorithm."""
+def _initialize_plus_plus(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
+    """Initialize cluster centroids with k-means++ algorithm.
 
-    def _init(key, pdists):
-        key, subkey = jax.random.split(key)
-        n_obs = pdists.shape[0]
-        # sample first centroid uniformly at random
-        idx = jax.random.choice(subkey, n_obs)
-        centroids = jnp.full((n_clusters,), -1, dtype=jnp.int32).at[0].set(idx)
-        mask = jnp.zeros((n_obs,), dtype=jnp.bool_).at[idx].set(True)
-        return centroids, mask, pdists, key
+    Note that this uses 1 local trial, unlike scikit-learn.
+    """
+    n_obs = X.shape[0]
+    initial_centroid_idx = jax.random.choice(key, n_obs, (1,), replace=False)
+    initial_centroid = X[initial_centroid_idx]
+    dist_sq = jnp.square(cdist(X, initial_centroid)).ravel()
+    initial_state = {"min_dist_sq": dist_sq, "centroid": initial_centroid}
 
-    def _step(state):
-        centroids, mask, pdists, key = state
-        key, subkey = jax.random.split(key)
-        n_obs = pdists.shape[0]
-        # d(x) = min_{mu in centroids} ||x - mu||^2, d(x) = 0 if x in centroids
-        probs = jnp.where(mask, 0, jnp.min(jnp.where(mask, pdists, jnp.inf), axis=1) ** 2)
-        # sample with probability ~ d(x)
-        idx = jax.random.choice(subkey, n_obs, p=probs / jnp.sum(probs))
-        centroids = centroids.at[jnp.sum(mask)].set(idx)
-        mask = mask.at[idx].set(True)
-        return centroids, mask, pdists, key
+    def _step(state, _):
+        prob = state["min_dist_sq"] / jnp.sum(state["min_dist_sq"])
+        # note that observations already chosen as centers will have 0 probability
+        # and will not be chosen again
+        # TODO: use multiple candidates like scikit learn
+        next_centroid_idx = jax.random.choice(key, n_obs, (1,), replace=False, p=prob)
+        next_centroid = X[next_centroid_idx]
+        dist_sq = jnp.square(cdist(X, state["centroid"])).ravel()
+        min_dist_sq = jnp.minimum(state["min_dist_sq"], dist_sq)
+        state["min_dist_sq"] = min_dist_sq
+        state["centroid"] = next_centroid
+        return state, next_centroid
 
-    def _convergence(state):
-        _, mask, _, _ = state
-        return jnp.sum(mask) < n_clusters
-
-    centroids, _, _, _ = jax.lax.while_loop(_convergence, _step, _init(key, pdists))
-    return X[centroids]
+    _, centroids = jax.lax.scan(_step, initial_state, jnp.arange(n_clusters - 1))
+    return centroids
 
 
 @jax.jit
@@ -62,7 +56,7 @@ def _get_dist_labels(X: jnp.ndarray, centroids: jnp.ndarray) -> jnp.ndarray:
     return dist, labels
 
 
-class KMeansJax:
+class KMeans:
     """Jax implementation of :class:`sklearn.cluster.KMeans`.
 
     This implementation is limited to Euclidean distance.
@@ -91,7 +85,7 @@ class KMeansJax:
     def __init__(
         self,
         n_clusters: int = 8,
-        init: Literal["k-means++", "random"] = "random",
+        init: Literal["k-means++", "random"] = "k-means++",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-4,
@@ -122,7 +116,6 @@ class KMeansJax:
         return self
 
     def _fit(self, X: np.ndarray):
-        self._pdists = pdist_squareform(X)
         all_centroids, all_inertias = jax.lax.map(
             lambda key: self._kmeans_full_run(X, key), jax.random.split(self.seed, self.n_init)
         )
@@ -131,7 +124,6 @@ class KMeansJax:
         self.inertia_ = get_ndarray(all_inertias[i])
         _, labels = _get_dist_labels(X, self.cluster_centroids_)
         self.labels_ = get_ndarray(labels)
-        del self._pdists
 
     @partial(jax.jit, static_argnums=(0,))
     def _kmeans_full_run(self, X: jnp.ndarray, key: jnp.ndarray) -> jnp.ndarray:
@@ -169,7 +161,7 @@ class KMeansJax:
             cond2 = n_iter > self.max_iter
             return jnp.logical_or(cond1, cond2)[0]
 
-        centroids = self._initialize(X, self.n_clusters, self._pdists, key)
+        centroids = self._initialize(X, self.n_clusters, key)
         # centroids, new_inertia, old_inertia, n_iter
         state = (centroids, jnp.inf, jnp.inf, jnp.array([0.0]))
         state = _kmeans_step(state)

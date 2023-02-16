@@ -77,6 +77,11 @@ def test_ilisi_clisi_knn():
     scib_metrics.clisi_knn(X, labels, perplexity=10)
 
 
+def test_cms():
+    X, _, batches = dummy_x_labels_batch(x_is_neighbors_graph=True)
+    scib_metrics.cell_mixing_score(X, batches)
+
+
 def test_nmi_ari_cluster_labels_kmeans():
     X, labels = dummy_x_labels()
     out = scib_metrics.nmi_ari_cluster_labels_kmeans(X, labels)

@@ -1,15 +1,12 @@
-import warnings
-from dataclasses import dataclass
-from typing import Sequence
+from typing import Sequence, Tuple
 
-import jax.numpy as jnp
-from jax.tree_util import tree_map
-
-from .._types import NdArray
+import numba
+import numpy as np
 
 
+@numba.njit
 def _anderson_ksamp_midrank(
-    samples: Sequence[jnp.ndarray], Z: jnp.ndarray, Zstar: jnp.ndarray, k: int, n: jnp.ndarray, N: int
+    samples: Sequence[np.ndarray], Z: np.ndarray, Zstar: np.ndarray, k: int, n: np.ndarray, N: int
 ):
     """Compute A2akN equation 7 of Scholz and Stephens.
 
@@ -34,26 +31,27 @@ def _anderson_ksamp_midrank(
         The A2aKN statistics of Scholz and Stephens 1987.
     """
     A2akN = 0.0
-    Z_ssorted_left = Z.searchsorted(Zstar, "left")
+    Z_ssorted_left = np.searchsorted(Z, Zstar, "left").astype(np.float32)
     if N == Zstar.size:
-        lj = 1.0
+        lj = np.ones_like(Z_ssorted_left)
     else:
-        lj = Z.searchsorted(Zstar, "right") - Z_ssorted_left
+        lj = np.searchsorted(Z, Zstar, "right").astype(np.float32) - Z_ssorted_left
     Bj = Z_ssorted_left + lj / 2.0
-    for i in jnp.arange(0, k):
-        s = jnp.sort(samples[i])
-        s_ssorted_right = s.searchsorted(Zstar, side="right")
-        Mij = s_ssorted_right.astype(float)
-        fij = s_ssorted_right - s.searchsorted(Zstar, "left")
+    for i in np.arange(0, k):
+        s = np.sort(samples[i])
+        s_ssorted_right = np.searchsorted(s, Zstar, side="right").astype(np.float32)
+        Mij = s_ssorted_right
+        fij = s_ssorted_right - np.searchsorted(s, Zstar, "left").astype(np.float32)
         Mij -= fij / 2.0
-        inner = lj / float(N) * (N * Mij - Bj * n[i]) ** 2 / (Bj * (N - Bj) - N * lj / 4.0)
+        inner = lj / numba.float32(N) * (N * Mij - Bj * n[i]) ** 2 / (Bj * (N - Bj) - N * lj / 4.0)
         A2akN += inner.sum() / n[i]
     A2akN *= (N - 1.0) / N
     return A2akN
 
 
+@numba.njit
 def _anderson_ksamp_right(
-    samples: Sequence[jnp.ndarray], Z: jnp.ndarray, Zstar: jnp.ndarray, k: int, n: jnp.ndarray, N: int
+    samples: Sequence[np.ndarray], Z: np.ndarray, Zstar: np.ndarray, k: int, n: np.ndarray, N: int
 ):
     """Compute A2akN equation 6 of Scholz & Stephens.
 
@@ -78,39 +76,19 @@ def _anderson_ksamp_right(
         The A2KN statistics of Scholz and Stephens 1987.
     """
     A2kN = 0.0
-    lj = Z.searchsorted(Zstar[:-1], "right") - Z.searchsorted(Zstar[:-1], "left")
+    lj = np.searchsorted(Z, Zstar[:-1], "right") - np.searchsorted(Z, Zstar[:-1], "left")
     Bj = lj.cumsum()
-    for i in jnp.arange(0, k):
-        s = jnp.sort(samples[i])
-        Mij = s.searchsorted(Zstar[:-1], side="right")
+    for i in np.arange(0, k):
+        s = np.sort(samples[i])
+        Mij = np.searchsorted(s, Zstar[:-1], side="right")
         inner = lj / float(N) * (N * Mij - Bj * n[i]) ** 2 / (Bj * (N - Bj))
         A2kN += inner.sum() / n[i]
     return A2kN
 
 
-@dataclass
-class Anderson_ksampResult:
-    """Result of `anderson_ksamp`.
-
-    Attributes
-    ----------
-    statistic : float
-        Normalized k-sample Anderson-Darling test statistic.
-    critical_values : array
-        The critical values for significance levels 25%, 10%, 5%, 2.5%, 1%,
-        0.5%, 0.1%.
-    significance_level : float
-        The approximate p-value of the test. The value is floored / capped
-        at 0.1% / 25%.
-    """
-
-    statistic: float
-    critical_values: jnp.ndarray
-    significance_level: float
-
-
-def anderson_ksamp(samples: Sequence[NdArray], midrank: bool = True) -> Anderson_ksampResult:
-    """Jax implementation of :func:`scipy.stats.anderson_ksamp`.
+@numba.njit
+def anderson_ksamp(samples: Sequence[np.ndarray], midrank: bool = True) -> Tuple[float, np.ndarray, float]:
+    """Numba-friendly implementation of :func:`scipy.stats.anderson_ksamp`.
 
     The k-sample Anderson-Darling test is a modification of the
     one-sample Anderson-Darling test. It tests the null hypothesis
@@ -130,7 +108,7 @@ def anderson_ksamp(samples: Sequence[NdArray], midrank: bool = True) -> Anderson
 
     Returns
     -------
-    result
+    result, tuple of (statistic, critical_values, significance_level)
 
     Raises
     ------
@@ -166,15 +144,23 @@ def anderson_ksamp(samples: Sequence[NdArray], midrank: bool = True) -> Anderson
     if k < 2:
         raise ValueError("anderson_ksamp needs at least two samples")
 
-    samples = tree_map(jnp.asarray, samples)
-    Z = jnp.sort(jnp.hstack(samples))
-    N = jnp.array(Z.size)
-    Zstar = jnp.unique(Z)
+    # join all samples into one long sample
+    samples = list(map(np.asarray, samples))
+    n_samples = sum(list(map(len, samples)))
+    long_samples = np.empty(n_samples)
+    i = 0
+    for sample in samples:
+        for s in sample:
+            long_samples[i] = s
+            i += 1
+    Z = np.sort(long_samples)
+    N = np.array(Z.size)
+    Zstar = np.unique(Z)
     if Zstar.size < 2:
         raise ValueError("anderson_ksamp needs more than one distinct " "observation")
 
-    n = jnp.array([sample.size for sample in samples])
-    if jnp.any(n == 0):
+    n = np.array([sample.size for sample in samples])
+    if np.any(n == 0):
         raise ValueError("anderson_ksamp encountered sample without " "observations")
 
     if midrank:
@@ -183,9 +169,9 @@ def anderson_ksamp(samples: Sequence[NdArray], midrank: bool = True) -> Anderson
         A2kN = _anderson_ksamp_right(samples, Z, Zstar, k, n, N)
 
     H = (1.0 / n).sum()
-    hs_cs = (1.0 / jnp.arange(N - 1, 1, -1)).cumsum()
+    hs_cs = (1.0 / np.arange(N - 1, 1, -1)).cumsum()
     h = hs_cs[-1] + 1
-    g = (hs_cs / jnp.arange(2, N)).sum()
+    g = (hs_cs / np.arange(2, N)).sum()
 
     a = (4 * g - 6) * (k - 1) + (10 - 6 * g) * H
     b = (2 * g - 4) * k**2 + 8 * h * k + (2 * g - 14 * h - 4) * H - 8 * h + 4 * g - 6
@@ -193,26 +179,24 @@ def anderson_ksamp(samples: Sequence[NdArray], midrank: bool = True) -> Anderson
     d = (2 * h + 6) * k**2 - 4 * h * k
     sigmasq = (a * N**3 + b * N**2 + c * N + d) / ((N - 1.0) * (N - 2.0) * (N - 3.0))
     m = k - 1
-    A2 = (A2kN - m) / jnp.sqrt(sigmasq)
+    A2 = (A2kN - m) / np.sqrt(sigmasq)
 
     # The b_i values are the interpolation coefficients from Table 2
     # of Scholz and Stephens 1987
-    b0 = jnp.array([0.675, 1.281, 1.645, 1.96, 2.326, 2.573, 3.085])
-    b1 = jnp.array([-0.245, 0.25, 0.678, 1.149, 1.822, 2.364, 3.615])
-    b2 = jnp.array([-0.105, -0.305, -0.362, -0.391, -0.396, -0.345, -0.154])
-    critical = b0 + b1 / jnp.sqrt(m) + b2 / m
+    b0 = np.array([0.675, 1.281, 1.645, 1.96, 2.326, 2.573, 3.085])
+    b1 = np.array([-0.245, 0.25, 0.678, 1.149, 1.822, 2.364, 3.615])
+    b2 = np.array([-0.105, -0.305, -0.362, -0.391, -0.396, -0.345, -0.154])
+    critical = b0 + b1 / np.sqrt(m) + b2 / m
 
-    sig = jnp.array([0.25, 0.1, 0.05, 0.025, 0.01, 0.005, 0.001])
+    sig = np.array([0.25, 0.1, 0.05, 0.025, 0.01, 0.005, 0.001])
     if A2 < critical.min():
         p = sig.max()
-        warnings.warn(f"p-value capped: true value larger than {p}", stacklevel=2)
     elif A2 > critical.max():
         p = sig.min()
-        warnings.warn(f"p-value floored: true value smaller than {p}", stacklevel=2)
     else:
         # interpolation of probit of significance level
-        pf = jnp.polyfit(critical, jnp.log(sig), 2)
-        p = jnp.exp(jnp.polyval(pf, A2))
+        pf = np.polyfit(critical, np.log(sig), 2)
+        p = np.exp(np.polyval(pf, A2))
 
-    res = Anderson_ksampResult(A2, critical, p)
+    res = (A2, critical, p)
     return res

@@ -1,4 +1,4 @@
-from ._anderson import Anderson_ksampResult, anderson_ksamp
+from ._anderson import anderson_ksamp
 from ._diffusion_nn import diffusion_nn
 from ._dist import cdist, pdist_squareform
 from ._kmeans import KMeansJax
@@ -21,6 +21,5 @@ __all__ = [
     "convert_knn_graph_to_idx",
     "check_square",
     "diffusion_nn",
-    "Anderson_ksampResult",
     "anderson_ksamp",
 ]

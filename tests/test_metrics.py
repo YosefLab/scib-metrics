@@ -79,7 +79,8 @@ def test_ilisi_clisi_knn():
 
 def test_cms():
     X, _, batches = dummy_x_labels_batch(x_is_neighbors_graph=True)
-    scib_metrics.cell_mixing_score(X, batches)
+    score = scib_metrics.cell_mixing_score(X, batches)
+    assert len(score) == X.shape[0]
 
 
 def test_nmi_ari_cluster_labels_kmeans():

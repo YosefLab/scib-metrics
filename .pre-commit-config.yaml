@@ -78,7 +78,7 @@ repos:
             language: fail
             files: '.*\.rej$'
     - repo: https://github.com/nbQA-dev/nbQA
-      rev: 1.6.1
+      rev: 1.6.3
       hooks:
           - id: nbqa-pyupgrade
             args: [--py38-plus]

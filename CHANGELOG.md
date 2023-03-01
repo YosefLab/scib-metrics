@@ -8,10 +8,18 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## 0.2.1 (2022-02-16)
+## 0.3.1 (2022-02-16)
 
+-   Expose chunk size for silhouette ([#82][])
+
+[#82]: https://github.com/YosefLab/scib-metrics/pull/82
+
+## 0.3.0 (2022-02-16)
+
+-   Rename `KmeansJax` to `Kmeans` and fix ++ initialization, use Kmeans as default in benchmarker instead of Leiden ([#81][])
 -   Warn about joblib, add progress bar postfix str ([#80][])
 
+[#81]: https://github.com/YosefLab/scib-metrics/pull/81
 [#80]: https://github.com/YosefLab/scib-metrics/pull/80
 
 ## 0.2.0 (2022-02-02)

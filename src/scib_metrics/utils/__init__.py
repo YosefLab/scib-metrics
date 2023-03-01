@@ -1,6 +1,6 @@
 from ._diffusion_nn import diffusion_nn
 from ._dist import cdist, pdist_squareform
-from ._kmeans import KMeansJax
+from ._kmeans import KMeans
 from ._lisi import compute_simpson_index
 from ._pca import pca
 from ._pcr import principal_component_regression
@@ -12,7 +12,7 @@ __all__ = [
     "cdist",
     "pdist_squareform",
     "get_ndarray",
-    "KMeansJax",
+    "KMeans",
     "pca",
     "principal_component_regression",
     "one_hot",

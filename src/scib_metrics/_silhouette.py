@@ -4,7 +4,7 @@ import pandas as pd
 from scib_metrics.utils import silhouette_samples
 
 
-def silhouette_label(X: np.ndarray, labels: np.ndarray, rescale: bool = True) -> float:
+def silhouette_label(X: np.ndarray, labels: np.ndarray, rescale: bool = True, chunk_size: int = 256) -> float:
     """Average silhouette width (ASW) :cite:p:`luecken2022benchmarking`.
 
     Parameters
@@ -15,18 +15,22 @@ def silhouette_label(X: np.ndarray, labels: np.ndarray, rescale: bool = True) ->
         Array of shape (n_cells,) representing label values
     rescale
         Scale asw into the range [0, 1].
+    chunk_size
+        Size of chunks to process at a time for distance computation.
 
     Returns
     -------
     silhouette score
     """
-    asw = np.mean(silhouette_samples(X, labels))
+    asw = np.mean(silhouette_samples(X, labels, chunk_size=chunk_size))
     if rescale:
         asw = (asw + 1) / 2
     return np.mean(asw)
 
 
-def silhouette_batch(X: np.ndarray, labels: np.ndarray, batch: np.ndarray, rescale: bool = True) -> float:
+def silhouette_batch(
+    X: np.ndarray, labels: np.ndarray, batch: np.ndarray, rescale: bool = True, chunk_size: int = 256
+) -> float:
     """Average silhouette width (ASW) with respect to batch ids within each label :cite:p:`luecken2022benchmarking`.
 
     Parameters
@@ -39,6 +43,8 @@ def silhouette_batch(X: np.ndarray, labels: np.ndarray, batch: np.ndarray, resca
         Array of shape (n_cells,) representing batch values
     rescale
         Scale asw into the range [0, 1]. If True, higher values are better.
+    chunk_size
+        Size of chunks to process at a time for distance computation.
 
     Returns
     -------
@@ -55,7 +61,7 @@ def silhouette_batch(X: np.ndarray, labels: np.ndarray, batch: np.ndarray, resca
         if (n_batches == 1) or (n_batches == X_subset.shape[0]):
             continue
 
-        sil_per_group = silhouette_samples(X_subset, batch_subset)
+        sil_per_group = silhouette_samples(X_subset, batch_subset, chunk_size=chunk_size)
 
         # take only absolute value
         sil_per_group = np.abs(sil_per_group)

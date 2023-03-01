@@ -56,8 +56,8 @@ class BioConservation:
     """
 
     isolated_labels: MetricType = True
-    nmi_ari_cluster_labels_leiden: MetricType = True
-    nmi_ari_cluster_labels_kmeans: MetricType = False
+    nmi_ari_cluster_labels_leiden: MetricType = False
+    nmi_ari_cluster_labels_kmeans: MetricType = True
     silhouette_label: MetricType = True
     clisi_knn: MetricType = True
 

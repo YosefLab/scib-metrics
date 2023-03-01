@@ -61,7 +61,7 @@ scib_metrics.ilisi_knn(...)
     utils.cdist
     utils.pdist_squareform
     utils.silhouette_samples
-    utils.KMeansJax
+    utils.KMeans
     utils.pca
     utils.principal_component_regression
     utils.one_hot

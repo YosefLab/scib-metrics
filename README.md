@@ -44,7 +44,7 @@ pip install scib-metrics
 pip install git+https://github.com/yoseflab/scib-metrics.git@main
 ```
 
-To leverage hardward acceleration (e.g., GPU) please install the apprpriate version of [jax](https://github.com/google/jax) separately. often this can be easier by using conda-distributed versions of jax.
+To leverage hardward acceleration (e.g., GPU) please install the apprpriate version of [jax](https://github.com/google/jax) separately. Often this can be easier by using conda-distributed versions of jax.
 
 ## Release notes
 

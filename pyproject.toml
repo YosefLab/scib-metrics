@@ -94,7 +94,7 @@ testpaths = ["tests"]
 xfail_strict = true
 
 [tool.ruff]
-src = ["."]
+src = ["src"]
 line-length = 119
 target-version = "py38"
 select = [

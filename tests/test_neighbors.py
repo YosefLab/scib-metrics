@@ -1,5 +1,4 @@
 from scib_metrics.nearest_neighbors import jax_approx_min_k
-
 from tests.utils.data import dummy_benchmarker_adata
 
 

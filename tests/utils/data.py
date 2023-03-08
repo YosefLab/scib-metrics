@@ -1,9 +1,8 @@
 import anndata
 import numpy as np
+import scib_metrics
 from scipy.sparse import csr_matrix
 from sklearn.neighbors import NearestNeighbors
-
-import scib_metrics
 
 
 def dummy_x_labels(return_symmetric_positive=False, x_is_neighbors_graph=False):

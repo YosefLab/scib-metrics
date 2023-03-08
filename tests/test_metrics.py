@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
+import scib_metrics
 from harmonypy import compute_lisi as harmonypy_lisi
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist as sp_cdist
@@ -8,7 +9,6 @@ from scipy.spatial.distance import pdist, squareform
 from sklearn.metrics import silhouette_samples as sk_silhouette_samples
 from sklearn.neighbors import NearestNeighbors
 
-import scib_metrics
 from tests.utils.data import dummy_x_labels, dummy_x_labels_batch
 
 scib_metrics.settings.jax_fix_no_kernel_image()

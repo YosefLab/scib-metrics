@@ -3,9 +3,9 @@ from itertools import product
 import jax.numpy as jnp
 import numpy as np
 import pytest
+import scib_metrics
 from sklearn.decomposition import PCA
 
-import scib_metrics
 from tests.utils.sampling import poisson_sample
 
 PCA_PARAMS = list(product([10, 100, 1000], [10, 100, 1000]))

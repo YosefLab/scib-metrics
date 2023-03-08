@@ -1,8 +1,8 @@
 from itertools import product
 
 import pytest
-
 import scib_metrics
+
 from tests.utils.sampling import categorical_sample, normal_sample, poisson_sample
 
 PCR_COMPARISON_PARAMS = list(product([100], [100], [False, True]))

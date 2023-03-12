@@ -1,0 +1,17 @@
+diff a/docs/conf.py b/docs/conf.py	(rejected hunks)
+@@ -87,6 +87,7 @@ source_suffix = {
+ }
+ 
+ intersphinx_mapping = {
++    "python": ("https://docs.python.org/3", None),
+     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
+     "numpy": ("https://numpy.org/doc/stable/", None),
+ }
+@@ -109,6 +110,7 @@ html_title = project_name
+ html_theme_options = {
+     "repository_url": repository_url,
+     "use_repository_button": True,
++    "path_to_docs": "docs/",
+ }
+ 
+ pygments_style = "default"

@@ -10,7 +10,7 @@ from scipy.sparse import csr_matrix
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_array
 
-from .._types import ArrayLike, IntOrKey, NdArray
+from scib_metrics._types import ArrayLike, IntOrKey, NdArray
 
 
 def get_ndarray(x: ArrayDevice) -> np.ndarray:

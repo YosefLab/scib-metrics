@@ -4,7 +4,8 @@ import jax.numpy as jnp
 from chex import dataclass
 from jax import jit
 
-from .._types import NdArray
+from scib_metrics._types import NdArray
+
 from ._utils import get_ndarray
 
 

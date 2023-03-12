@@ -44,13 +44,13 @@ dev = [
     "pre-commit"
 ]
 doc = [
-    "sphinx>=4,<5.3",
-    "sphinx-book-theme",
+    "sphinx>=4",
+    "sphinx-book-theme>=1.0",
     "myst-nb",
     "sphinxcontrib-bibtex>=1.0.0",
     "scanpydoc[typehints]>=0.7.4",
     # For notebooks
-    "ipython!=8.7.0", # code highlighting issue
+    "ipython",
     "ipykernel",
     "sphinx-copybutton",
 ]

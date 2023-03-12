@@ -6,11 +6,11 @@ diff a/docs/extensions/typed_returns.py b/docs/extensions/typed_returns.py	(reje
 +
  import re
 +from collections.abc import Generator, Iterable
- 
+
  from sphinx.application import Sphinx
  from sphinx.ext.napoleon import NumpyDocstring
- 
- 
+
+
 -def _process_return(lines):
 +def _process_return(lines: Iterable[str]) -> Generator[str, None, None]:
      for line in lines:
@@ -21,8 +21,8 @@ diff a/docs/extensions/typed_returns.py b/docs/extensions/typed_returns.py	(reje
              yield f'-{m["param"]} (:class:`~{m["type"]}`)'
          else:
              yield line
- 
- 
+
+
 -def _parse_returns_section(self, section):
 -    lines_raw = list(_process_return(self._dedent(self._consume_to_next_section())))
 -    lines = self._format_block(":returns: ", lines_raw)

@@ -6,7 +6,8 @@ import jax.numpy as jnp
 import numpy as np
 from sklearn.utils import check_array
 
-from .._types import IntOrKey
+from scib_metrics._types import IntOrKey
+
 from ._dist import cdist
 from ._utils import get_ndarray, validate_seed
 

@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 from jax import jit
 
-from .._types import NdArray
+from scib_metrics._types import NdArray
+
 from ._pca import pca
 from ._utils import one_hot
 

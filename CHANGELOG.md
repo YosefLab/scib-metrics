@@ -8,13 +8,27 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## 0.3.1 (2022-02-16)
+## 0.3.2 (2023-03-13)
+
+### Changed
+
+-   Switch to Ruff for linting/formatting ([#87][])
+-   Update cookiecutter template ([#88][])
+
+[#87]: https://github.com/YosefLab/scib-metrics/pull/87
+[#88]: https://github.com/YosefLab/scib-metrics/pull/88
+
+## 0.3.1 (2023-02-16)
+
+### Changed
 
 -   Expose chunk size for silhouette ([#82][])
 
 [#82]: https://github.com/YosefLab/scib-metrics/pull/82
 
-## 0.3.0 (2022-02-16)
+## 0.3.0 (2023-02-16)
+
+### Changed
 
 -   Rename `KmeansJax` to `Kmeans` and fix ++ initialization, use Kmeans as default in benchmarker instead of Leiden ([#81][])
 -   Warn about joblib, add progress bar postfix str ([#80][])
@@ -22,21 +36,30 @@ and this project adheres to [Semantic Versioning][].
 [#81]: https://github.com/YosefLab/scib-metrics/pull/81
 [#80]: https://github.com/YosefLab/scib-metrics/pull/80
 
-## 0.2.0 (2022-02-02)
+## 0.2.0 (2023-02-02)
+
+### Added
 
 -   Allow custom nearest neighbors methods in Benchmarker ([#78][])
 
 [#78]: https://github.com/YosefLab/scib-metrics/pull/78
 
-## 0.1.1 (2022-01-04)
+## 0.1.1 (2023-01-04)
+
+### Added
 
 -   Add new tutorial and fix scalability of lisi ([#71][])
 
 [#71]: https://github.com/YosefLab/scib-metrics/pull/71
 
-## 0.1.0 (2022-01-03)
+## 0.1.0 (2023-01-03)
+
+### Added
 
 -   Add benchmarking pipeline with plotting ([#52][] and [#69][])
+
+### Fixed
+
 -   Fix diffusion distance computation, affecting kbet ([#70][])
 
 [#52]: https://github.com/YosefLab/scib-metrics/pull/52
@@ -44,6 +67,8 @@ and this project adheres to [Semantic Versioning][].
 [#70]: https://github.com/YosefLab/scib-metrics/pull/70
 
 ## 0.0.9 (2022-12-16)
+
+### Added
 
 -   Add kbet ([#60][])
 -   Add graph connectivty metric ([#61][])

@@ -73,7 +73,7 @@ napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = False
 napoleon_use_rtype = True  # having a separate entry generally helps readability
 napoleon_use_param = True
-myst_heading_anchors = 3  # create anchors for h1-h3
+myst_heading_anchors = 6  # create anchors for h1-h6
 myst_enable_extensions = [
     "amsmath",
     "colon_fence",
@@ -127,14 +127,14 @@ git_ref = None
 try:
     git_ref = git("name-rev", "--name-only", "--no-undefined", "HEAD")
     git_ref = re.sub(r"^(remotes/[^/]+|tags)/", "", git_ref)
-except Exception:  # noqa: B902
+except Exception:
     pass
 
 # (if no name found or relative ref, use commit hash instead)
 if not git_ref or re.search(r"[\^~]", git_ref):
     try:
         git_ref = git("rev-parse", "HEAD")
-    except Exception:  # noqa: B902
+    except Exception:
         git_ref = "main"
 
 # https://github.com/DisnakeDev/disnake/blob/7853da70b13fcd2978c39c0b7efa59b34d298186/docs/conf.py#L192
@@ -158,7 +158,7 @@ def linkcode_resolve(domain, info):
 
         path = os.path.relpath(inspect.getsourcefile(obj), start=_project_module_path)  # type: ignore
         src, lineno = inspect.getsourcelines(obj)
-    except Exception:  # noqa: B902
+    except Exception:
         return None
 
     path = f"{path}#L{lineno}-L{lineno + len(src) - 1}"

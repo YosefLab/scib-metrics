@@ -1,5 +1,5 @@
 name: Feature request
-description: Propose a new feature for {{ cookiecutter.project_name }}
+description: Propose a new feature for scib-metrics
 labels: enhancement
 body:
     - type: textarea

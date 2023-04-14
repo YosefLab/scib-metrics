@@ -1,23 +1,23 @@
 {
-    "template": "https://github.com/scverse/cookiecutter-scverse",
-    "commit": "57f6267716826dad73baba46dc3c00fe7262c459",
-    "checkout": "v0.2.0",
-    "context": {
-        "cookiecutter": {
-            "project_name": "scib-metrics",
-            "package_name": "scib_metrics",
-            "project_description": "Accelerated and Python-only scIB metrics",
-            "author_full_name": "Adam Gayoso",
-            "author_email": "adamgayoso@berkeley.edu",
-            "github_user": "adamgayoso",
-            "project_repo": "https://github.com/yoseflab/scib-metrics",
-            "license": "BSD 3-Clause License",
-            "_copy_without_render": [
-                ".github/workflows/**.yaml",
-                "docs/_templates/autosummary/**.rst"
-            ],
-            "_template": "https://github.com/scverse/cookiecutter-scverse"
-        }
-    },
-    "directory": null
+  "template": "https://github.com/scverse/cookiecutter-scverse",
+  "commit": "c21b82bf134f3a0f13db7482d4fb04ca1f562d59",
+  "checkout": "main",
+  "context": {
+    "cookiecutter": {
+      "project_name": "scib-metrics",
+      "package_name": "scib_metrics",
+      "project_description": "Accelerated and Python-only scIB metrics",
+      "author_full_name": "Adam Gayoso",
+      "author_email": "adamgayoso@berkeley.edu",
+      "github_user": "adamgayoso",
+      "project_repo": "https://github.com/yoseflab/scib-metrics",
+      "license": "BSD 3-Clause License",
+      "_copy_without_render": [
+        ".github/workflows/**.yaml",
+        "docs/_templates/autosummary/**.rst"
+      ],
+      "_template": "https://github.com/scverse/cookiecutter-scverse"
+    }
+  },
+  "directory": null
 }

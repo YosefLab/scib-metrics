@@ -144,7 +144,10 @@ ignore = [
 "docs/*" = ["I", "BLE001", "E402"]
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
-"scvi/__init__.py" = ["I"]
+"src/scib_metrics/__init__.py" = ["I"]
+
+[tool.ruff.pydocstyle]
+convention = "numpy"
 
 
 [tool.black]

@@ -38,7 +38,9 @@ jobs:
                       A new version of the [scverse cookiecutter template](https://github.com/scverse/cookiecutter-scverse/releases)
                       got released. This PR adds all new changes to your repository and helps to to stay in sync with
                       the latest best-practice template maintained by the scverse team.
+
                       **If a merge conflict arised, a `.rej` file with the rejected patch is generated. You'll need to
                       manually merge these changes.**
+
                       For more information about the template sync, please refer to the
-                      [template documentation](https://cookiecutter-scverse-instance.readthedocs.io/en/latest/developer_docs.html#automated-template-sync).
+                      [template documentation](https://cookiecutter-scverse-instance.readthedocs.io/en/latest/template_usage.html#automated-template-sync).

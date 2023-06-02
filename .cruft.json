@@ -1,7 +1,7 @@
 {
     "template": "https://github.com/scverse/cookiecutter-scverse",
-    "commit": "c21b82bf134f3a0f13db7482d4fb04ca1f562d59",
-    "checkout": "main",
+    "commit": "1929d97848fd6a62fe2916dec21d6c3de99cd0a2",
+    "checkout": "v0.2.9",
     "context": {
         "cookiecutter": {
             "project_name": "scib-metrics",

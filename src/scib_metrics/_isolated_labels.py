@@ -4,7 +4,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-from ._silhouette import silhouette_label
+from scib_metrics.utils import silhouette_samples
 
 logger = logging.getLogger(__name__)
 
@@ -43,25 +43,16 @@ def isolated_labels(
     scores = {}
     isolated_labels = _get_isolated_labels(labels, batch, iso_threshold)
 
+    silhouette_all = silhouette_samples(X, labels)
+    # Scale into range [0, 1]
+    silhouette_all = (silhouette_all + 1) / 2
+
     for label in isolated_labels:
-        score = _score_isolated_label(X, labels, label)
+        score = np.mean(silhouette_all[labels == label])
         scores[label] = score
     scores = pd.Series(scores)
 
     return scores.mean()
-
-
-def _score_isolated_label(
-    X: np.ndarray,
-    labels: np.ndarray,
-    isolated_label: Union[str, float, int],
-):
-    """Compute label score for a single label."""
-    mask = labels == isolated_label
-    score = silhouette_label(X, mask.astype(np.float32))
-    logging.info(f"{isolated_label}: {score}")
-
-    return score
 
 
 def _get_isolated_labels(labels: np.ndarray, batch: np.ndarray, iso_threshold: float):

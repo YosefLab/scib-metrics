@@ -24,7 +24,7 @@ dependencies = [
     "chex",
     "jax",
     "jaxlib",
-    "numpy!=1.26.0",
+    "numpy",
     "pandas",
     "scipy",
     "scikit-learn",
@@ -35,6 +35,7 @@ dependencies = [
     "matplotlib",
     "plottable",
     "tqdm",
+    "numba>=0.57.1",
 ]
 
 [project.optional-dependencies]

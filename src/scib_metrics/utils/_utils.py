@@ -33,7 +33,7 @@ def one_hot(y: NdArray, n_classes: Optional[int] = None) -> jnp.ndarray:
     one_hot: jnp.ndarray
         Array of shape (n_cells, n_classes).
     """
-    n_classes = n_classes or jnp.max(y) + 1
+    n_classes = n_classes or int(jax.device_get(jnp.max(y))) + 1
     return nn.one_hot(jnp.ravel(y), n_classes)
 
 

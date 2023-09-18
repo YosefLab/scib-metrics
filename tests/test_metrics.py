@@ -107,10 +107,10 @@ def test_isolated_labels():
     X, labels, batch = dummy_x_labels_batch()
     pred = scib_metrics.isolated_labels(X, labels, batch)
     adata = anndata.AnnData(X)
-    adata.obsm['embed'] = X
-    adata.obs['batch'] = batch
-    adata.obs['labels'] = labels
-    target = isolated_labels_asw(adata, 'labels', 'batch', 'embed')
+    adata.obsm["embed"] = X
+    adata.obs["batch"] = batch
+    adata.obs["labels"] = labels
+    target = isolated_labels_asw(adata, "labels", "batch", "embed")
     np.testing.assert_allclose(np.array(pred), np.array(target))
 
 

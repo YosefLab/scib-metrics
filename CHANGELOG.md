@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.4.0 (2023-09-19)
+
+-  Drop Python 3.8 ([#107][])
+-  Fix jax one-hot error ([#107][])
+
+[#107]: https://github.com/YosefLab/scib-metrics/pull/107
+
+
 ## 0.3.3 (2023-03-29)
 
 ### Fixed

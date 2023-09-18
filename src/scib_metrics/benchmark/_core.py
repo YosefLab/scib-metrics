@@ -3,7 +3,7 @@ import warnings
 from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -20,7 +20,7 @@ from tqdm import tqdm
 import scib_metrics
 from scib_metrics.nearest_neighbors import NeighborsOutput, pynndescent
 
-Kwargs = Dict[str, Any]
+Kwargs = dict[str, Any]
 MetricType = Union[bool, Kwargs]
 
 _LABELS = "labels"
@@ -131,7 +131,7 @@ class Benchmarker:
         adata: AnnData,
         batch_key: str,
         label_key: str,
-        embedding_obsm_keys: List[str],
+        embedding_obsm_keys: list[str],
         bio_conservation_metrics: Optional[BioConservation] = None,
         batch_correction_metrics: Optional[BatchCorrection] = None,
         pre_integrated_embedding_obsm_key: Optional[str] = None,

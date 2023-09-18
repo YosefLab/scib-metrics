@@ -1,5 +1,5 @@
 import warnings
-from typing import Optional, Tuple
+from typing import Optional
 
 import jax
 import jax.numpy as jnp
@@ -48,7 +48,7 @@ def check_square(X: ArrayLike):
         raise ValueError("X must be a square matrix")
 
 
-def convert_knn_graph_to_idx(X: csr_matrix) -> Tuple[np.ndarray, np.ndarray]:
+def convert_knn_graph_to_idx(X: csr_matrix) -> tuple[np.ndarray, np.ndarray]:
     """Convert a kNN graph to indices and distances."""
     check_array(X, accept_sparse="csr")
     check_square(X)

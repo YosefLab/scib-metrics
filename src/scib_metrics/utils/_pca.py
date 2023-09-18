@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional
 
 import jax.numpy as jnp
 from chex import dataclass
@@ -128,7 +128,7 @@ def pca(
 @jit
 def _pca(
     X: NdArray,
-) -> Tuple[NdArray, NdArray, NdArray, NdArray, NdArray]:
+) -> tuple[NdArray, NdArray, NdArray, NdArray, NdArray]:
     """Principal component analysis.
 
     Parameters

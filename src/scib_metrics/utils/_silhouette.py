@@ -1,5 +1,4 @@
 from functools import partial
-from typing import Tuple
 
 import jax
 import jax.numpy as jnp
@@ -13,7 +12,7 @@ from ._utils import get_ndarray
 @jax.jit
 def _silhouette_reduce(
     D_chunk: jnp.ndarray, start: int, labels: jnp.ndarray, label_freqs: jnp.ndarray
-) -> Tuple[jnp.ndarray, jnp.ndarray]:
+) -> tuple[jnp.ndarray, jnp.ndarray]:
     """Accumulate silhouette statistics for vertical chunk of X.
 
     Follows scikit-learn implementation.

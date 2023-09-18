@@ -1,6 +1,5 @@
 import logging
 import warnings
-from typing import Dict, Tuple
 
 import numpy as np
 import scanpy as sc
@@ -30,14 +29,14 @@ def _compute_nmi_ari_cluster_labels(
     X: np.ndarray,
     labels: np.ndarray,
     resolution: float = 1.0,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     labels_pred = _compute_clustering_leiden(X, resolution)
     nmi = normalized_mutual_info_score(labels, labels_pred, average_method="arithmetic")
     ari = adjusted_rand_score(labels, labels_pred)
     return nmi, ari
 
 
-def nmi_ari_cluster_labels_kmeans(X: np.ndarray, labels: np.ndarray) -> Dict[str, float]:
+def nmi_ari_cluster_labels_kmeans(X: np.ndarray, labels: np.ndarray) -> dict[str, float]:
     """Compute nmi and ari between k-means clusters and labels.
 
     This deviates from the original implementation in scib by using k-means
@@ -69,7 +68,7 @@ def nmi_ari_cluster_labels_kmeans(X: np.ndarray, labels: np.ndarray) -> Dict[str
 
 def nmi_ari_cluster_labels_leiden(
     X: spmatrix, labels: np.ndarray, optimize_resolution: bool = True, resolution: float = 1.0, n_jobs: int = 1
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Compute nmi and ari between leiden clusters and labels.
 
     This deviates from the original implementation in scib by using leiden instead of

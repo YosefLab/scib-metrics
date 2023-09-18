@@ -141,7 +141,7 @@ ignore = [
 ]
 
 [tool.ruff.per-file-ignores]
-"docs/*" = ["I", "BLE001", "E402"]
+"docs/*" = ["I", "BLE001", "E402", "B018"]
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
 "src/scib_metrics/__init__.py" = ["I"]

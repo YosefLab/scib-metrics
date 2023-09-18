@@ -35,7 +35,6 @@ dependencies = [
     "matplotlib",
     "plottable",
     "tqdm",
-    "numba>=0.57.1",
 ]
 
 [project.optional-dependencies]
@@ -64,6 +63,7 @@ test = [
     # For vscode Python extension testing
     "flake8",
     "black",
+    "numba>=0.57.1",
 ]
 parallel = [
     "joblib"

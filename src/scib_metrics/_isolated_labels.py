@@ -13,6 +13,7 @@ def isolated_labels(
     X: np.ndarray,
     labels: np.ndarray,
     batch: np.ndarray,
+    rescale: bool = True
     iso_threshold: Optional[int] = None,
 ) -> float:
     """Isolated label score :cite:p:`luecken2022benchmarking`.
@@ -31,6 +32,8 @@ def isolated_labels(
         Array of shape (n_cells,) representing label values
     batch
         Array of shape (n_cells,) representing batch values
+    rescale
+        Scale asw into the range [0, 1].
     iso_threshold
         Max number of batches per label for label to be considered as
         isolated, if integer. If `None`, considers minimum number of
@@ -44,8 +47,8 @@ def isolated_labels(
     isolated_labels = _get_isolated_labels(labels, batch, iso_threshold)
 
     silhouette_all = silhouette_samples(X, labels)
-    # Scale into range [0, 1]
-    silhouette_all = (silhouette_all + 1) / 2
+    if rescale:
+        silhouette_all = (silhouette_all + 1) / 2
 
     for label in isolated_labels:
         score = np.mean(silhouette_all[labels == label])

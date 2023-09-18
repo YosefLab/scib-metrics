@@ -12,8 +12,10 @@ and this project adheres to [Semantic Versioning][].
 
 -   Drop Python 3.8 ([#107][])
 -   Fix jax one-hot error ([#107][])
+-   Update isolated labels to use newest scib methodology ([#108][])
 
 [#107]: https://github.com/YosefLab/scib-metrics/pull/107
+[#108]: https://github.com/YosefLab/scib-metrics/pull/108
 
 ## 0.3.3 (2023-03-29)
 

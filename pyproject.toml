@@ -96,7 +96,6 @@ xfail_strict = true
 [tool.ruff]
 src = ["src"]
 line-length = 119
-target-version = "py38"
 select = [
     "F",  # Errors detected by Pyflakes
     "E",  # Error detected by Pycodestyle
@@ -152,7 +151,6 @@ convention = "numpy"
 
 [tool.black]
 line-length = 120
-target-version = ['py38']
 include = '\.pyi?$'
 exclude = '''
 (

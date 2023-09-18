@@ -138,11 +138,13 @@ ignore = [
     "D213",
     # Missing argument description in the docstring TODO: enable
     "D417",
+    # No explicit stacklevel argument
+    "B028",
 ]
 
 [tool.ruff.per-file-ignores]
 "docs/*" = ["I", "BLE001", "E402"]
-"tests/*" = ["D"]
+"tests/*" = ["D", "B018"]
 "*/__init__.py" = ["F401"]
 "src/scib_metrics/__init__.py" = ["I"]
 

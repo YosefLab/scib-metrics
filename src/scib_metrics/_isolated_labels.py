@@ -13,7 +13,7 @@ def isolated_labels(
     X: np.ndarray,
     labels: np.ndarray,
     batch: np.ndarray,
-    rescale: bool = True
+    rescale: bool = True,
     iso_threshold: Optional[int] = None,
 ) -> float:
     """Isolated label score :cite:p:`luecken2022benchmarking`.

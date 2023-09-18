@@ -1,10 +1,10 @@
 import logging
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import pandas as pd
 
-from ._silhouette import silhouette_label
+from scib_metrics.utils import silhouette_samples
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,7 @@ def isolated_labels(
     X: np.ndarray,
     labels: np.ndarray,
     batch: np.ndarray,
+    rescale: bool = True,
     iso_threshold: Optional[int] = None,
 ) -> float:
     """Isolated label score :cite:p:`luecken2022benchmarking`.
@@ -31,6 +32,8 @@ def isolated_labels(
         Array of shape (n_cells,) representing label values
     batch
         Array of shape (n_cells,) representing batch values
+    rescale
+        Scale asw into the range [0, 1].
     iso_threshold
         Max number of batches per label for label to be considered as
         isolated, if integer. If `None`, considers minimum number of
@@ -43,25 +46,16 @@ def isolated_labels(
     scores = {}
     isolated_labels = _get_isolated_labels(labels, batch, iso_threshold)
 
+    silhouette_all = silhouette_samples(X, labels)
+    if rescale:
+        silhouette_all = (silhouette_all + 1) / 2
+
     for label in isolated_labels:
-        score = _score_isolated_label(X, labels, label)
+        score = np.mean(silhouette_all[labels == label])
         scores[label] = score
     scores = pd.Series(scores)
 
     return scores.mean()
-
-
-def _score_isolated_label(
-    X: np.ndarray,
-    labels: np.ndarray,
-    isolated_label: Union[str, float, int],
-):
-    """Compute label score for a single label."""
-    mask = labels == isolated_label
-    score = silhouette_label(X, mask.astype(np.float32))
-    logging.info(f"{isolated_label}: {score}")
-
-    return score
 
 
 def _get_isolated_labels(labels: np.ndarray, batch: np.ndarray, iso_threshold: float):

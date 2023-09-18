@@ -1,7 +1,9 @@
+import anndata
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 from harmonypy import compute_lisi as harmonypy_lisi
+from scib.metrics import isolated_labels_asw
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist as sp_cdist
 from scipy.spatial.distance import pdist, squareform
@@ -103,7 +105,13 @@ def test_nmi_ari_cluster_labels_leiden_single_resolution():
 
 def test_isolated_labels():
     X, labels, batch = dummy_x_labels_batch()
-    scib_metrics.isolated_labels(X, labels, batch)
+    pred = scib_metrics.isolated_labels(X, labels, batch)
+    adata = anndata.AnnData(X)
+    adata.obsm["embed"] = X
+    adata.obs["batch"] = batch
+    adata.obs["labels"] = labels
+    target = isolated_labels_asw(adata, "labels", "batch", "embed")
+    np.testing.assert_allclose(np.array(pred), np.array(target))
 
 
 def test_kmeans():

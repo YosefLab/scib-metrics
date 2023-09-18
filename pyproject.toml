@@ -58,7 +58,7 @@ doc = [
 test = [
     "pytest",
     "pytest-cov",
-    "scib",
+    "scib>=1.1.4",
     "harmonypy",
     "joblib",
     # For vscode Python extension testing

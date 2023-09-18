@@ -10,11 +10,10 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.4.0 (2023-09-19)
 
--  Drop Python 3.8 ([#107][])
--  Fix jax one-hot error ([#107][])
+-   Drop Python 3.8 ([#107][])
+-   Fix jax one-hot error ([#107][])
 
 [#107]: https://github.com/YosefLab/scib-metrics/pull/107
-
 
 ## 0.3.3 (2023-03-29)
 

@@ -28,7 +28,7 @@ dependencies = [
     "pandas",
     "scipy",
     "scikit-learn",
-    "scanpy",
+    "scanpy>=1.9",
     "rich",
     "pynndescent",
     "igraph>0.9.0",

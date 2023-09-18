@@ -111,6 +111,7 @@ def test_isolated_labels():
     adata.obs['batch'] = batch
     adata.obs['labels'] = labels
     target = isolated_labels_asw(adata, 'labels', 'batch', 'embed')
+    np.testing.assert_allclose(np.array(pred), np.array(target))
 
 
 def test_kmeans():

@@ -53,6 +53,7 @@ doc = [
     "ipython",
     "ipykernel",
     "sphinx-copybutton",
+    "numba>=0.57.1",
 ]
 test = [
     "pytest",

@@ -1,6 +1,6 @@
 import logging
 from functools import partial
-from typing import Tuple, Union
+from typing import Union
 
 import chex
 import jax
@@ -102,7 +102,7 @@ def kbet_per_label(
     alpha: float = 0.05,
     diffusion_n_comps: int = 100,
     return_df: bool = False,
-) -> Union[float, Tuple[float, pd.DataFrame]]:
+) -> Union[float, tuple[float, pd.DataFrame]]:
     """Compute kBET score per cell type label as in :cite:p:`luecken2022benchmarking`.
 
     This approximates the method used in the original scib package. Notably, the underlying

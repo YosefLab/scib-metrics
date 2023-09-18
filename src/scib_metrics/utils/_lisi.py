@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Tuple, Union
+from typing import Union
 
 import chex
 import jax
@@ -23,7 +23,7 @@ class _NeighborProbabilityState:
 
 
 @jax.jit
-def _Hbeta(knn_dists_row: jnp.ndarray, beta: float) -> Tuple[jnp.ndarray, jnp.ndarray]:
+def _Hbeta(knn_dists_row: jnp.ndarray, beta: float) -> tuple[jnp.ndarray, jnp.ndarray]:
     P = jnp.exp(-knn_dists_row * beta)
     sumP = jnp.nansum(P)
     H = jnp.where(sumP == 0, 0, jnp.log(sumP) + beta * jnp.nansum(knn_dists_row * P) / sumP)
@@ -34,7 +34,7 @@ def _Hbeta(knn_dists_row: jnp.ndarray, beta: float) -> Tuple[jnp.ndarray, jnp.nd
 @jax.jit
 def _get_neighbor_probability(
     knn_dists_row: jnp.ndarray, perplexity: float, tol: float
-) -> Tuple[jnp.ndarray, jnp.ndarray]:
+) -> tuple[jnp.ndarray, jnp.ndarray]:
     beta = 1
     betamin = -jnp.inf
     betamax = jnp.inf

@@ -1,5 +1,5 @@
 import warnings
-from typing import Optional, Tuple
+from typing import Optional
 
 import jax
 import jax.numpy as jnp
@@ -33,7 +33,7 @@ def one_hot(y: NdArray, n_classes: Optional[int] = None) -> jnp.ndarray:
     one_hot: jnp.ndarray
         Array of shape (n_cells, n_classes).
     """
-    n_classes = n_classes or jnp.max(y) + 1
+    n_classes = n_classes or int(jax.device_get(jnp.max(y))) + 1
     return nn.one_hot(jnp.ravel(y), n_classes)
 
 
@@ -48,7 +48,7 @@ def check_square(X: ArrayLike):
         raise ValueError("X must be a square matrix")
 
 
-def convert_knn_graph_to_idx(X: csr_matrix) -> Tuple[np.ndarray, np.ndarray]:
+def convert_knn_graph_to_idx(X: csr_matrix) -> tuple[np.ndarray, np.ndarray]:
     """Convert a kNN graph to indices and distances."""
     check_array(X, accept_sparse="csr")
     check_square(X)

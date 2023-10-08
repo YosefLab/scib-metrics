@@ -12,10 +12,17 @@ from ._dist import cdist
 from ._utils import get_ndarray, validate_seed
 
 
+def _tolerance(X: jnp.ndarray, tol: float) -> float:
+    """Return a tolerance which is dependent on the dataset."""
+    variances = np.var(X, axis=0)
+    return np.mean(variances) * tol
+
+
 def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
     """Initialize cluster centroids randomly."""
     n_obs = X.shape[0]
-    indices = jax.random.choice(key, n_obs, (n_clusters,), replace=False)
+    key, subkey = jax.random.split(key)
+    indices = jax.random.choice(subkey, n_obs, (n_clusters,), replace=False)
     initial_state = X[indices]
     return initial_state
 
@@ -53,13 +60,14 @@ def _initialize_plus_plus(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyAr
         return state, state["centroid"]
 
     _, centroids = jax.lax.scan(_step, initial_state, jnp.arange(n_clusters - 1))
+    centroids = jnp.concatenate([initial_centroid[jnp.newaxis, :], centroids])
     return centroids
 
 
 @jax.jit
 def _get_dist_labels(X: jnp.ndarray, centroids: jnp.ndarray) -> jnp.ndarray:
     """Get the distance and labels for each observation."""
-    dist = cdist(X, centroids)
+    dist = jnp.square(cdist(X, centroids))
     labels = jnp.argmin(dist, axis=1)
     return dist, labels
 
@@ -94,7 +102,7 @@ class KMeans:
         self,
         n_clusters: int = 8,
         init: Literal["k-means++", "random"] = "k-means++",
-        n_init: int = 10,
+        n_init: int = 1,
         max_iter: int = 300,
         tol: float = 1e-4,
         seed: IntOrKey = 0,
@@ -102,7 +110,7 @@ class KMeans:
         self.n_clusters = n_clusters
         self.n_init = n_init
         self.max_iter = max_iter
-        self.tol = tol
+        self.tol_scale = tol
         self.seed: jax.random.KeyArray = validate_seed(seed)
 
         if init not in ["k-means++", "random"]:
@@ -115,6 +123,7 @@ class KMeans:
     def fit(self, X: np.ndarray):
         """Fit the model to the data."""
         X = check_array(X, dtype=np.float32, order="C")
+        self.tol = _tolerance(X, self.tol_scale)
         # Subtract mean for numerical accuracy
         mean = X.mean(axis=0)
         X -= mean
@@ -159,19 +168,22 @@ class KMeans:
                 )
                 / counts
             )
-            new_inertia = jnp.mean(jnp.min(dist, axis=1))
+            new_inertia = jnp.sum(jnp.min(dist, axis=1))
             n_iter = n_iter + 1
             return new_centroids, new_inertia, old_inertia, n_iter
 
         def _kmeans_convergence(state):
             _, new_inertia, old_inertia, n_iter = state
-            cond1 = jnp.abs(old_inertia - new_inertia) < self.tol
-            cond2 = n_iter > self.max_iter
+            cond1 = jnp.abs(old_inertia - new_inertia) > self.tol
+            cond2 = n_iter < self.max_iter
             return jnp.logical_or(cond1, cond2)[0]
 
         centroids = self._initialize(X, self.n_clusters, key)
         # centroids, new_inertia, old_inertia, n_iter
         state = (centroids, jnp.inf, jnp.inf, jnp.array([0.0]))
-        state = _kmeans_step(state)
         state = jax.lax.while_loop(_kmeans_convergence, _kmeans_step, state)
-        return state[0], state[1]
+        # Compute final inertia
+        centroids = state[0]
+        dist, _ = _get_dist_labels(X, centroids)
+        final_intertia = jnp.sum(jnp.min(dist, axis=1))
+        return centroids, final_intertia

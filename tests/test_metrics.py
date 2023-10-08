@@ -132,8 +132,8 @@ def test_kmeans():
     np.testing.assert_allclose(sk_inertia, jax_inertia, atol=4e-2)
 
     # Reorder cluster centroids between methods and measure accuracy
-    k_means_cluster_centers = k_means.cluster_centroids_
-    order = pairwise_distances_argmin(k_means.cluster_centroids_, skmeans.cluster_centers_)
+    k_means_cluster_centers = kmeans.cluster_centroids_
+    order = pairwise_distances_argmin(kmeans.cluster_centroids_, skmeans.cluster_centers_)
     sk_means_cluster_centers = skmeans.cluster_centers_[order]
 
     k_means_labels = pairwise_distances_argmin(X, k_means_cluster_centers)

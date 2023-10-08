@@ -145,8 +145,7 @@ class KMeans:
     @partial(jax.jit, static_argnums=(0,))
     def _kmeans_full_run(self, X: jnp.ndarray, key: jnp.ndarray) -> jnp.ndarray:
         def _kmeans_step(state):
-            old_inertia = state[1]
-            centroids, _, _, n_iter = state
+            centroids, old_inertia, _, n_iter = state
             # TODO(adamgayoso): Efficiently compute argmin and min simultaneously.
             dist, new_labels = _get_dist_labels(X, centroids)
             # From https://colab.research.google.com/drive/1AwS4haUx6swF82w3nXr6QKhajdF8aSvA?usp=sharing

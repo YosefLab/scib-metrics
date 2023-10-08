@@ -7,9 +7,9 @@ from scib.metrics import isolated_labels_asw
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist as sp_cdist
 from scipy.spatial.distance import pdist, squareform
-from sklearn.metrics import silhouette_samples as sk_silhouette_samples
-from sklearn.datasets import make_blobs
 from sklearn.cluster import KMeans as SKMeans
+from sklearn.datasets import make_blobs
+from sklearn.metrics import silhouette_samples as sk_silhouette_samples
 from sklearn.neighbors import NearestNeighbors
 
 import scib_metrics
@@ -118,7 +118,7 @@ def test_isolated_labels():
 
 def test_kmeans():
     centers = [[1, 1], [-1, -1], [1, -1]]
-    n_clusters = len(centers)
+    len(centers)
     X, labels_true = make_blobs(n_samples=3000, centers=centers, cluster_std=0.7)
     kmeans = scib_metrics.utils.KMeans(n_clusters=3)
     kmeans.fit(X)

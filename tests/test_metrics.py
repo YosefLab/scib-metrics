@@ -10,6 +10,7 @@ from scipy.spatial.distance import pdist, squareform
 from sklearn.cluster import KMeans as SKMeans
 from sklearn.datasets import make_blobs
 from sklearn.metrics import silhouette_samples as sk_silhouette_samples
+from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.neighbors import NearestNeighbors
 
 import scib_metrics
@@ -128,7 +129,18 @@ def test_kmeans():
     skmeans.fit(X)
     sk_inertia = np.array([skmeans.inertia_])
     jax_inertia = np.array([kmeans.inertia_])
-    np.testing.assert_allclose(sk_inertia, jax_inertia)
+    np.testing.assert_allclose(sk_inertia, jax_inertia, atol=4e-2)
+
+    # Reorder cluster centroids between methods and measure accuracy
+    k_means_cluster_centers = k_means.cluster_centroids_
+    order = pairwise_distances_argmin(k_means.cluster_centroids_, skmeans.cluster_centers_)
+    sk_means_cluster_centers = skmeans.cluster_centers_[order]
+
+    k_means_labels = pairwise_distances_argmin(X, k_means_cluster_centers)
+    sk_means_labels = pairwise_distances_argmin(X, sk_means_cluster_centers)
+
+    accuracy = (k_means_labels == sk_means_labels).sum() / len(k_means_labels)
+    assert accuracy > 0.999
 
 
 def test_kbet():

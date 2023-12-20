@@ -2,6 +2,7 @@ import logging
 from importlib.metadata import version
 
 from . import nearest_neighbors, utils
+from ._cms import cell_mixing_score
 from ._graph_connectivity import graph_connectivity
 from ._isolated_labels import isolated_labels
 from ._kbet import kbet, kbet_per_label
@@ -26,6 +27,7 @@ __all__ = [
     "kbet",
     "kbet_per_label",
     "graph_connectivity",
+    "cell_mixing_score",
 ]
 
 __version__ = version("scib-metrics")

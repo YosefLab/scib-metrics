@@ -35,6 +35,7 @@ dependencies = [
     "matplotlib",
     "plottable",
     "tqdm",
+    "numba",
 ]
 
 [project.optional-dependencies]

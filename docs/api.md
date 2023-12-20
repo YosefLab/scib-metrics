@@ -69,6 +69,7 @@ scib_metrics.ilisi_knn(...)
     utils.convert_knn_graph_to_idx
     utils.check_square
     utils.diffusion_nn
+    utils.anderson_ksamp
 ```
 
 ### Nearest neighbors

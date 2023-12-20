@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import numpy as np
 from chex import ArrayDevice
 from jax import nn
-from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix, csr_matrix
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_array
 
@@ -63,3 +63,52 @@ def convert_knn_graph_to_idx(X: csr_matrix) -> tuple[np.ndarray, np.ndarray]:
         nn_obj = NearestNeighbors(n_neighbors=n_neighbors, metric="precomputed").fit(X)
         kneighbors = nn_obj.kneighbors(X)
     return kneighbors
+
+
+def compute_connectivities_umap(
+    knn_indices,
+    knn_dists,
+    n_obs,
+    n_neighbors,
+    set_op_mix_ratio=1.0,
+    local_connectivity=1.0,
+):
+    """Sped up version of sc.neighbors._compute_connectivities_umap."""
+    with warnings.catch_warnings():
+        # umap 0.5.0
+        warnings.filterwarnings("ignore", message=r"Tensorflow not installed")
+        from umap.umap_ import fuzzy_simplicial_set
+
+    X = coo_matrix(([], ([], [])), shape=(n_obs, 1))
+    connectivities = fuzzy_simplicial_set(
+        X,
+        n_neighbors,
+        None,
+        None,
+        knn_indices=knn_indices,
+        knn_dists=knn_dists,
+        set_op_mix_ratio=set_op_mix_ratio,
+        local_connectivity=local_connectivity,
+    )
+
+    if isinstance(connectivities, tuple):
+        # In umap-learn 0.4, this returns (result, sigmas, rhos)
+        connectivities = connectivities[0]
+
+    n_samples = knn_indices.shape[0]
+    distances = knn_dists.ravel()
+    indices = knn_indices.ravel()
+
+    # Check for self-connections
+    self_connections = not np.all(knn_indices != np.arange(n_samples)[:, None])
+
+    # Efficient creation of row pointer
+    rowptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
+
+    # Create CSR matrix
+    dist_sparse_csr = csr_matrix((distances, indices, rowptr), shape=(n_samples, n_samples))
+
+    # Set diagonal to zero if self-connections exist
+    if self_connections:
+        dist_sparse_csr.setdiag(0.0)
+    return dist_sparse_csr, connectivities.tocsr()

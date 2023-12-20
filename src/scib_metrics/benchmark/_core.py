@@ -19,6 +19,7 @@ from tqdm import tqdm
 
 import scib_metrics
 from scib_metrics.nearest_neighbors import NeighborsOutput, pynndescent
+from scib_metrics.utils._utils import compute_connectivities_umap
 
 Kwargs = dict[str, Any]
 MetricType = Union[bool, Kwargs]
@@ -190,7 +191,7 @@ class Benchmarker:
                 )
             indices, distances = neigh_output.indices, neigh_output.distances
             for n in self._neighbor_values:
-                sp_distances, sp_conns = sc.neighbors._compute_connectivities_umap(
+                sp_distances, sp_conns = compute_connectivities_umap(
                     indices[:, :n], distances[:, :n], ad.n_obs, n_neighbors=n
                 )
                 ad.obsp[f"{n}_connectivities"] = sp_conns

@@ -49,7 +49,7 @@ class NeighborsResults:
         return csr_matrix((self.distances.ravel(), self.indices.ravel(), rowptr), shape=(n_samples, n_samples))
 
     @cached_property
-    def knn_graph_connectivities(self) -> csr_matrix:
+    def knn_graph_connectivities(self) -> coo_matrix:
         """Compute connectivities using the UMAP approach.
 
         This function computes connectivities (similarities) from distances

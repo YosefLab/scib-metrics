@@ -25,15 +25,17 @@ def lisi_knn(X: NeighborsResults, labels: np.ndarray, perplexity: float = None) 
         Array of shape (n_cells,) with the LISI score for each cell.
     """
     labels = np.asarray(pd.Categorical(labels).codes)
-    # Drop self edge
-    knn_dists, knn_idx = X.distances[:, 1:], X.indices[:, 1:]
+    knn_dists, knn_idx = X.distances, X.indices
+    row_idx = np.arange(X.n_samples)[:, np.newaxis]
 
     if perplexity is None:
         perplexity = np.floor(knn_idx.shape[1] / 3)
 
     n_labels = len(np.unique(labels))
 
-    simpson = compute_simpson_index(knn_dists, knn_idx, labels, n_labels, perplexity=perplexity)
+    simpson = compute_simpson_index(
+        knn_dists=knn_dists, knn_idx=knn_idx, row_idx=row_idx, labels=labels, n_labels=n_labels, perplexity=perplexity
+    )
     return 1 / simpson
 
 

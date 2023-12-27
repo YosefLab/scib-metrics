@@ -4,7 +4,6 @@ from functools import cached_property
 import chex
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
-from sklearn.neighbors import NearestNeighbors
 from umap.umap_ import fuzzy_simplicial_set
 
 
@@ -18,7 +17,8 @@ class NeighborsResults:
         Array of distances to the nearest neighbors.
     indices : np.ndarray
         Array of indices of the nearest neighbors. Self should always
-        be included here.
+        be included here; however, some approximate algorithms may not return
+        the self edge.
     """
 
     indices: np.ndarray
@@ -26,13 +26,6 @@ class NeighborsResults:
 
     def __post_init__(self):
         chex.assert_equal_shape([self.indices, self.distances])
-        # Guarantee that the first neighbor is self.
-        # This is a simple and lightweight way to ensure this.
-        nn_obj = NearestNeighbors(n_neighbors=self.n_neighbors, metric="precomputed").fit(self.knn_graph_distances)
-        # When X=None, the query is not considered its own neighbor so we can concatenate the self edge manually.
-        distances_non_self, indices_non_self = nn_obj.kneighbors()
-        self.distances = np.concatenate([np.zeros((self.n_samples, 1)), distances_non_self], axis=-1)
-        self.indices = np.concatenate([np.arange(self.n_samples)[:, np.newaxis], indices_non_self], axis=-1)
 
     @property
     def n_samples(self):

@@ -85,6 +85,7 @@ def _compute_simpson_index_cell(
 def compute_simpson_index(
     knn_dists: NdArray,
     knn_idx: NdArray,
+    row_idx: NdArray,
     labels: NdArray,
     n_labels: int,
     perplexity: float = 30,
@@ -98,6 +99,8 @@ def compute_simpson_index(
         KNN distances of size (n_cells, n_neighbors).
     knn_idx
         KNN indices of size (n_cells, n_neighbors) corresponding to distances.
+    row_idx
+        Idx of each row (n_cells, 1).
     labels
         Cell labels of size (n_cells,).
     n_labels
@@ -115,7 +118,10 @@ def compute_simpson_index(
     knn_dists = jnp.array(knn_dists)
     knn_idx = jnp.array(knn_idx)
     labels = jnp.array(labels)
+    row_idx = jnp.array(row_idx)
     knn_labels = labels[knn_idx]
+    # Set self edges to infinity so they are not considered.
+    knn_dists = jnp.where(knn_idx != row_idx, knn_dists, jnp.inf)
     simpson_fn = partial(_compute_simpson_index_cell, n_batches=n_labels, perplexity=perplexity, tol=tol)
     out = jax.vmap(simpson_fn)(knn_dists, knn_labels)
     return get_ndarray(out)

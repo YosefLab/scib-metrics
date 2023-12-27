@@ -189,7 +189,7 @@ class Benchmarker:
                     ad.X, n_neighbors=max(self._neighbor_values), random_state=0, n_jobs=self._n_jobs
                 )
             for n in self._neighbor_values:
-                ad.uns[f"{n}_neighbor_res"] = neigh_result
+                ad.uns[f"{n}_neighbor_res"] = neigh_result.subset_neighbors(n=n)
 
         self._prepared = True
 

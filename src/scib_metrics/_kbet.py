@@ -165,7 +165,7 @@ def kbet_per_label(
             if n_comp == 1:  # a single component to compute kBET on
                 try:
                     diffusion_n_comps = np.min([diffusion_n_comps, n_obs - 1])
-                    nn_graph_sub = diffusion_nn(conn_graph, k=k0, n_comps=diffusion_n_comps).astype("float")
+                    nn_graph_sub = diffusion_nn(conn_graph, k=k0, n_comps=diffusion_n_comps)
                     # call kBET
                     score, _, _ = kbet(
                         nn_graph_sub,
@@ -191,9 +191,7 @@ def kbet_per_label(
 
                     try:
                         diffusion_n_comps = np.min([diffusion_n_comps, conn_graph_sub_sub_sub.shape[0] - 1])
-                        nn_results_sub_sub = diffusion_nn(
-                            conn_graph_sub_sub_sub, k=k0, n_comps=diffusion_n_comps
-                        ).astype("float")
+                        nn_results_sub_sub = diffusion_nn(conn_graph_sub_sub_sub, k=k0, n_comps=diffusion_n_comps)
                         # call kBET
                         score, _, _ = kbet(
                             nn_results_sub_sub,

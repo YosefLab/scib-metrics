@@ -1,13 +1,14 @@
 import logging
 import warnings
 
+import igraph
 import numpy as np
-import scanpy as sc
 from scipy.sparse import spmatrix
 from sklearn.metrics.cluster import adjusted_rand_score, normalized_mutual_info_score
 from sklearn.utils import check_array
 
-from .utils import KMeans, check_square
+from .nearest_neighbors import NeighborsResults
+from .utils import KMeans
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +20,15 @@ def _compute_clustering_kmeans(X: np.ndarray, n_clusters: int) -> np.ndarray:
 
 
 def _compute_clustering_leiden(connectivity_graph: spmatrix, resolution: float) -> np.ndarray:
-    g = sc._utils.get_igraph_from_adjacency(connectivity_graph)
+    # The connectivity graph with the umap method is symmetric
+    g = igraph.Graph.Weighted_Adjacency(connectivity_graph, mode="undirected")
     clustering = g.community_leiden(objective_function="modularity", weights="weight", resolution_parameter=resolution)
     clusters = clustering.membership
     return np.asarray(clusters)
 
 
 def _compute_nmi_ari_cluster_labels(
-    X: np.ndarray,
+    X: spmatrix,
     labels: np.ndarray,
     resolution: float = 1.0,
 ) -> tuple[float, float]:
@@ -67,7 +69,7 @@ def nmi_ari_cluster_labels_kmeans(X: np.ndarray, labels: np.ndarray) -> dict[str
 
 
 def nmi_ari_cluster_labels_leiden(
-    X: spmatrix, labels: np.ndarray, optimize_resolution: bool = True, resolution: float = 1.0, n_jobs: int = 1
+    X: NeighborsResults, labels: np.ndarray, optimize_resolution: bool = True, resolution: float = 1.0, n_jobs: int = 1
 ) -> dict[str, float]:
     """Compute nmi and ari between leiden clusters and labels.
 
@@ -78,9 +80,7 @@ def nmi_ari_cluster_labels_leiden(
     Parameters
     ----------
     X
-        Array of shape (n_cells, n_cells) representing a connectivity graph.
-        Values should represent weights between pairs of neighbors, with a higher weight
-        indicating more connected.
+        A :class:`~scib_metrics.utils.nearest_neighbors.NeighborsResults` object.
     labels
         Array of shape (n_cells,) representing label values
     optimize_resolution
@@ -99,23 +99,24 @@ def nmi_ari_cluster_labels_leiden(
     ari
         Adjusted rand index score
     """
-    X = check_array(X, accept_sparse=True, ensure_2d=True)
-    check_square(X)
+    conn_graph = X.knn_graph_connectivities
     if optimize_resolution:
         n = 10
         resolutions = np.array([2 * x / n for x in range(1, n + 1)])
         try:
             from joblib import Parallel, delayed
 
-            out = Parallel(n_jobs=n_jobs)(delayed(_compute_nmi_ari_cluster_labels)(X, labels, r) for r in resolutions)
+            out = Parallel(n_jobs=n_jobs)(
+                delayed(_compute_nmi_ari_cluster_labels)(conn_graph, labels, r) for r in resolutions
+            )
         except ImportError:
             warnings.warn("Using for loop over clustering resolutions. `pip install joblib` for parallelization.")
-            out = [_compute_nmi_ari_cluster_labels(X, labels, r) for r in resolutions]
+            out = [_compute_nmi_ari_cluster_labels(conn_graph, labels, r) for r in resolutions]
         nmi_ari = np.array(out)
         nmi_ind = np.argmax(nmi_ari[:, 0])
         nmi, ari = nmi_ari[nmi_ind, :]
         return {"nmi": nmi, "ari": ari}
     else:
-        nmi, ari = _compute_nmi_ari_cluster_labels(X, labels, resolution)
+        nmi, ari = _compute_nmi_ari_cluster_labels(conn_graph, labels, resolution)
 
     return {"nmi": nmi, "ari": ari}

@@ -29,7 +29,10 @@ class NeighborsResults:
         # Guarantee that the first neighbor is self.
         # This is a simple and lightweight way to ensure this.
         nn_obj = NearestNeighbors(n_neighbors=self.n_neighbors, metric="precomputed").fit(self.knn_graph_distances)
-        self.distances, self.indices = nn_obj.kneighbors(self.knn_graph_distances)
+        # When X=None, the query is not considered its own neighbor so we can concatenate the self edge manually.
+        distances_non_self, indices_non_self = nn_obj.kneighbors()
+        self.distances = np.concatenate([np.zeros((self.n_samples, 1)), distances_non_self], axis=-1)
+        self.indices = np.concatenate([np.arange(self.n_samples)[:, np.newaxis], indices_non_self], axis=-1)
 
     @property
     def n_samples(self):

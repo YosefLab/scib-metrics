@@ -82,15 +82,15 @@ class MetricAnnDataAPI(Enum):
     """Specification of the AnnData API for a metric."""
 
     isolated_labels = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
-    nmi_ari_cluster_labels_leiden = lambda ad, fn: fn(ad.obsp["15_neighbor_res"], ad.obs[_LABELS])
+    nmi_ari_cluster_labels_leiden = lambda ad, fn: fn(ad.uns["15_neighbor_res"], ad.obs[_LABELS])
     nmi_ari_cluster_labels_kmeans = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
     silhouette_label = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
-    clisi_knn = lambda ad, fn: fn(ad.obsp["90_neighbor_res"], ad.obs[_LABELS])
-    graph_connectivity = lambda ad, fn: fn(ad.obsp["15_neighbor_res"], ad.obs[_LABELS])
+    clisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_LABELS])
+    graph_connectivity = lambda ad, fn: fn(ad.uns["15_neighbor_res"], ad.obs[_LABELS])
     silhouette_batch = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
     pcr_comparison = lambda ad, fn: fn(ad.obsm[_X_PRE], ad.X, ad.obs[_BATCH], categorical=True)
-    ilisi_knn = lambda ad, fn: fn(ad.obsp["90_neighbor_res"], ad.obs[_BATCH])
-    kbet_per_label = lambda ad, fn: fn(ad.obsp["50_neighbor_res"], ad.obs[_BATCH], ad.obs[_LABELS])
+    ilisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_BATCH])
+    kbet_per_label = lambda ad, fn: fn(ad.uns["50_neighbor_res"], ad.obs[_BATCH], ad.obs[_LABELS])
 
 
 class Benchmarker:
@@ -189,7 +189,7 @@ class Benchmarker:
                     ad.X, n_neighbors=max(self._neighbor_values), random_state=0, n_jobs=self._n_jobs
                 )
             for n in self._neighbor_values:
-                ad.obsp[f"{n}_neighbor_res"] = neigh_result
+                ad.uns[f"{n}_neighbor_res"] = neigh_result
 
         self._prepared = True
 

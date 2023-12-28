@@ -28,11 +28,13 @@ class NeighborsResults:
         chex.assert_equal_shape([self.indices, self.distances])
 
     @property
-    def n_samples(self):
+    def n_samples(self) -> np.ndarray:
+        """Number of samples (cells)."""
         return self.indices.shape[0]
 
     @property
-    def n_neighbors(self):
+    def n_neighbors(self) -> np.ndarray:
+        """Number of neighbors."""
         return self.indices.shape[1]
 
     @cached_property
@@ -65,6 +67,7 @@ class NeighborsResults:
         return connectivities[0]
 
     def subset_neighbors(self, n: int) -> "NeighborsResults":
+        """Subset down to `n` neighbors."""
         if n > self.n_neighbors:
             raise ValueError("n must be smaller than the number of neighbors")
         return self.__class__(indices=self.indices[:, :n], distances=self.distances[:, :n])

@@ -74,7 +74,7 @@ def test_lisi_knn():
         X, pd.DataFrame(labels, columns=["labels"]), label_colnames=["labels"], perplexity=10
     )[:, 0]
     # Slight numerical differences arise due to how self edges are handled. With approximate nearest
-    # neighbors methods, there is no guarantee that the self edge is the first edge. To accomodate this,
+    # neighbors methods, there is no guarantee that the self edge is the first edge. To accommodate this,
     # we mask out self edges internally in lisi computation which causes slight numerical differences.
     np.testing.assert_allclose(lisi_res, harmonypy_lisi_res, rtol=5e-5, atol=5e-5)
 

@@ -65,7 +65,7 @@ def test_compute_simpson_index():
     )
 
 
-@pytest.mark.parametrize("n_neighbors", [12, 21, 30])
+@pytest.mark.parametrize("n_neighbors", [30, 60, 72])
 def test_lisi_knn(n_neighbors):
     perplexity = n_neighbors // 3
     X, labels = dummy_x_labels()

@@ -2,6 +2,7 @@ import anndata
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
+import pytest
 from harmonypy import compute_lisi as harmonypy_lisi
 from scib.metrics import isolated_labels_asw
 from scipy.spatial.distance import cdist as sp_cdist
@@ -64,14 +65,16 @@ def test_compute_simpson_index():
     )
 
 
-def test_lisi_knn():
+@pytest.mark.parametrize("n_neighbors", [12, 21, 30])
+def test_lisi_knn(n_neighbors):
+    perplexity = n_neighbors // 3
     X, labels = dummy_x_labels()
-    nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm="kd_tree").fit(X)
     dists, inds = nbrs.kneighbors(X)
     neigh_results = NeighborsResults(indices=inds, distances=dists)
-    lisi_res = scib_metrics.lisi_knn(neigh_results, labels, perplexity=10)
+    lisi_res = scib_metrics.lisi_knn(neigh_results, labels, perplexity=perplexity)
     harmonypy_lisi_res = harmonypy_lisi(
-        X, pd.DataFrame(labels, columns=["labels"]), label_colnames=["labels"], perplexity=10
+        X, pd.DataFrame(labels, columns=["labels"]), label_colnames=["labels"], perplexity=perplexity
     )[:, 0]
     # Slight numerical differences arise due to how self edges are handled. With approximate nearest
     # neighbors methods, there is no guarantee that the self edge is the first edge. To accommodate this,

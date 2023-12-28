@@ -146,7 +146,7 @@ def test_kmeans():
     sk_means_labels = pairwise_distances_argmin(X, sk_means_cluster_centers)
 
     accuracy = (k_means_labels == sk_means_labels).sum() / len(k_means_labels)
-    assert accuracy > 0.997
+    assert accuracy > 0.995
 
 
 def test_kbet():

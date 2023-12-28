@@ -50,7 +50,7 @@ class NeighborsResults:
     def knn_graph_connectivities(self) -> coo_matrix:
         """Compute connectivities using the UMAP approach.
 
-        This function computes connectivities (similarities) from distances
+        Connectivities (similarities) are computed from distances
         using the approach from the UMAP method, which is also used by scanpy.
         """
         conn_graph = coo_matrix(([], ([], [])), shape=(self.n_samples, 1))

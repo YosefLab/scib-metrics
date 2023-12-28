@@ -58,8 +58,9 @@ def test_compute_simpson_index():
     D = scib_metrics.utils.cdist(X, X)
     nbrs = NearestNeighbors(n_neighbors=30, algorithm="kd_tree").fit(X)
     D, knn_idx = nbrs.kneighbors(X)
+    row_idx = np.arange(X.shape[0])[:, None]
     scib_metrics.utils.compute_simpson_index(
-        jnp.array(D), jnp.array(knn_idx), jnp.array(labels), len(np.unique(labels))
+        jnp.array(D), jnp.array(knn_idx), jnp.array(row_idx), jnp.array(labels), len(np.unique(labels))
     )
 
 
@@ -72,7 +73,7 @@ def test_lisi_knn():
     harmonypy_lisi_res = harmonypy_lisi(
         X, pd.DataFrame(labels, columns=["labels"]), label_colnames=["labels"], perplexity=10
     )[:, 0]
-    assert np.testing.assert_allclose(lisi_res, harmonypy_lisi_res)
+    np.testing.assert_allclose(lisi_res, harmonypy_lisi_res)
 
 
 def test_ilisi_clisi_knn():

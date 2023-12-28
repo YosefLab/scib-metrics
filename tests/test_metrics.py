@@ -72,7 +72,7 @@ def test_lisi_knn():
     harmonypy_lisi_res = harmonypy_lisi(
         X, pd.DataFrame(labels, columns=["labels"]), label_colnames=["labels"], perplexity=10
     )[:, 0]
-    assert np.allclose(lisi_res, harmonypy_lisi_res)
+    assert np.testing.assert_allclose(lisi_res, harmonypy_lisi_res)
 
 
 def test_ilisi_clisi_knn():

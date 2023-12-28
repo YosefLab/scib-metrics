@@ -160,12 +160,12 @@ def kbet_per_label(
             if k0 * n_obs >= size_max:
                 k0 = np.floor(size_max / n_obs).astype("int")
 
-            n_comp, labs = scipy.sparse.csgraph.connected_components(conn_graph, connection="strong")
+            n_comp, labs = scipy.sparse.csgraph.connected_components(conn_graph_sub, connection="strong")
 
             if n_comp == 1:  # a single component to compute kBET on
                 try:
                     diffusion_n_comps = np.min([diffusion_n_comps, n_obs - 1])
-                    nn_graph_sub = diffusion_nn(conn_graph, k=k0, n_comps=diffusion_n_comps)
+                    nn_graph_sub = diffusion_nn(conn_graph_sub, k=k0, n_comps=diffusion_n_comps)
                     # call kBET
                     score, _, _ = kbet(
                         nn_graph_sub,
@@ -186,12 +186,12 @@ def kbet_per_label(
                 # check if 75% of all cells can be used for kBET run
                 if len(idx_nonan) / len(labs) >= 0.75:
                     # create another subset of components, assume they are not visited in a diffusion process
-                    conn_graph_sub_sub_sub = conn_graph_sub[idx_nonan, :][:, idx_nonan]
-                    conn_graph_sub_sub_sub.sort_indices()
+                    conn_graph_sub_sub = conn_graph_sub[idx_nonan, :][:, idx_nonan]
+                    conn_graph_sub_sub.sort_indices()
 
                     try:
-                        diffusion_n_comps = np.min([diffusion_n_comps, conn_graph_sub_sub_sub.shape[0] - 1])
-                        nn_results_sub_sub = diffusion_nn(conn_graph_sub_sub_sub, k=k0, n_comps=diffusion_n_comps)
+                        diffusion_n_comps = np.min([diffusion_n_comps, conn_graph_sub_sub.shape[0] - 1])
+                        nn_results_sub_sub = diffusion_nn(conn_graph_sub_sub, k=k0, n_comps=diffusion_n_comps)
                         # call kBET
                         score, _, _ = kbet(
                             nn_results_sub_sub,

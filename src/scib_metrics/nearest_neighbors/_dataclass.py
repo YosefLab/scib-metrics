@@ -67,4 +67,4 @@ class NeighborsResults:
     def subset_neighbors(self, n: int) -> "NeighborsResults":
         if n > self.n_neighbors:
             raise ValueError("n must be smaller than the number of neighbors")
-        return self.__class__(self.distances[:, :n], self.indices[:, :n])
+        return self.__class__(indices=self.indices[:, :n], distances=self.distances[:, :n])

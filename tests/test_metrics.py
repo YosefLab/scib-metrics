@@ -1,8 +1,10 @@
 import anndata
+import igraph
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import pytest
+import scanpy as sc
 from harmonypy import compute_lisi as harmonypy_lisi
 from scib.metrics import isolated_labels_asw
 from scipy.spatial.distance import cdist as sp_cdist
@@ -110,6 +112,16 @@ def test_nmi_ari_cluster_labels_leiden_single_resolution():
     nmi, ari = out["nmi"], out["ari"]
     assert isinstance(nmi, float)
     assert isinstance(ari, float)
+
+
+def test_leiden_graph_construction():
+    X, _ = dummy_x_labels(symmetric_positive=True, x_is_neighbors_results=True)
+    conn_graph = X.knn_graph_connectivities
+    g = igraph.Graph.Weighted_Adjacency(conn_graph, mode="directed")
+    g.to_undirected(mode="each")
+    sc_g = sc._utils.get_igraph_from_adjacency(conn_graph, directed=False)
+    assert g.isomorphic(sc_g)
+    np.testing.assert_equal(g.es["weight"], sc_g.es["weight"])
 
 
 def test_isolated_labels():

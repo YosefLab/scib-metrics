@@ -40,22 +40,6 @@ repos:
           Fix the merge conflicts manually and remove the .rej files.
         language: fail
         files: '.*\.rej$'
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.7.1
-    hooks:
-      - id: nbqa
-        entry: nbqa mdformat
-        name: nbqa-mdformat
-        alias: nbqa-mdformat
-        additional_dependencies:
-            [
-                mdformat,
-                mdformat-black,
-                mdformat-frontmatter,
-                mdformat-web,
-                mdformat-myst,
-            ]
-        args: [--nbqa-md]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.6.1
     hooks:

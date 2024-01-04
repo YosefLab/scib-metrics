@@ -39,6 +39,7 @@ dev = [
     # CLI for bumping the version number
     "bump2version",
     "pre-commit",
+    "twine>=4.0.2",
 ]
 doc = [
     "sphinx>=4",
@@ -54,7 +55,7 @@ doc = [
 ]
 test = [
     "pytest",
-    "pytest-cov",
+    "coverage",
     "scib>=1.1.4",
     "harmonypy",
     "joblib",
@@ -88,24 +89,25 @@ omit = ["**/test_*.py"]
 testpaths = ["tests"]
 xfail_strict = true
 
+
 [tool.ruff]
 src = ["src"]
 line-length = 120
 select = [
-    "F",      # Errors detected by Pyflakes
-    "E",      # Error detected by Pycodestyle
-    "W",      # Warning detected by Pycodestyle
-    "I",      # isort
-    "D",      # pydocstyle
-    "B",      # flake8-bugbear
-    "TID",    # flake8-tidy-imports
-    "C4",     # flake8-comprehensions
-    "BLE",    # flake8-blind-except
-    "UP",     # pyupgrade
-    "RUF100", # Report unused noqa directives
+    "F",  # Errors detected by Pyflakes
+    "E",  # Error detected by Pycodestyle
+    "W",  # Warning detected by Pycodestyle
+    "I",  # isort
+    "D",  # pydocstyle
+    "B",  # flake8-bugbear
+    "TID",  # flake8-tidy-imports
+    "C4",  # flake8-comprehensions
+    "BLE",  # flake8-blind-except
+    "UP",  # pyupgrade
+    "RUF100",  # Report unused noqa directives
 ]
 ignore = [
-    # line too long -> we accept long comment lines; black gets rid of long code lines
+    # line too long -> we accept long comment lines; formatter gets rid of long code lines
     "E501",
     # Do not assign a lambda expression, use a def -> lambda expression assignments are convenient
     "E731",
@@ -121,7 +123,8 @@ ignore = [
     "B008",
     # __magic__ methods are are often self-explanatory, allow missing docstrings
     "D105",
-    # first line should end with a period [Bug: doesn't work with single-line docstrings]    "D400",
+    # first line should end with a period [Bug: doesn't work with single-line docstrings]
+    "D400",
     # First line should be in imperative mood; try rephrasing
     "D401",
     ## Disable one in each pair of mutually incompatible rules
@@ -134,6 +137,7 @@ ignore = [
     # No explicit stacklevel argument
     "B028",
 ]
+extend-include = ["*.ipynb"]
 
 [tool.ruff.per-file-ignores]
 "docs/*" = ["I", "BLE001", "E402", "B018"]
@@ -141,29 +145,11 @@ ignore = [
 "*/__init__.py" = ["F401"]
 "src/scib_metrics/__init__.py" = ["I"]
 
+[tool.ruff.format]
+docstring-code-format = true
+
 [tool.ruff.pydocstyle]
 convention = "numpy"
-
-
-[tool.black]
-line-length = 120
-include = '\.pyi?$'
-exclude = '''
-(
-  /(
-      \.eggs
-    | \.git
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-)
-'''
 
 [tool.jupytext]
 formats = "ipynb,md"

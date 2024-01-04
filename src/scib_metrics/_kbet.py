@@ -8,9 +8,9 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import scipy
-from scipy.sparse import csr_matrix
 
-from scib_metrics.utils import convert_knn_graph_to_idx, diffusion_nn, get_ndarray
+from scib_metrics.nearest_neighbors import NeighborsResults
+from scib_metrics.utils import diffusion_nn, get_ndarray
 
 from ._types import NdArray
 
@@ -40,7 +40,7 @@ def _kbet(neigh_batch_ids: jnp.ndarray, batches: jnp.ndarray, n_batches: int) ->
     return test_statistics, p_values
 
 
-def kbet(X: csr_matrix, batches: np.ndarray, alpha: float = 0.05) -> float:
+def kbet(X: NeighborsResults, batches: np.ndarray, alpha: float = 0.05) -> float:
     """Compute kbet :cite:p:`buttner2018`.
 
     This implementation is inspired by the implementation in Pegasus:
@@ -57,8 +57,7 @@ def kbet(X: csr_matrix, batches: np.ndarray, alpha: float = 0.05) -> float:
     Parameters
     ----------
     X
-        Array of shape (n_cells, n_cells) with non-zero values
-        representing distances to exactly each cell's k nearest neighbors.
+        A :class:`~scib_metrics.utils.nearest_neighbors.NeighborsResults` object.
     batches
         Array of shape (n_cells,) representing batch values
         for each cell.
@@ -73,16 +72,10 @@ def kbet(X: csr_matrix, batches: np.ndarray, alpha: float = 0.05) -> float:
         Mean Kbet chi-square statistic over all cells.
     pvalue_mean
         Mean Kbet p-value over all cells.
-
-    Notes
-    -----
-    This function requires X to be cell-cell distances, not connectivies.
     """
-    if len(batches) != X.shape[0]:
+    if len(batches) != len(X.indices):
         raise ValueError("Length of batches does not match number of cells.")
-    _, knn_idx = convert_knn_graph_to_idx(X)
-    # Make sure self is included
-    knn_idx = np.concatenate([np.arange(knn_idx.shape[0])[:, None], knn_idx], axis=1)
+    knn_idx = X.indices
     batches = np.asarray(pd.Categorical(batches).codes)
     neigh_batch_ids = batches[knn_idx]
     chex.assert_equal_shape([neigh_batch_ids, knn_idx])
@@ -96,7 +89,7 @@ def kbet(X: csr_matrix, batches: np.ndarray, alpha: float = 0.05) -> float:
 
 
 def kbet_per_label(
-    X: csr_matrix,
+    X: NeighborsResults,
     batches: np.ndarray,
     labels: np.ndarray,
     alpha: float = 0.05,
@@ -113,8 +106,7 @@ def kbet_per_label(
     Parameters
     ----------
     X
-        Array of shape (n_cells, n_cells) with non-zero values
-        representing connectivies to exactly each cell's k nearest neighbors.
+        A :class:`~scib_metrics.utils.nearest_neighbors.NeighborsResults` object.
     batches
         Array of shape (n_cells,) representing batch values
         for each cell.
@@ -136,23 +128,25 @@ def kbet_per_label(
     -----
     This function requires X to be cell-cell connectivities, not distances.
     """
-    if len(batches) != X.shape[0]:
+    if len(batches) != len(X.indices):
         raise ValueError("Length of batches does not match number of cells.")
-    if len(labels) != X.shape[0]:
+    if len(labels) != len(X.indices):
         raise ValueError("Length of labels does not match number of cells.")
     # set upper bound for k0
     size_max = 2**31 - 1
     batches = np.asarray(pd.Categorical(batches).codes)
     labels = np.asarray(labels)
 
+    conn_graph = X.knn_graph_connectivities
+
     # prepare call of kBET per cluster
     kbet_scores = {"cluster": [], "kBET": []}
     for clus in np.unique(labels):
         # subset by label
         mask = labels == clus
-        X_sub = X[mask, :][:, mask]
-        X_sub.sort_indices()
-        n_obs = X_sub.shape[0]
+        conn_graph_sub = conn_graph[mask, :][:, mask]
+        conn_graph_sub.sort_indices()
+        n_obs = conn_graph_sub.shape[0]
         batches_sub = batches[mask]
 
         # check if neighborhood size too small or only one batch in subset
@@ -166,12 +160,12 @@ def kbet_per_label(
             if k0 * n_obs >= size_max:
                 k0 = np.floor(size_max / n_obs).astype("int")
 
-            n_comp, labs = scipy.sparse.csgraph.connected_components(X_sub, connection="strong")
+            n_comp, labs = scipy.sparse.csgraph.connected_components(conn_graph_sub, connection="strong")
 
             if n_comp == 1:  # a single component to compute kBET on
                 try:
                     diffusion_n_comps = np.min([diffusion_n_comps, n_obs - 1])
-                    nn_graph_sub = diffusion_nn(X_sub, k=k0, n_comps=diffusion_n_comps).astype("float")
+                    nn_graph_sub = diffusion_nn(conn_graph_sub, k=k0, n_comps=diffusion_n_comps)
                     # call kBET
                     score, _, _ = kbet(
                         nn_graph_sub,
@@ -192,15 +186,15 @@ def kbet_per_label(
                 # check if 75% of all cells can be used for kBET run
                 if len(idx_nonan) / len(labs) >= 0.75:
                     # create another subset of components, assume they are not visited in a diffusion process
-                    X_sub_sub = X_sub[idx_nonan, :][:, idx_nonan]
-                    X_sub_sub.sort_indices()
+                    conn_graph_sub_sub = conn_graph_sub[idx_nonan, :][:, idx_nonan]
+                    conn_graph_sub_sub.sort_indices()
 
                     try:
-                        diffusion_n_comps = np.min([diffusion_n_comps, X_sub_sub.shape[0] - 1])
-                        nn_graph_sub_sub = diffusion_nn(X_sub_sub, k=k0, n_comps=diffusion_n_comps).astype("float")
+                        diffusion_n_comps = np.min([diffusion_n_comps, conn_graph_sub_sub.shape[0] - 1])
+                        nn_results_sub_sub = diffusion_nn(conn_graph_sub_sub, k=k0, n_comps=diffusion_n_comps)
                         # call kBET
                         score, _, _ = kbet(
-                            nn_graph_sub_sub,
+                            nn_results_sub_sub,
                             batches=batches_sub[idx_nonan],
                             alpha=alpha,
                         )

@@ -5,17 +5,13 @@ requires = ["hatchling"]
 
 [project]
 name = "scib-metrics"
-version = "0.4.1"
+version = "0.5.0"
 description = "Accelerated and Python-only scIB metrics"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {file = "LICENSE"}
-authors = [
-    {name = "Adam Gayoso"},
-]
-maintainers = [
-    {name = "Adam Gayoso", email = "adamgayoso@berkeley.edu"},
-]
+license = { file = "LICENSE" }
+authors = [{ name = "Adam Gayoso" }]
+maintainers = [{ name = "Adam Gayoso", email = "adamgayoso@berkeley.edu" }]
 urls.Documentation = "https://scib-metrics.readthedocs.io/"
 urls.Source = "https://github.com/yoseflab/scib-metrics"
 urls.Home-page = "https://github.com/yoseflab/scib-metrics"
@@ -35,13 +31,14 @@ dependencies = [
     "matplotlib",
     "plottable",
     "tqdm",
+    "umap-learn>=0.5.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     # CLI for bumping the version number
     "bump2version",
-    "pre-commit"
+    "pre-commit",
 ]
 doc = [
     "sphinx>=4",
@@ -66,20 +63,18 @@ test = [
     "black",
     "numba>=0.57.1",
 ]
-parallel = [
-    "joblib"
-]
+parallel = ["joblib"]
 tutorial = [
     "rich",
     "scanorama",
     "harmony-pytorch",
     "scvi-tools",
     "pyliger",
-    "numexpr", # missing liger dependency
-    "plotnine", # missing liger dependency
-    "mygene", # missing liger dependency
-    "goatools", # missing liger dependency
-    "adjustText", # missing liger dependency
+    "numexpr",         # missing liger dependency
+    "plotnine",        # missing liger dependency
+    "mygene",          # missing liger dependency
+    "goatools",        # missing liger dependency
+    "adjustText",      # missing liger dependency
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -87,9 +82,7 @@ packages = ['src/scib_metrics']
 
 [tool.coverage.run]
 source = ["scib_metrics"]
-omit = [
-    "**/test_*.py",
-]
+omit = ["**/test_*.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -99,17 +92,17 @@ xfail_strict = true
 src = ["src"]
 line-length = 120
 select = [
-    "F",  # Errors detected by Pyflakes
-    "E",  # Error detected by Pycodestyle
-    "W",  # Warning detected by Pycodestyle
-    "I",  # isort
-    "D",  # pydocstyle
-    "B",  # flake8-bugbear
-    "TID",  # flake8-tidy-imports
-    "C4",  # flake8-comprehensions
-    "BLE",  # flake8-blind-except
-    "UP",  # pyupgrade
-    "RUF100",  # Report unused noqa directives
+    "F",      # Errors detected by Pyflakes
+    "E",      # Error detected by Pycodestyle
+    "W",      # Warning detected by Pycodestyle
+    "I",      # isort
+    "D",      # pydocstyle
+    "B",      # flake8-bugbear
+    "TID",    # flake8-tidy-imports
+    "C4",     # flake8-comprehensions
+    "BLE",    # flake8-blind-except
+    "UP",     # pyupgrade
+    "RUF100", # Report unused noqa directives
 ]
 ignore = [
     # line too long -> we accept long comment lines; black gets rid of long code lines
@@ -128,8 +121,7 @@ ignore = [
     "B008",
     # __magic__ methods are are often self-explanatory, allow missing docstrings
     "D105",
-    # first line should end with a period [Bug: doesn't work with single-line docstrings]
-    "D400",
+    # first line should end with a period [Bug: doesn't work with single-line docstrings]    "D400",
     # First line should be in imperative mood; try rephrasing
     "D401",
     ## Disable one in each pair of mutually incompatible rules
@@ -185,5 +177,5 @@ skip = [
     "docs/changelog.md",
     "docs/references.bib",
     "docs/references.md",
-    "docs/notebooks/example.ipynb"
+    "docs/notebooks/example.ipynb",
 ]

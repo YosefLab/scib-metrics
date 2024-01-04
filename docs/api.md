@@ -82,7 +82,7 @@ scib_metrics.ilisi_knn(...)
 
     nearest_neighbors.pynndescent
     nearest_neighbors.jax_approx_min_k
-    nearest_neighbors.NeighborsOutput
+    nearest_neighbors.NeighborsResults
 ```
 
 ## Settings

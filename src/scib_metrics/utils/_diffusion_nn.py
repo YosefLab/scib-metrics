@@ -2,11 +2,14 @@ import logging
 from typing import Literal
 
 import numpy as np
-import pynndescent
 import scipy
 from scipy.sparse import csr_matrix, issparse
 
+from scib_metrics import nearest_neighbors
+
 logger = logging.getLogger(__name__)
+
+_EPS = 1e-8
 
 
 def _compute_transitions(X: csr_matrix, density_normalize: bool = True):
@@ -88,7 +91,7 @@ def _get_sparse_matrix_from_indices_distances_numpy(indices, distances, n_obs, n
     return D
 
 
-def diffusion_nn(X: csr_matrix, k: int, n_comps: int = 100):
+def diffusion_nn(X: csr_matrix, k: int, n_comps: int = 100) -> nearest_neighbors.NeighborsResults:
     """Diffusion-based neighbors.
 
     This function generates a nearest neighbour list from a connectivities matrix.
@@ -110,20 +113,15 @@ def diffusion_nn(X: csr_matrix, k: int, n_comps: int = 100):
 
     Returns
     -------
-    Neighbors graph
+    Neighbors results
     """
     transitions = _compute_transitions(X)
     evals, evecs = _compute_eigen(transitions, n_comps=n_comps)
-    evals += 1e-8  # Avoid division by zero
+    evals += _EPS  # Avoid division by zero
     # Multiscale such that the number of steps t gets "integrated out"
     embedding = evecs
     scaled_evals = np.array([e if e == 1 else e / (1 - e) for e in evals])
     embedding *= scaled_evals
-    nn_obj = pynndescent.NNDescent(embedding, n_neighbors=k + 1)
-    neigh_inds, neigh_distances = nn_obj.neighbor_graph
-    # We purposely ignore the first neighbor as it is the cell itself
-    # It gets added back inside the kbet internal function
-    neigh_graph = _get_sparse_matrix_from_indices_distances_numpy(
-        neigh_inds[:, 1:], neigh_distances[:, 1:], X.shape[0], k
-    )
-    return neigh_graph
+    nn_result = nearest_neighbors.pynndescent(embedding, n_neighbors=k + 1)
+
+    return nn_result

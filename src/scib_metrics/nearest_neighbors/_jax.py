@@ -6,7 +6,7 @@ import numpy as np
 
 from scib_metrics.utils import cdist, get_ndarray
 
-from ._dataclass import NeighborsOutput
+from ._dataclass import NeighborsResults
 
 
 @functools.partial(jax.jit, static_argnames=["k", "recall_target"])
@@ -18,7 +18,7 @@ def _euclidean_ann(qy: jnp.ndarray, db: jnp.ndarray, k: int, recall_target: floa
 
 def jax_approx_min_k(
     X: np.ndarray, n_neighbors: int, recall_target: float = 0.95, chunk_size: int = 2048
-) -> NeighborsOutput:
+) -> NeighborsResults:
     """Run approximate nearest neighbor search using jax.
 
     On TPU backends, this is approximate nearest neighbor search. On other backends, this is exact nearest neighbor search.
@@ -47,4 +47,4 @@ def jax_approx_min_k(
         dists.append(dist)
     neighbors = jnp.concatenate(neighbors, axis=0)
     dists = jnp.concatenate(dists, axis=0)
-    return NeighborsOutput(indices=get_ndarray(neighbors), distances=get_ndarray(dists))
+    return NeighborsResults(indices=get_ndarray(neighbors), distances=get_ndarray(dists))

@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.5.0 (2024-MM-DD)
+
+-   Refactor all relevant metrics to use `NeighborsResults` as input instead of sparse distance/connectivity matrices.
+
 ## 0.4.1 (2023-10-08)
 
 -   Fix KMeans. All previous versions had a bug with KMeans and ARI/NMI metrics are not reliable with this clustering. ([#115][])

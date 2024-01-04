@@ -61,6 +61,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx.ext.mathjax",
     "IPython.sphinxext.ipython_console_highlighting",
+    "sphinxext.opengraph",
     *[p.stem for p in (HERE / "extensions").glob("*.py")],
 ]
 
@@ -172,6 +173,7 @@ def linkcode_resolve(domain, info):
 #
 html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
+html_css_files = ["css/custom.css"]
 html_title = "scib-metrics"
 
 html_theme_options = {

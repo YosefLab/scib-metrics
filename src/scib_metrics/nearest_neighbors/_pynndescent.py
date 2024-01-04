@@ -1,10 +1,10 @@
 import numpy as np
 from pynndescent import NNDescent
 
-from ._dataclass import NeighborsOutput
+from ._dataclass import NeighborsResults
 
 
-def pynndescent(X: np.ndarray, n_neighbors: int, random_state: int = 0, n_jobs: int = 1) -> NeighborsOutput:
+def pynndescent(X: np.ndarray, n_neighbors: int, random_state: int = 0, n_jobs: int = 1) -> NeighborsResults:
     """Run pynndescent approximate nearest neighbor search.
 
     Parameters
@@ -37,4 +37,4 @@ def pynndescent(X: np.ndarray, n_neighbors: int, random_state: int = 0, n_jobs: 
     )
     indices, distances = knn_search_index.neighbor_graph
 
-    return NeighborsOutput(indices=indices, distances=distances)
+    return NeighborsResults(indices=indices, distances=distances)

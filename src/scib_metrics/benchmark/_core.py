@@ -18,7 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
 
 import scib_metrics
-from scib_metrics.nearest_neighbors import NeighborsOutput, pynndescent
+from scib_metrics.nearest_neighbors import NeighborsResults, pynndescent
 
 Kwargs = dict[str, Any]
 MetricType = Union[bool, Kwargs]
@@ -82,15 +82,15 @@ class MetricAnnDataAPI(Enum):
     """Specification of the AnnData API for a metric."""
 
     isolated_labels = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
-    nmi_ari_cluster_labels_leiden = lambda ad, fn: fn(ad.obsp["15_connectivities"], ad.obs[_LABELS])
+    nmi_ari_cluster_labels_leiden = lambda ad, fn: fn(ad.uns["15_neighbor_res"], ad.obs[_LABELS])
     nmi_ari_cluster_labels_kmeans = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
     silhouette_label = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
-    clisi_knn = lambda ad, fn: fn(ad.obsp["90_distances"], ad.obs[_LABELS])
-    graph_connectivity = lambda ad, fn: fn(ad.obsp["15_distances"], ad.obs[_LABELS])
+    clisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_LABELS])
+    graph_connectivity = lambda ad, fn: fn(ad.uns["15_neighbor_res"], ad.obs[_LABELS])
     silhouette_batch = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
     pcr_comparison = lambda ad, fn: fn(ad.obsm[_X_PRE], ad.X, ad.obs[_BATCH], categorical=True)
-    ilisi_knn = lambda ad, fn: fn(ad.obsp["90_distances"], ad.obs[_BATCH])
-    kbet_per_label = lambda ad, fn: fn(ad.obsp["50_connectivities"], ad.obs[_BATCH], ad.obs[_LABELS])
+    ilisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_BATCH])
+    kbet_per_label = lambda ad, fn: fn(ad.uns["50_neighbor_res"], ad.obs[_BATCH], ad.obs[_LABELS])
 
 
 class Benchmarker:
@@ -156,7 +156,7 @@ class Benchmarker:
             "Batch correction": self._batch_correction_metrics,
         }
 
-    def prepare(self, neighbor_computer: Optional[Callable[[np.ndarray, int], NeighborsOutput]] = None) -> None:
+    def prepare(self, neighbor_computer: Optional[Callable[[np.ndarray, int], NeighborsResults]] = None) -> None:
         """Prepare the data for benchmarking.
 
         Parameters
@@ -164,7 +164,7 @@ class Benchmarker:
         neighbor_computer
             Function that computes the neighbors of the data. If `None`, the neighbors will be computed
             with :func:`~scib_metrics.utils.nearest_neighbors.pynndescent`. The function should take as input
-            the data and the number of neighbors to compute and return a :class:`~scib_metrics.utils.nearest_neighbors.NeighborsOutput`
+            the data and the number of neighbors to compute and return a :class:`~scib_metrics.utils.nearest_neighbors.NeighborsResults`
             object.
         """
         # Compute PCA
@@ -183,18 +183,13 @@ class Benchmarker:
         # Compute neighbors
         for ad in tqdm(self._emb_adatas.values(), desc="Computing neighbors"):
             if neighbor_computer is not None:
-                neigh_output = neighbor_computer(ad.X, max(self._neighbor_values))
+                neigh_result = neighbor_computer(ad.X, max(self._neighbor_values))
             else:
-                neigh_output = pynndescent(
+                neigh_result = pynndescent(
                     ad.X, n_neighbors=max(self._neighbor_values), random_state=0, n_jobs=self._n_jobs
                 )
-            indices, distances = neigh_output.indices, neigh_output.distances
             for n in self._neighbor_values:
-                sp_distances, sp_conns = sc.neighbors._compute_connectivities_umap(
-                    indices[:, :n], distances[:, :n], ad.n_obs, n_neighbors=n
-                )
-                ad.obsp[f"{n}_connectivities"] = sp_conns
-                ad.obsp[f"{n}_distances"] = sp_distances
+                ad.uns[f"{n}_neighbor_res"] = neigh_result.subset_neighbors(n=n)
 
         self._prepared = True
 

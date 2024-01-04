@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
-from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
 
+from scib_metrics.nearest_neighbors import NeighborsResults
 
-def graph_connectivity(X: csr_matrix, labels: np.ndarray) -> float:
+
+def graph_connectivity(X: NeighborsResults, labels: np.ndarray) -> float:
     """Quantify the connectivity of the subgraph per cell type label.
 
     Parameters
@@ -19,9 +20,11 @@ def graph_connectivity(X: csr_matrix, labels: np.ndarray) -> float:
     # TODO(adamgayoso): Utils for validating inputs
     clust_res = []
 
+    graph = X.knn_graph_distances
+
     for label in np.unique(labels):
         mask = labels == label
-        graph_sub = X[mask]
+        graph_sub = graph[mask]
         graph_sub = graph_sub[:, mask]
         _, comps = connected_components(graph_sub, connection="strong")
         tab = pd.value_counts(comps)

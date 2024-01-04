@@ -23,8 +23,10 @@ class _NeighborProbabilityState:
 
 
 @jax.jit
-def _Hbeta(knn_dists_row: jnp.ndarray, beta: float) -> tuple[jnp.ndarray, jnp.ndarray]:
+def _Hbeta(knn_dists_row: jnp.ndarray, row_self_mask: jnp.ndarray, beta: float) -> tuple[jnp.ndarray, jnp.ndarray]:
     P = jnp.exp(-knn_dists_row * beta)
+    # Mask out self edges to be zero
+    P = jnp.where(row_self_mask, P, 0)
     sumP = jnp.nansum(P)
     H = jnp.where(sumP == 0, 0, jnp.log(sumP) + beta * jnp.nansum(knn_dists_row * P) / sumP)
     P = jnp.where(sumP == 0, jnp.zeros_like(knn_dists_row), P / sumP)
@@ -33,12 +35,12 @@ def _Hbeta(knn_dists_row: jnp.ndarray, beta: float) -> tuple[jnp.ndarray, jnp.nd
 
 @jax.jit
 def _get_neighbor_probability(
-    knn_dists_row: jnp.ndarray, perplexity: float, tol: float
+    knn_dists_row: jnp.ndarray, row_self_mask: jnp.ndarray, perplexity: float, tol: float
 ) -> tuple[jnp.ndarray, jnp.ndarray]:
     beta = 1
     betamin = -jnp.inf
     betamax = jnp.inf
-    H, P = _Hbeta(knn_dists_row, beta)
+    H, P = _Hbeta(knn_dists_row, row_self_mask, beta)
     Hdiff = H - jnp.log(perplexity)
 
     def _get_neighbor_probability_step(state):
@@ -55,7 +57,7 @@ def _get_neighbor_probability(
             jnp.where(betamax == jnp.inf, beta * 2, (beta + betamax) / 2),
             jnp.where(betamin == -jnp.inf, beta / 2, (beta + betamin) / 2),
         )
-        new_H, new_P = _Hbeta(knn_dists_row, new_beta)
+        new_H, new_P = _Hbeta(knn_dists_row, row_self_mask, new_beta)
         new_Hdiff = new_H - jnp.log(perplexity)
         return _NeighborProbabilityState(
             H=new_H, P=new_P, Hdiff=new_Hdiff, beta=new_beta, betamin=new_betamin, betamax=new_betamax, tries=tries + 1
@@ -63,7 +65,7 @@ def _get_neighbor_probability(
 
     def _get_neighbor_probability_convergence(state):
         Hdiff, tries = state.Hdiff, state.tries
-        return jnp.logical_and(jnp.abs(Hdiff) > tol, tries < 50)
+        return jnp.logical_and(jnp.abs(Hdiff) >= tol, tries < 50)
 
     init_state = _NeighborProbabilityState(H=H, P=P, Hdiff=Hdiff, beta=beta, betamin=betamin, betamax=betamax, tries=0)
     final_state = jax.lax.while_loop(_get_neighbor_probability_convergence, _get_neighbor_probability_step, init_state)
@@ -71,9 +73,14 @@ def _get_neighbor_probability(
 
 
 def _compute_simpson_index_cell(
-    knn_dists_row: jnp.ndarray, knn_labels_row: jnp.ndarray, n_batches: int, perplexity: float, tol: float
+    knn_dists_row: jnp.ndarray,
+    knn_labels_row: jnp.ndarray,
+    row_self_mask: jnp.ndarray,
+    n_batches: int,
+    perplexity: float,
+    tol: float,
 ) -> jnp.ndarray:
-    H, P = _get_neighbor_probability(knn_dists_row, perplexity, tol)
+    H, P = _get_neighbor_probability(knn_dists_row, row_self_mask, perplexity, tol)
 
     def _non_zero_H_simpson():
         sumP = jnp.bincount(knn_labels_row, weights=P, length=n_batches)
@@ -85,6 +92,7 @@ def _compute_simpson_index_cell(
 def compute_simpson_index(
     knn_dists: NdArray,
     knn_idx: NdArray,
+    row_idx: NdArray,
     labels: NdArray,
     n_labels: int,
     perplexity: float = 30,
@@ -98,6 +106,8 @@ def compute_simpson_index(
         KNN distances of size (n_cells, n_neighbors).
     knn_idx
         KNN indices of size (n_cells, n_neighbors) corresponding to distances.
+    row_idx
+        Idx of each row (n_cells, 1).
     labels
         Cell labels of size (n_cells,).
     n_labels
@@ -115,7 +125,9 @@ def compute_simpson_index(
     knn_dists = jnp.array(knn_dists)
     knn_idx = jnp.array(knn_idx)
     labels = jnp.array(labels)
+    row_idx = jnp.array(row_idx)
     knn_labels = labels[knn_idx]
+    self_mask = knn_idx != row_idx
     simpson_fn = partial(_compute_simpson_index_cell, n_batches=n_labels, perplexity=perplexity, tol=tol)
-    out = jax.vmap(simpson_fn)(knn_dists, knn_labels)
+    out = jax.vmap(simpson_fn)(knn_dists, knn_labels, self_mask)
     return get_ndarray(out)

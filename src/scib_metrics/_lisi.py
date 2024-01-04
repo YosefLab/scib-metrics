@@ -29,7 +29,8 @@ def lisi_knn(X: NeighborsResults, labels: np.ndarray, perplexity: float = None) 
     row_idx = np.arange(X.n_samples)[:, np.newaxis]
 
     if perplexity is None:
-        perplexity = np.floor(knn_idx.shape[1] / 3)
+        # -1 to account for this implementation masking out self edge later
+        perplexity = np.floor((knn_idx.shape[1] - 1) / 3)
 
     n_labels = len(np.unique(labels))
 

@@ -5,4 +5,4 @@
 import setuptools
 
 if __name__ == "__main__":
-    setuptools.setup(name="scvi-metrics")
+    setuptools.setup(name="scib-metrics")

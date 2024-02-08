@@ -2,11 +2,12 @@ from typing import Union
 
 import jax
 import jax.numpy as jnp
+from jax import Array
 
-IntOrKey = Union[int, jax.random.KeyArray]
+IntOrKey = Union[int, Array]
 
 
-def _validate_seed(seed: IntOrKey) -> jax.random.KeyArray:
+def _validate_seed(seed: IntOrKey) -> Array:
     return jax.random.PRNGKey(seed) if isinstance(seed, int) else seed
 
 

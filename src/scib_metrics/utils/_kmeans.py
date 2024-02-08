@@ -4,6 +4,7 @@ from typing import Literal
 import jax
 import jax.numpy as jnp
 import numpy as np
+from jax import Array
 from sklearn.utils import check_array
 
 from scib_metrics._types import IntOrKey
@@ -18,7 +19,7 @@ def _tolerance(X: jnp.ndarray, tol: float) -> float:
     return np.mean(variances) * tol
 
 
-def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
+def _initialize_random(X: jnp.ndarray, n_clusters: int, key: Array) -> jnp.ndarray:
     """Initialize cluster centroids randomly."""
     n_obs = X.shape[0]
     key, subkey = jax.random.split(key)
@@ -28,7 +29,7 @@ def _initialize_random(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray
 
 
 @partial(jax.jit, static_argnums=1)
-def _initialize_plus_plus(X: jnp.ndarray, n_clusters: int, key: jax.random.KeyArray) -> jnp.ndarray:
+def _initialize_plus_plus(X: jnp.ndarray, n_clusters: int, key: Array) -> jnp.ndarray:
     """Initialize cluster centroids with k-means++ algorithm."""
     n_obs = X.shape[0]
     key, subkey = jax.random.split(key)
@@ -111,7 +112,7 @@ class KMeans:
         self.n_init = n_init
         self.max_iter = max_iter
         self.tol_scale = tol
-        self.seed: jax.random.KeyArray = validate_seed(seed)
+        self.seed: jax.Array = validate_seed(seed)
 
         if init not in ["k-means++", "random"]:
             raise ValueError("Invalid init method, must be one of ['k-means++' or 'random'].")

@@ -5,7 +5,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from chex import ArrayDevice
-from jax import nn
+from jax import Array, nn
 from scipy.sparse import csr_matrix
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_array
@@ -37,7 +37,7 @@ def one_hot(y: NdArray, n_classes: Optional[int] = None) -> jnp.ndarray:
     return nn.one_hot(jnp.ravel(y), n_classes)
 
 
-def validate_seed(seed: IntOrKey) -> jax.random.KeyArray:
+def validate_seed(seed: IntOrKey) -> Array:
     """Validate a seed and return a Jax random key."""
     return jax.random.PRNGKey(seed) if isinstance(seed, int) else seed
 

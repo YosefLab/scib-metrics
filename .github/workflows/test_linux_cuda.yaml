@@ -1,0 +1,66 @@
+name: Test (Linux, CUDA)
+
+on:
+  pull_request:
+    branches: [main]
+    types: [labeled, synchronize, opened]
+  schedule:
+    - cron: "0 10 * * *" # runs at 10:00 UTC (03:00 PST) every day
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # if PR has label "cuda tests" or "all tests" or if scheduled or manually triggered
+    if: >-
+      (
+        contains(github.event.pull_request.labels.*.name, 'cuda tests') ||
+        contains(github.event.pull_request.labels.*.name, 'all tests') ||
+        contains(github.event_name, 'schedule') ||
+        contains(github.event_name, 'workflow_dispatch')
+      )
+    runs-on: [self-hosted, Linux, X64, CUDA]
+    defaults:
+      run:
+        shell: bash -e {0} # -e to fail on error
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11"]
+        cuda: ["11"]
+
+    container:
+      image: scverse/scvi-tools:py${{ matrix.python }}-cu${{ matrix.cuda }}-base
+      options: --user root --gpus all
+
+    name: Integration (CUDA)
+
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          pip install ".[dev,test]"
+
+      - name: Test
+        env:
+          MPLBACKEND: agg
+          PLATFORM: ${{ matrix.os }}
+          DISPLAY: :42
+        run: |
+          coverage run -m pytest -v --color=yes
+      - name: Report coverage
+        run: |
+          coverage report
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

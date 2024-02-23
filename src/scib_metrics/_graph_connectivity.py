@@ -12,7 +12,7 @@ def graph_connectivity(X: NeighborsResults, labels: npt.ndarray) -> float:
     Parameters
     ----------
     X
-        :class:`scib_metrics.nearest_neighbors.NeighborsResults` object containing information
+        A :class:`scib_metrics.nearest_neighbors.NeighborsResults` object containing information
         about each cell's K nearest neighbors.
     labels
         Array of shape `(n_cells,)` representing label values for each cell.

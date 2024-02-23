@@ -1,33 +1,33 @@
+from __future__ import annotations
+
 import logging
 from functools import partial
-from typing import Union
 
 import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import scipy
 
 from scib_metrics.nearest_neighbors import NeighborsResults
 from scib_metrics.utils import diffusion_nn, get_ndarray
 
-from ._types import NdArray
-
 logger = logging.getLogger(__name__)
 
 
-def _chi2_cdf(df: Union[int, NdArray], x: NdArray) -> float:
+def _chi2_cdf(df: int | jax.Array, x: jax.Array) -> float:
     """Chi2 cdf.
 
-    See https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.chdtr.html
-    for explanation of gammainc.
+    See https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.chdtr.html for
+    an explanation of :func:`jax.scipy.special.gammainc`.
     """
     return jax.scipy.special.gammainc(df / 2, x / 2)
 
 
 @partial(jax.jit, static_argnums=2)
-def _kbet(neigh_batch_ids: jnp.ndarray, batches: jnp.ndarray, n_batches: int) -> float:
+def _kbet(neigh_batch_ids: jax.Array, batches: jax.Array, n_batches: int) -> float:
     expected_freq = jnp.bincount(batches, length=n_batches)
     expected_freq = expected_freq / jnp.sum(expected_freq)
     dof = n_batches - 1
@@ -40,27 +40,26 @@ def _kbet(neigh_batch_ids: jnp.ndarray, batches: jnp.ndarray, n_batches: int) ->
     return test_statistics, p_values
 
 
-def kbet(X: NeighborsResults, batches: np.ndarray, alpha: float = 0.05) -> float:
-    """Compute kbet :cite:p:`buttner2018`.
+def kbet(X: NeighborsResults, batches: npt.ndarray, alpha: float = 0.05) -> float:
+    """Compute KBET :cite:p:`buttner2018`.
 
     This implementation is inspired by the implementation in Pegasus:
-    https://pegasus.readthedocs.io/en/stable/index.html
+    https://pegasus.readthedocs.io/en/stable/index.html.
 
-    A higher acceptance rate means more mixing of batches. This implementation does
-    not exactly mirror the default original implementation, as there is currently no
-    `adapt` option.
+    A higher acceptance rate means more mixing of batches. This implementation does not exactly
+    mirror the default original implementation, as there is currently no `adapt` option.
 
-    Note that this is also not equivalent to the kbet used in the original scib package,
-    as that one computes kbet for each cell type label. To achieve this, use
+    Note that this is also not equivalent to the kbet used in the original scib package, as that one
+    computes KBET for each cell type label. To achieve this, use
     :func:`scib_metrics.kbet_per_label`.
 
     Parameters
     ----------
     X
-        A :class:`~scib_metrics.utils.nearest_neighbors.NeighborsResults` object.
+        A :class:`scib_metrics.nearest_neighbors.NeighborsResults` object containing information
+        about each cell's K nearest neighbors.
     batches
-        Array of shape (n_cells,) representing batch values
-        for each cell.
+        Array of shape `(n_cells,)` representing batch values for each cell.
     alpha
         Significance level for the statistical test.
 
@@ -90,12 +89,12 @@ def kbet(X: NeighborsResults, batches: np.ndarray, alpha: float = 0.05) -> float
 
 def kbet_per_label(
     X: NeighborsResults,
-    batches: np.ndarray,
-    labels: np.ndarray,
+    batches: npt.ndarray,
+    labels: npt.ndarray,
     alpha: float = 0.05,
     diffusion_n_comps: int = 100,
     return_df: bool = False,
-) -> Union[float, tuple[float, pd.DataFrame]]:
+) -> float | tuple[float, pd.DataFrame]:
     """Compute kBET score per cell type label as in :cite:p:`luecken2022benchmarking`.
 
     This approximates the method used in the original scib package. Notably, the underlying
@@ -106,16 +105,16 @@ def kbet_per_label(
     Parameters
     ----------
     X
-        A :class:`~scib_metrics.utils.nearest_neighbors.NeighborsResults` object.
+        A :class:`scib_metrics.nearest_neighbors.NeighborsResults` object containing information
+        about each cell's K nearest neighbors.
     batches
-        Array of shape (n_cells,) representing batch values
-        for each cell.
+        Array of shape `(n_cells,)` representing batch values for each cell.
     alpha
         Significance level for the statistical test.
     diffusion_n_comps
         Number of diffusion components to use for diffusion distance approximation.
     return_df
-        Return dataframe of results in addition to score.
+        Whether to return a :class:`pandas.DataFrame` of results in addition to score.
 
     Returns
     -------

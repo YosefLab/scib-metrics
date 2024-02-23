@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning][].
 
 -   Replace removed {class}`jax.random.KeyArray` with {class}`jax.Array` ([#135][]).
 
+[#135]: https://github.com/YosefLab/scib-metrics/pull/135
+
 ## 0.5.0 (2024-01-04)
 
 -   Refactor all relevant metrics to use `NeighborsResults` as input instead of sparse distance/connectivity matrices.

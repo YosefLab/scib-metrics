@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.5.1 (2024-02-DD)
+
+### Changed
+
+-   Replace removed {class}`jax.random.KeyArray` with {class}`jax.Array` ([#135][]).
+
+[#135]: https://github.com/YosefLab/scib-metrics/pull/135
+
 ## 0.5.0 (2024-01-04)
 
 -   Refactor all relevant metrics to use `NeighborsResults` as input instead of sparse distance/connectivity matrices.

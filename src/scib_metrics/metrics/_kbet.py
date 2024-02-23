@@ -9,10 +9,9 @@ import numpy as np
 import pandas as pd
 import scipy
 
+from scib_metrics._types import NdArray
 from scib_metrics.nearest_neighbors import NeighborsResults
 from scib_metrics.utils import diffusion_nn, get_ndarray
-
-from ._types import NdArray
 
 logger = logging.getLogger(__name__)
 

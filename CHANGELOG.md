@@ -12,9 +12,7 @@ and this project adheres to [Semantic Versioning][].
 
 ### Changed
 
--   Replace removed {class}`jax.random.KeyArray` with {class}`jax.Array` ([#135][]).
-
-[#135]: https://github.com/YosefLab/scib-metrics/pull/135
+-   Replace removed {class}`jax.random.KeyArray` with {class}`jax.Array` {pr}`135`.
 
 ## 0.5.0 (2024-01-04)
 
@@ -22,9 +20,8 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.4.1 (2023-10-08)
 
--   Fix KMeans. All previous versions had a bug with KMeans and ARI/NMI metrics are not reliable with this clustering. ([#115][])
-
-[#115]: https://github.com/YosefLab/scib-metrics/pull/115
+-   Fix KMeans. All previous versions had a bug with KMeans and ARI/NMI metrics are not reliable
+    with this clustering {pr}`115`.
 
 ## 0.4.0 (2023-09-19)
 

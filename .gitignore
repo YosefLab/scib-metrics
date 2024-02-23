@@ -27,4 +27,7 @@ __pycache__/
 /.idea/
 /.vscode/
 
+# node
+/node_modules/
+
 docs/notebooks/data/

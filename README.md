@@ -1,15 +1,34 @@
 # scib-metrics
 
-[![Tests][badge-tests]][link-tests]
-[![Documentation][badge-docs]][link-docs]
+[![Stars][badge-stars]][link-stars]
+[![PyPI][badge-pypi]][link-pypi]
+[![PyPIDownloads][badge-downloads]][link-downloads]
+[![Docs][badge-docs]][link-docs]
+[![Build][badge-build]][link-build]
+[![Coverage][badge-cov]][link-cov]
+[![Discourse][badge-discourse]][link-discourse]
+[![Chat][badge-zulip]][link-zulip]
 
-[badge-tests]: https://img.shields.io/github/actions/workflow/status/yoseflab/scib-metrics/test.yaml?branch=main
-[link-tests]: https://github.com/yoseflab/scib-metrics/actions/workflows/test.yml
-[badge-docs]: https://img.shields.io/readthedocs/scib-metrics
+[badge-stars]: https://img.shields.io/github/stars/YosefLab/scib-metrics?logo=GitHub&color=yellow
+[link-stars]: https://github.com/YosefLab/scib-metrics/stargazers
+[badge-pypi]: https://img.shields.io/pypi/v/scib-metrics.svg
+[link-pypi]: https://pypi.org/project/scib-metrics
+[badge-downloads]: https://static.pepy.tech/badge/scib-metrics
+[link-downloads]: https://pepy.tech/project/scib-metrics
+[badge-docs]: https://readthedocs.org/projects/scib-metrics/badge/?version=latest
+[link-docs]: https://scib-metrics.readthedocs.io/en/latest/?badge=latest
+[badge-build]: https://github.com/YosefLab/scib-metrics/actions/workflows/build.yaml/badge.svg
+[link-build]: https://github.com/YosefLab/scib-metrics/actions/workflows/build.yaml/
+[badge-cov]: https://codecov.io/gh/YosefLab/scib-metrics/branch/main/graph/badge.svg
+[link-cov]: https://codecov.io/gh/YosefLab/scib-metrics
+[badge-discourse]: https://img.shields.io/discourse/posts?color=yellow&logo=discourse&server=https%3A%2F%2Fdiscourse.scverse.org
+[link-discourse]: https://discourse.scverse.org/
+[badge-zulip]: https://img.shields.io/badge/zulip-join_chat-brightgreen.svg
+[link-zulip]: https://scverse.zulipchat.com/
 
 Accelerated and Python-only metrics for benchmarking single-cell integration outputs.
 
-This package contains implementations of metrics for evaluating the performance of single-cell omics data integration methods. The implementations of these metrics use [jax](https://jax.readthedocs.io/en/latest/) when possible for jit-compilation and hardware acceleration. All implementations are in Python.
+This package contains implementations of metrics for evaluating the performance of single-cell omics data integration methods. The implementations of these metrics use [JAX](https://jax.readthedocs.io/en/latest/) when possible for jit-compilation and hardware acceleration. All implementations are in Python.
 
 Currently we are porting metrics used in the scIB [manuscript](https://www.nature.com/articles/s41592-021-01336-8) (and [code](https://github.com/theislab/scib)). Deviations from the original implementations are documented. However, metric values from this repository should not be compared to the scIB repository.
 
@@ -22,15 +41,7 @@ Please refer to the [documentation][link-docs].
 You need to have Python 3.9 or newer installed on your system. If you don't have
 Python installed, we recommend installing [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
 
-There are several alternative options to install scib-metrics:
-
-<!--
-1) Install the latest release of `scib-metrics` from `PyPI <https://pypi.org/project/scib-metrics/>`_:
-
-```bash
-pip install scib-metrics
-```
--->
+There are several options to install scib-metrics:
 
 1. Install the latest release on PyPI:
 
@@ -44,7 +55,7 @@ pip install scib-metrics
 pip install git+https://github.com/yoseflab/scib-metrics.git@main
 ```
 
-To leverage hardward acceleration (e.g., GPU) please install the apprpriate version of [jax](https://github.com/google/jax#installation) separately. Often this can be easier by using conda-distributed versions of jax.
+To leverage hardware acceleration (e.g., GPU) please install the apprpriate version of [JAX](https://github.com/google/jax#installation) separately. Often this can be easier by using conda-distributed versions of JAX.
 
 ## Release notes
 
@@ -52,7 +63,7 @@ See the [changelog][changelog].
 
 ## Contact
 
-For questions and help requests, you can reach out in the [scverse discourse][scverse-discourse].
+For questions and help requests, you can reach out in the [scverse Discourse][link-discourse].
 If you found a bug, please use the [issue tracker][issue-tracker].
 
 ## Citation
@@ -73,7 +84,6 @@ References for individual metrics can be found in the corresponding documentatio
 ```
 
 [scverse-discourse]: https://discourse.scverse.org/
-[issue-tracker]: https://github.com/yoseflab/scib-metrics/issues
-[changelog]: https://scib-metrics.readthedocs.io/latest/changelog.html
-[link-docs]: https://scib-metrics.readthedocs.io
-[link-api]: https://scib-metrics.readthedocs.io/latest/api.html
+[issue-tracker]: https://github.com/YosefLab/scib-metrics/issues
+[changelog]: https://scib-metrics.readthedocs.io/en/latest/changelog.html
+[link-api]: https://scib-metrics.readthedocs.io/en/latest/api.html

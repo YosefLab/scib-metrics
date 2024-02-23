@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 def isolated_labels(
     X: npt.ndarray,
-    labels: npt.ndarray,
-    batch: npt.ndarray,
+    labels: npt.NDArray,
+    batch: npt.NDArray,
     rescale: bool = True,
     iso_threshold: int | None = None,
 ) -> float:
@@ -59,7 +59,7 @@ def isolated_labels(
     return scores.mean()
 
 
-def _get_isolated_labels(labels: npt.ndarray, batch: npt.ndarray, iso_threshold: float) -> npt.ndarray:
+def _get_isolated_labels(labels: npt.NDArray, batch: npt.NDArray, iso_threshold: float) -> npt.ndarray:
     """Get labels that are isolated depending on the number of batches."""
     tmp = pd.DataFrame()
     label_key = "label"

@@ -6,7 +6,7 @@ from scipy.sparse.csgraph import connected_components
 from scib_metrics.nearest_neighbors import NeighborsResults
 
 
-def graph_connectivity(X: NeighborsResults, labels: npt.ndarray) -> float:
+def graph_connectivity(X: NeighborsResults, labels: npt.NDArray) -> float:
     """Quantify the connectivity of the subgraph per cell type label.
 
     Parameters

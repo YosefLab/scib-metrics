@@ -40,7 +40,7 @@ def _kbet(neigh_batch_ids: jax.Array, batches: jax.Array, n_batches: int) -> flo
     return test_statistics, p_values
 
 
-def kbet(X: NeighborsResults, batches: npt.ndarray, alpha: float = 0.05) -> float:
+def kbet(X: NeighborsResults, batches: npt.NDArray, alpha: float = 0.05) -> float:
     """Compute KBET :cite:p:`buttner2018`.
 
     This implementation is inspired by the implementation in Pegasus:
@@ -89,8 +89,8 @@ def kbet(X: NeighborsResults, batches: npt.ndarray, alpha: float = 0.05) -> floa
 
 def kbet_per_label(
     X: NeighborsResults,
-    batches: npt.ndarray,
-    labels: npt.ndarray,
+    batches: npt.NDArray,
+    labels: npt.NDArray,
     alpha: float = 0.05,
     diffusion_n_comps: int = 100,
     return_df: bool = False,

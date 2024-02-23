@@ -7,8 +7,8 @@ from scipy.sparse import spmatrix
 from sklearn.metrics.cluster import adjusted_rand_score, normalized_mutual_info_score
 from sklearn.utils import check_array
 
-from .nearest_neighbors import NeighborsResults
-from .utils import KMeans
+from scib_metrics.nearest_neighbors import NeighborsResults
+from scib_metrics.utils import KMeans
 
 logger = logging.getLogger(__name__)
 

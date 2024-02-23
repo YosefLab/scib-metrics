@@ -8,149 +8,137 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## [Unreleased] 0.5.1 (2024-02-DD)
+
+### Changed
+
+-   Replace removed {class}`jax.random.KeyArray` with {class}`jax.Array` {pr}`135`.
+
 ## 0.5.0 (2024-01-04)
 
--   Refactor all relevant metrics to use `NeighborsResults` as input instead of sparse distance/connectivity matrices.
+### Changed
+
+-   Refactor all relevant metrics to use `NeighborsResults` as input instead of sparse
+    distance/connectivity matrices {pr}`129`.
 
 ## 0.4.1 (2023-10-08)
 
--   Fix KMeans. All previous versions had a bug with KMeans and ARI/NMI metrics are not reliable with this clustering. ([#115][])
+### Fixed
 
-[#115]: https://github.com/YosefLab/scib-metrics/pull/115
+-   Fix KMeans. All previous versions had a bug with KMeans and ARI/NMI metrics are not reliable
+    with this clustering {pr}`115`.
 
 ## 0.4.0 (2023-09-19)
 
--   Drop Python 3.8 ([#107][])
--   Fix jax one-hot error ([#107][])
--   Update isolated labels to use newest scib methodology ([#108][])
+### Added
 
-[#107]: https://github.com/YosefLab/scib-metrics/pull/107
-[#108]: https://github.com/YosefLab/scib-metrics/pull/108
+-   Update isolated labels to use newest scib methodology {pr}`108`.
+
+### Fixed
+
+-   Fix jax one-hot error {pr}`107`.
+
+### Removed
+
+-   Drop Python 3.8 {pr}`107`.
 
 ## 0.3.3 (2023-03-29)
 
 ### Fixed
 
--   Large scale tutorial now properly uses gpu index ([#92][])
-
-[#92]: https://github.com/YosefLab/scib-metrics/pull/92
+-   Large scale tutorial now properly uses gpu index {pr}`92`
 
 ## 0.3.2 (2023-03-13)
 
 ### Changed
 
--   Switch to Ruff for linting/formatting ([#87][])
--   Update cookiecutter template ([#88][])
-
-[#87]: https://github.com/YosefLab/scib-metrics/pull/87
-[#88]: https://github.com/YosefLab/scib-metrics/pull/88
+-   Switch to Ruff for linting/formatting {pr}`87`
+-   Update cookiecutter template {pr}`88`
 
 ## 0.3.1 (2023-02-16)
 
 ### Changed
 
--   Expose chunk size for silhouette ([#82][])
-
-[#82]: https://github.com/YosefLab/scib-metrics/pull/82
+-   Expose chunk size for silhouette {pr}`82`
 
 ## 0.3.0 (2023-02-16)
 
 ### Changed
 
--   Rename `KmeansJax` to `Kmeans` and fix ++ initialization, use Kmeans as default in benchmarker instead of Leiden ([#81][])
--   Warn about joblib, add progress bar postfix str ([#80][])
-
-[#81]: https://github.com/YosefLab/scib-metrics/pull/81
-[#80]: https://github.com/YosefLab/scib-metrics/pull/80
+-   Rename `KmeansJax` to `Kmeans` and fix ++ initialization, use Kmeans as default in benchmarker instead of Leiden {pr}`81`.
+-   Warn about joblib, add progress bar postfix str {pr}`80`
 
 ## 0.2.0 (2023-02-02)
 
 ### Added
 
--   Allow custom nearest neighbors methods in Benchmarker ([#78][])
-
-[#78]: https://github.com/YosefLab/scib-metrics/pull/78
+-   Allow custom nearest neighbors methods in Benchmarker {pr}`78`.
 
 ## 0.1.1 (2023-01-04)
 
 ### Added
 
--   Add new tutorial and fix scalability of lisi ([#71][])
-
-[#71]: https://github.com/YosefLab/scib-metrics/pull/71
+-   Add new tutorial and fix scalability of lisi {pr}`71`.
 
 ## 0.1.0 (2023-01-03)
 
 ### Added
 
--   Add benchmarking pipeline with plotting ([#52][] and [#69][])
+-   Add benchmarking pipeline with plotting {pr}`52` {pr}`69`.
 
 ### Fixed
 
--   Fix diffusion distance computation, affecting kbet ([#70][])
-
-[#52]: https://github.com/YosefLab/scib-metrics/pull/52
-[#69]: https://github.com/YosefLab/scib-metrics/pull/69
-[#70]: https://github.com/YosefLab/scib-metrics/pull/70
+-   Fix diffusion distance computation, affecting kbet {pr}`70`.
 
 ## 0.0.9 (2022-12-16)
 
 ### Added
 
--   Add kbet ([#60][])
--   Add graph connectivty metric ([#61][])
-
-[#60]: https://github.com/YosefLab/scib-metrics/pull/60
-[#61]: https://github.com/YosefLab/scib-metrics/pull/61
+-   Add kbet {pr}`60`.
+-   Add graph connectivty metric {pr}`61`.
 
 ## 0.0.8 (2022-11-18)
 
--   Switch to random kmeans initialization due to kmeans++ complexity issues ([#54][])
--   Begin fixes to make kmeans++ initialization faster ([#49][])
+### Changed
 
-[#54]: https://github.com/YosefLab/scib-metrics/pull/54
-[#49]: https://github.com/YosefLab/scib-metrics/pull/49
+-   Switch to random kmeans initialization due to kmeans++ complexity issues {pr}`54`.
+
+### Fixed
+
+-   Begin fixes to make kmeans++ initialization faster {pr}`49`.
 
 ## 0.0.7 (2022-10-31)
 
--   Fix memory issue in `KMeansJax` by using `_kmeans_full_run` with `map` instead of `vmap` ([#45][])
--   Move PCR to utils module in favor of PCR comparison ([#46][])
+### Changed
 
-[#45]: https://github.com/YosefLab/scib-metrics/pull/45
-[#46]: https://github.com/YosefLab/scib-metrics/pull/46
+-   Move PCR to utils module in favor of PCR comparison {pr}`46`.
+
+### Fixed
+
+-   Fix memory issue in `KMeansJax` by using `_kmeans_full_run` with `map` instead of `vmap` {pr}`45`.
 
 ## 0.0.6 (2022-10-25)
 
--   Reimplement silhouette in a memory constant way, pdist using lax scan ([#42][])
+### Changed
 
-[#42]: https://github.com/YosefLab/scib-metrics/pull/42
+-   Reimplement silhouette in a memory constant way, pdist using lax scan {pr}`42`.
 
 ## 0.0.5 (2022-10-24)
 
 ### Added
 
--   Standardize language of docstring ([#30][])
--   Use K-means++ initialization ([#23][])
--   Add pc regression and pc comparsion ([#16][] and [#38][])
--   Lax'd silhouette ([#33][])
--   Cookicutter template sync ([#35][])
-
-[#33]: https://github.com/YosefLab/scib-metrics/pull/33
-[#38]: https://github.com/YosefLab/scib-metrics/pull/38
-[#35]: https://github.com/YosefLab/scib-metrics/pull/35
-[#16]: https://github.com/YosefLab/scib-metrics/pull/16
-[#23]: https://github.com/YosefLab/scib-metrics/pull/23
-[#30]: https://github.com/YosefLab/scib-metrics/pull/30
+-   Standardize language of docstring {pr}`30`.
+-   Use K-means++ initialization {pr}`23`.
+-   Add pc regression and pc comparsion {pr}`16` {pr}`38`.
+-   Lax'd silhouette {pr}`33`.
+-   Cookicutter template sync {pr}`35`.
 
 ## 0.0.4 (2022-10-10)
 
 ### Added
 
--   NMI/ARI metric with Leiden clustering resolution optimization ([#24][])
--   iLISI/cLISI metrics ([#20][])
-
-[#20]: https://github.com/YosefLab/scib-metrics/pull/20
-[#24]: https://github.com/YosefLab/scib-metrics/pull/24
+-   NMI/ARI metric with Leiden clustering resolution optimization {pr}`24`.
+-   iLISI/cLISI metrics {pr}`20`.
 
 ## 0.0.1 - 0.0.3
 

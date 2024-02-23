@@ -24,5 +24,10 @@
       "_template": "https://github.com/scverse/cookiecutter-scverse"
     }
   },
-  "directory": null
+  "directory": null,
+  "skip": [
+    ".github/workflows/**.yaml",
+    ".pre-commit-config.yaml",
+    "pyproject.toml"
+  ]
 }

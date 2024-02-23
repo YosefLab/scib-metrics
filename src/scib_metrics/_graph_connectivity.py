@@ -1,21 +1,25 @@
 import numpy as np
 import pandas as pd
+from numpy.typing import ArrayLike
 from scipy.sparse.csgraph import connected_components
 
 from scib_metrics.nearest_neighbors import NeighborsResults
 
 
-def graph_connectivity(X: NeighborsResults, labels: np.ndarray) -> float:
+def graph_connectivity(X: NeighborsResults, labels: ArrayLike) -> float:
     """Quantify the connectivity of the subgraph per cell type label.
 
     Parameters
     ----------
     X
-        Array of shape (n_cells, n_cells) with non-zero values
-        representing distances to exactly each cell's k nearest neighbors.
+        :class:`scib_metrics.nearest_neighbors.NeighborsResults` object containing information
+        about each cell's K nearest neighbors.
     labels
-        Array of shape (n_cells,) representing label values
-        for each cell.
+        Array of shape ``(n_cells,)`` representing label values for each cell.
+
+    Returns
+    -------
+    Mean connectivity of the subgraph per cell type label.
     """
     # TODO(adamgayoso): Utils for validating inputs
     clust_res = []

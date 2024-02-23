@@ -1,12 +1,12 @@
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
-from numpy.typing import ArrayLike
 from scipy.sparse.csgraph import connected_components
 
 from scib_metrics.nearest_neighbors import NeighborsResults
 
 
-def graph_connectivity(X: NeighborsResults, labels: ArrayLike) -> float:
+def graph_connectivity(X: NeighborsResults, labels: npt.ndarray) -> float:
     """Quantify the connectivity of the subgraph per cell type label.
 
     Parameters
@@ -15,7 +15,7 @@ def graph_connectivity(X: NeighborsResults, labels: ArrayLike) -> float:
         :class:`scib_metrics.nearest_neighbors.NeighborsResults` object containing information
         about each cell's K nearest neighbors.
     labels
-        Array of shape ``(n_cells,)`` representing label values for each cell.
+        Array of shape `(n_cells,)` representing label values for each cell.
 
     Returns
     -------

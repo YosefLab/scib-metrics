@@ -36,8 +36,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    # CLI for bumping the version number
-    "bump2version",
     "pre-commit",
     "twine>=4.0.2",
 ]

@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.6.0 (unreleased)
 
+### Added
+
+-   Add `progress_bar` argument to {class}`scib_metrics.benchmark.Benchmarker` {pr}`152`.
+
 ## 0.5.1 (2024-02-23)
 
 ### Changed

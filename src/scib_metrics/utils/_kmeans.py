@@ -153,7 +153,7 @@ class KMeans:
             counts = (new_labels[jnp.newaxis, :] == jnp.arange(self.n_clusters)[:, jnp.newaxis]).sum(
                 axis=1, keepdims=True
             )
-            counts = jnp.clip(counts, a_min=1, a_max=None)
+            counts = jnp.clip(counts, min=1, max=None)
             # Sum over points in a centroid by zeroing others out
             new_centroids = (
                 jnp.sum(

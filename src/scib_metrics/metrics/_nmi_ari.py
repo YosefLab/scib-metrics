@@ -75,7 +75,12 @@ def nmi_ari_cluster_labels_kmeans(X: np.ndarray, labels: np.ndarray) -> dict[str
 
 
 def nmi_ari_cluster_labels_leiden(
-    X: NeighborsResults, labels: np.ndarray, optimize_resolution: bool = True, resolution: float = 1.0, n_jobs: int = 1, seed: int = 42
+    X: NeighborsResults,
+    labels: np.ndarray,
+    optimize_resolution: bool = True,
+    resolution: float = 1.0,
+    n_jobs: int = 1,
+    seed: int = 42,
 ) -> dict[str, float]:
     """Compute nmi and ari between leiden clusters and labels.
 

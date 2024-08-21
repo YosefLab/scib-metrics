@@ -24,7 +24,7 @@ def _compute_clustering_leiden(connectivity_graph: spmatrix, resolution: float) 
     # to have both sets of edges as is done in scanpy. See test for more details.
     g = igraph.Graph.Weighted_Adjacency(connectivity_graph, mode="directed")
     g.to_undirected(mode="each")
-    clustering = g.community_leiden(objective_function="modularity", weights="weight", resolution_parameter=resolution)
+    clustering = g.community_leiden(objective_function="modularity", weights="weight", resolution=resolution)
     clusters = clustering.membership
     return np.asarray(clusters)
 

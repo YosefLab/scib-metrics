@@ -1,6 +1,5 @@
 import anndata
 import igraph
-import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
@@ -134,13 +133,12 @@ def test_isolated_labels():
 
 
 def test_kmeans():
-    centers = [[1, 1], [-1, -1], [1, -1]]
+    centers = np.array([[1, 1], [-1, -1], [1, -1]]) * 2
     len(centers)
     X, labels_true = make_blobs(n_samples=3000, centers=centers, cluster_std=0.7, random_state=42)
 
-    with jax.experimental.enable_x64():
-        kmeans = scib_metrics.utils.KMeans(n_clusters=3)
-        kmeans.fit(X)
+    kmeans = scib_metrics.utils.KMeans(n_clusters=3)
+    kmeans.fit(X)
     assert kmeans.labels_.shape == (X.shape[0],)
 
     skmeans = SKMeans(n_clusters=3)

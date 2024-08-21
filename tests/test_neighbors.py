@@ -20,9 +20,8 @@ def test_neighbors_results(n):
     new_connect = neigh_result.knn_graph_connectivities
     new_dist = neigh_result.knn_graph_distances
 
-    sc_dist, sc_connect = sc.neighbors._connectivity.umap(
+    sc_connect = sc.neighbors._connectivity.umap(
         neigh_result.indices[:, :n], neigh_result.distances[:, :n], n_obs=adata.n_obs, n_neighbors=n
     )
 
-    np.testing.assert_allclose(new_dist.toarray(), sc_dist.toarray())
     np.testing.assert_allclose(new_connect.toarray(), sc_connect.toarray())

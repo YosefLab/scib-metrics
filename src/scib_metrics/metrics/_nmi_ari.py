@@ -22,7 +22,7 @@ def _compute_clustering_kmeans(X: np.ndarray, n_clusters: int) -> np.ndarray:
 
 def _compute_clustering_leiden(connectivity_graph: spmatrix, resolution: float, seed: int) -> np.ndarray:
     rng = random.Random(seed)
-    ig.set_random_number_generator(rng)
+    igraph.set_random_number_generator(rng)
     # The connectivity graph with the umap method is symmetric, but we need to first make it directed
     # to have both sets of edges as is done in scanpy. See test for more details.
     g = igraph.Graph.Weighted_Adjacency(connectivity_graph, mode="directed")

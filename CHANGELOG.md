@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning][].
 ### Fixed
 
 -   Fix neighbors connectivities in test to use new scanpy fn {pr}`170`.
+-   Fix Kmeans test {pr}`172`.
 
 ## 0.5.1 (2024-02-23)
 

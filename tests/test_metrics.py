@@ -110,6 +110,14 @@ def test_nmi_ari_cluster_labels_leiden_single_resolution():
     assert isinstance(nmi, float)
     assert isinstance(ari, float)
 
+def test_nmi_ari_cluster_labels_leiden_reproducibility():
+    X, labels = dummy_x_labels(symmetric_positive=True, x_is_neighbors_results=True)
+    out1 = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=False, resolution=3.0)
+    out2 = scib_metrics.nmi_ari_cluster_labels_leiden(X, labels, optimize_resolution=False, resolution=3.0)
+    nmi1, ari1 = out1["nmi"], out1["ari"]
+    nmi2, ari2 = out2["nmi"], out2["ari"]
+    assert nmi1 == nmi2
+    assert ari1 == ari2
 
 def test_leiden_graph_construction():
     X, _ = dummy_x_labels(symmetric_positive=True, x_is_neighbors_results=True)

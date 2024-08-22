@@ -1,5 +1,4 @@
 from functools import partial
-from typing import Union
 
 import chex
 import jax

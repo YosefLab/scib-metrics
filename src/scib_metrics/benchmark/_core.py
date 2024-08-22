@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import partial
-from typing import Any, Union
+from typing import Any
 
 import matplotlib
 import matplotlib.pyplot as plt

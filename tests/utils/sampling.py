@@ -1,10 +1,8 @@
-from typing import Union
-
 import jax
 import jax.numpy as jnp
 from jax import Array
 
-IntOrKey = Union[int, Array]
+IntOrKey = int | Array
 
 
 def _validate_seed(seed: IntOrKey) -> Array:

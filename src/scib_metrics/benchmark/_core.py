@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import partial
-from typing import Any, Union
+from typing import Any
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ import scib_metrics
 from scib_metrics.nearest_neighbors import NeighborsResults, pynndescent
 
 Kwargs = dict[str, Any]
-MetricType = Union[bool, Kwargs]
+MetricType = bool | Kwargs
 
 _LABELS = "labels"
 _BATCH = "batch"

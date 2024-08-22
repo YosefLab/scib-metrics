@@ -1,5 +1,4 @@
 from functools import partial
-from typing import Union
 
 import chex
 import jax
@@ -8,7 +7,7 @@ import numpy as np
 
 from ._utils import get_ndarray
 
-NdArray = Union[np.ndarray, jnp.ndarray]
+NdArray = np.ndarray | jnp.ndarray
 
 
 @chex.dataclass

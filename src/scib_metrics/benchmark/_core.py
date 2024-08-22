@@ -22,7 +22,7 @@ import scib_metrics
 from scib_metrics.nearest_neighbors import NeighborsResults, pynndescent
 
 Kwargs = dict[str, Any]
-MetricType = Union[bool, Kwargs]
+MetricType = bool | Kwargs
 
 _LABELS = "labels"
 _BATCH = "batch"

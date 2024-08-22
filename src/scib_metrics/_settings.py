@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Literal, Union
+from typing import Literal
 
 from rich.console import Console
 from rich.logging import RichHandler
@@ -56,7 +56,7 @@ class ScibConfig:
         return self._verbosity
 
     @verbosity.setter
-    def verbosity(self, level: Union[str, int]):
+    def verbosity(self, level: str | int):
         """Set verbosity level.
 
         If "scib_metrics" logger has no StreamHandler, add one.
@@ -116,7 +116,7 @@ class ScibConfig:
         return self._jax_gpu
 
     @jax_preallocate_gpu_memory.setter
-    def jax_preallocate_gpu_memory(self, value: Union[float, bool]):
+    def jax_preallocate_gpu_memory(self, value: float | bool):
         # see https://jax.readthedocs.io/en/latest/gpu_memory_allocation.html#gpu-memory-allocation
         if value is False:
             os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"

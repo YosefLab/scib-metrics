@@ -1,6 +1,5 @@
 import logging
 from functools import partial
-from typing import Union
 
 import chex
 import jax
@@ -16,7 +15,7 @@ from scib_metrics.utils import diffusion_nn, get_ndarray
 logger = logging.getLogger(__name__)
 
 
-def _chi2_cdf(df: Union[int, NdArray], x: NdArray) -> float:
+def _chi2_cdf(df: int | NdArray, x: NdArray) -> float:
     """Chi2 cdf.
 
     See https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.chdtr.html
@@ -94,7 +93,7 @@ def kbet_per_label(
     alpha: float = 0.05,
     diffusion_n_comps: int = 100,
     return_df: bool = False,
-) -> Union[float, tuple[float, pd.DataFrame]]:
+) -> float | tuple[float, pd.DataFrame]:
     """Compute kBET score per cell type label as in :cite:p:`luecken2022benchmarking`.
 
     This approximates the method used in the original scib package. Notably, the underlying

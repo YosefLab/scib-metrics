@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -14,7 +13,7 @@ def isolated_labels(
     labels: np.ndarray,
     batch: np.ndarray,
     rescale: bool = True,
-    iso_threshold: Optional[int] = None,
+    iso_threshold: int | None = None,
 ) -> float:
     """Isolated label score :cite:p:`luecken2022benchmarking`.
 

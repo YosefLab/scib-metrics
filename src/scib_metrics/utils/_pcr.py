@@ -1,5 +1,3 @@
-from typing import Optional
-
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
@@ -15,7 +13,7 @@ def principal_component_regression(
     X: NdArray,
     covariate: NdArray,
     categorical: bool = False,
-    n_components: Optional[int] = None,
+    n_components: int | None = None,
 ) -> float:
     """Principal component regression (PCR) :cite:p:`buttner2018`.
 

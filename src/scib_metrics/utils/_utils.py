@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional
 
 import jax
 import jax.numpy as jnp
@@ -18,7 +17,7 @@ def get_ndarray(x: ArrayDevice) -> np.ndarray:
     return np.array(jax.device_get(x))
 
 
-def one_hot(y: NdArray, n_classes: Optional[int] = None) -> jnp.ndarray:
+def one_hot(y: NdArray, n_classes: int | None = None) -> jnp.ndarray:
     """One-hot encode an array. Wrapper around :func:`~jax.nn.one_hot`.
 
     Parameters

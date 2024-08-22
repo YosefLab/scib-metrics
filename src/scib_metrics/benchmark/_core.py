@@ -1,9 +1,10 @@
 import os
 import warnings
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import partial
-from typing import Any, Callable, Optional, Union
+from typing import Any, Union
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -135,9 +136,9 @@ class Benchmarker:
         batch_key: str,
         label_key: str,
         embedding_obsm_keys: list[str],
-        bio_conservation_metrics: Optional[BioConservation] = None,
-        batch_correction_metrics: Optional[BatchCorrection] = None,
-        pre_integrated_embedding_obsm_key: Optional[str] = None,
+        bio_conservation_metrics: BioConservation | None = None,
+        batch_correction_metrics: BatchCorrection | None = None,
+        pre_integrated_embedding_obsm_key: str | None = None,
         n_jobs: int = 1,
         progress_bar: bool = True,
     ):
@@ -161,7 +162,7 @@ class Benchmarker:
             "Batch correction": self._batch_correction_metrics,
         }
 
-    def prepare(self, neighbor_computer: Optional[Callable[[np.ndarray, int], NeighborsResults]] = None) -> None:
+    def prepare(self, neighbor_computer: Callable[[np.ndarray, int], NeighborsResults] | None = None) -> None:
         """Prepare the data for benchmarking.
 
         Parameters
@@ -283,9 +284,7 @@ class Benchmarker:
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE
         return df
 
-    def plot_results_table(
-        self, min_max_scale: bool = True, show: bool = True, save_dir: Optional[str] = None
-    ) -> Table:
+    def plot_results_table(self, min_max_scale: bool = True, show: bool = True, save_dir: str | None = None) -> Table:
         """Plot the benchmarking results.
 
         Parameters

@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning][].
 
 -   Add `progress_bar` argument to {class}`scib_metrics.benchmark.Benchmarker` {pr}`152`.
 
+### Changed
+
+-   Leiden clustering now has a seed argument for reproducibility {pr}`173`.
+
+### Fixed
+
+-   Fix neighbors connectivities in test to use new scanpy fn {pr}`170`.
+-   Fix Kmeans test {pr}`172`.
+-   Fix deprecation and future warnings {pr}`171`.
+
 ## 0.5.1 (2024-02-23)
 
 ### Changed

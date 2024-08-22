@@ -18,11 +18,9 @@ def test_neighbors_results(n):
     neigh_result = pynndescent(adata.obsm[embedding_keys[0]], n_neighbors=n)
     neigh_result = neigh_result.subset_neighbors(n=n)
     new_connect = neigh_result.knn_graph_connectivities
-    new_dist = neigh_result.knn_graph_distances
 
-    sc_dist, sc_connect = sc.neighbors._compute_connectivities_umap(
-        neigh_result.indices[:, :n], neigh_result.distances[:, :n], adata.n_obs, n_neighbors=n
+    sc_connect = sc.neighbors._connectivity.umap(
+        neigh_result.indices[:, :n], neigh_result.distances[:, :n], n_obs=adata.n_obs, n_neighbors=n
     )
 
-    np.testing.assert_allclose(new_dist.A, sc_dist.A)
-    np.testing.assert_allclose(new_connect.A, sc_connect.A)
+    np.testing.assert_allclose(new_connect.toarray(), sc_connect.toarray())

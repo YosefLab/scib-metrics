@@ -176,7 +176,7 @@ def kbet_per_label(
 
             else:
                 # check the number of components where kBET can be computed upon
-                comp_size = pd.value_counts(labs)
+                comp_size = pd.Series(labs).value_counts()
                 # check which components are small
                 comp_size_thresh = 3 * k0
                 idx_nonan = np.flatnonzero(np.in1d(labs, comp_size[comp_size >= comp_size_thresh].index))

@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning][].
 
 ### Changed
 
-- Leiden clustering now has a seed argument for reproducibility {pr}`173`.
+-   Leiden clustering now has a seed argument for reproducibility {pr}`173`.
 
 ### Fixed
 

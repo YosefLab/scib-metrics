@@ -8,7 +8,7 @@ import numpy as np
 
 from ._utils import get_ndarray
 
-NdArray = Union[np.ndarray, jnp.ndarray]
+NdArray = np.ndarray | jnp.ndarray
 
 
 @chex.dataclass

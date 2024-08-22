@@ -147,7 +147,7 @@ extend-include = ["*.ipynb"]
 [tool.ruff.format]
 docstring-code-format = true
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
 [tool.jupytext]

@@ -1,12 +1,14 @@
 # code from https://github.com/theislab/scanpy/blob/master/docs/extensions/typed_returns.py
 # with some minor adjustment
 from __future__ import annotations
-
-import re
-from collections.abc import Generator, Iterable
-
-from sphinx.application import Sphinx
 from sphinx.ext.napoleon import NumpyDocstring
+from typing import TYPE_CHECKING
+import re
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable
+
+    from sphinx.application import Sphinx
 
 
 def _process_return(lines: Iterable[str]) -> Generator[str, None, None]:

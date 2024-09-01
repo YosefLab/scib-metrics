@@ -35,10 +35,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pre-commit",
-    "twine>=4.0.2",
-]
+dev = ["pre-commit", "twine>=4.0.2"]
 doc = [
     "sphinx>=4",
     "sphinx-book-theme>=1.0",
@@ -93,21 +90,20 @@ xfail_strict = true
 src = ["src"]
 line-length = 120
 lint.select = [
-    "F",  # Errors detected by Pyflakes
-    "E",  # Error detected by Pycodestyle
-    "W",  # Warning detected by Pycodestyle
-    "I",  # isort
-    "D",  # pydocstyle
-    "B",  # flake8-bugbear
-    "TID",  # flake8-tidy-imports
-    "C4",  # flake8-comprehensions
-    "BLE",  # flake8-blind-except
-    "UP",  # pyupgrade
-    "RUF100",  # Report unused noqa directives
-    "ICN", # flake8-import-conventions
-    "TCH", # flake8-type-checking
-    "PTH", # flake8-use-pathlib
-    "FA", # flake8-future-annotations
+    "F",      # Errors detected by Pyflakes
+    "E",      # Error detected by Pycodestyle
+    "W",      # Warning detected by Pycodestyle
+    "I",      # isort
+    "D",      # pydocstyle
+    "B",      # flake8-bugbear
+    "TID",    # flake8-tidy-imports
+    "C4",     # flake8-comprehensions
+    "BLE",    # flake8-blind-except
+    "UP",     # pyupgrade
+    "RUF100", # Report unused noqa directives
+    "ICN",    # flake8-import-conventions
+    "TCH",    # flake8-type-checking
+    "FA",     # flake8-future-annotations
 ]
 lint.ignore = [
     # line too long -> we accept long comment lines; formatter gets rid of long code lines
@@ -126,8 +122,7 @@ lint.ignore = [
     "B008",
     # __magic__ methods are are often self-explanatory, allow missing docstrings
     "D105",
-    # first line should end with a period [Bug: doesn't work with single-line docstrings]
-    "D400",
+    # first line should end with a period [Bug: doesn't work with single-line docstrings]    "D400",
     # First line should be in imperative mood; try rephrasing
     "D401",
     ## Disable one in each pair of mutually incompatible rules

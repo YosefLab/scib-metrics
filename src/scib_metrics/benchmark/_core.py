@@ -6,7 +6,7 @@ from enum import Enum
 from functools import partial
 from typing import Any
 
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -297,7 +297,7 @@ class Benchmarker:
             The directory to save the plot to. If `None`, the plot is not saved.
         """
         num_embeds = len(self._embedding_obsm_keys)
-        cmap_fn = lambda col_data: normed_cmap(col_data, cmap=matplotlib.cm.PRGn, num_stds=2.5)
+        cmap_fn = lambda col_data: normed_cmap(col_data, cmap=mpl.cm.PRGn, num_stds=2.5)
         df = self.get_results(min_max_scale=min_max_scale)
         # Do not want to plot what kind of metric it is
         plot_df = df.drop(_METRIC_TYPE, axis=0)
@@ -335,7 +335,7 @@ class Benchmarker:
                 title=col.replace(" ", "\n", 1),
                 plot_fn=bar,
                 plot_kw={
-                    "cmap": matplotlib.cm.YlGnBu,
+                    "cmap": mpl.cm.YlGnBu,
                     "plot_bg_bar": False,
                     "annotate": True,
                     "height": 0.9,
@@ -347,7 +347,7 @@ class Benchmarker:
             for i, col in enumerate(score_cols)
         ]
         # Allow to manipulate text post-hoc (in illustrator)
-        with matplotlib.rc_context({"svg.fonttype": "none"}):
+        with mpl.rc_context({"svg.fonttype": "none"}):
             fig, ax = plt.subplots(figsize=(len(df.columns) * 1.25, 3 + 0.3 * num_embeds))
             tab = Table(
                 plot_df,

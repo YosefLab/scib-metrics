@@ -107,6 +107,7 @@ lint.select = [
     "ICN", # flake8-import-conventions
     "TCH", # flake8-type-checking
     "PTH", # flake8-use-pathlib
+    "FA", # flake8-future-annotations
 ]
 lint.ignore = [
     # line too long -> we accept long comment lines; formatter gets rid of long code lines

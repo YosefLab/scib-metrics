@@ -279,7 +279,8 @@ class Benchmarker:
         # Compute scores
         per_class_score = df.groupby(_METRIC_TYPE).mean().transpose()
         # This is the default scIB weighting from the manuscript
-        per_class_score["Total"] = 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
+        if "Batch correction" in per_class_score.columns and "Bio conservation" in per_class_score.columns:
+            per_class_score["Total"] = 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
         df = pd.concat([df.transpose(), per_class_score], axis=1)
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE
         return df
@@ -302,7 +303,11 @@ class Benchmarker:
         # Do not want to plot what kind of metric it is
         plot_df = df.drop(_METRIC_TYPE, axis=0)
         # Sort by total score
-        plot_df = plot_df.sort_values(by="Total", ascending=False).astype(np.float64)
+        priority_columns = ["Total", "Bio conservation", "Batch correction"]
+        for col in priority_columns:
+            if col in plot_df.columns:
+                plot_df = plot_df.sort_values(by=col, ascending=False).astype(np.float64)
+                break
         plot_df["Method"] = plot_df.index
 
         # Split columns by metric type, using df as it doesn't have the new method col

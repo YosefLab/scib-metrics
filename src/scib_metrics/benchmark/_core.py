@@ -280,7 +280,9 @@ class Benchmarker:
         per_class_score = df.groupby(_METRIC_TYPE).mean().transpose()
         # This is the default scIB weighting from the manuscript
         if "Batch correction" in per_class_score.columns and "Bio conservation" in per_class_score.columns:
-            per_class_score["Total"] = 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
+            per_class_score["Total"] = (
+                0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
+            )
         df = pd.concat([df.transpose(), per_class_score], axis=1)
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE
         return df

@@ -159,10 +159,9 @@ class Benchmarker:
 
         self._metric_collection_dict = {}
         if self._bio_conservation_metrics is not None:
-         self._metric_collection_dict.update({"Bio conservation": self._bio_conservation_metrics})
+            self._metric_collection_dict.update({"Bio conservation": self._bio_conservation_metrics})
         if self._batch_correction_metrics is not None:
-         self._metric_collection_dict.update({"Batch correction": self._batch_correction_metrics})
-
+            self._metric_collection_dict.update({"Batch correction": self._batch_correction_metrics})
 
     def prepare(self, neighbor_computer: Callable[[np.ndarray, int], NeighborsResults] | None = None) -> None:
         """Prepare the data for benchmarking.
@@ -282,7 +281,9 @@ class Benchmarker:
         per_class_score = df.groupby(_METRIC_TYPE).mean().transpose()
         # This is the default scIB weighting from the manuscript
         if self._batch_correction_metrics is not None and self._bio_conservation_metrics is not None:
-            per_class_score["Total"] = 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
+            per_class_score["Total"] = (
+                0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
+            )
         df = pd.concat([df.transpose(), per_class_score], axis=1)
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE
         return df

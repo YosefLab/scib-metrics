@@ -136,8 +136,8 @@ class Benchmarker:
         batch_key: str,
         label_key: str,
         embedding_obsm_keys: list[str],
-        bio_conservation_metrics: BioConservation | None = None,
-        batch_correction_metrics: BatchCorrection | None = None,
+        bio_conservation_metrics: BioConservation | None,
+        batch_correction_metrics: BatchCorrection | None,
         pre_integrated_embedding_obsm_key: str | None = None,
         n_jobs: int = 1,
         progress_bar: bool = True,
@@ -145,8 +145,8 @@ class Benchmarker:
         self._adata = adata
         self._embedding_obsm_keys = embedding_obsm_keys
         self._pre_integrated_embedding_obsm_key = pre_integrated_embedding_obsm_key
-        self._bio_conservation_metrics = bio_conservation_metrics if bio_conservation_metrics else BioConservation()
-        self._batch_correction_metrics = batch_correction_metrics if batch_correction_metrics else BatchCorrection()
+        self._bio_conservation_metrics = bio_conservation_metrics
+        self._batch_correction_metrics = batch_correction_metrics
         self._results = pd.DataFrame(columns=list(self._embedding_obsm_keys) + [_METRIC_TYPE])
         self._emb_adatas = {}
         self._neighbor_values = (15, 50, 90)
@@ -157,10 +157,12 @@ class Benchmarker:
         self._n_jobs = n_jobs
         self._progress_bar = progress_bar
 
-        self._metric_collection_dict = {
-            "Bio conservation": self._bio_conservation_metrics,
-            "Batch correction": self._batch_correction_metrics,
-        }
+        self._metric_collection_dict = {}
+        if self._bio_conservation_metrics is not None:
+         self._metric_collection_dict.update({"Bio conservation": self._bio_conservation_metrics})
+        if self._batch_correction_metrics is not None:
+         self._metric_collection_dict.update({"Batch correction": self._batch_correction_metrics})
+
 
     def prepare(self, neighbor_computer: Callable[[np.ndarray, int], NeighborsResults] | None = None) -> None:
         """Prepare the data for benchmarking.
@@ -279,7 +281,8 @@ class Benchmarker:
         # Compute scores
         per_class_score = df.groupby(_METRIC_TYPE).mean().transpose()
         # This is the default scIB weighting from the manuscript
-        per_class_score["Total"] = 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
+        if self._batch_correction_metrics is not None and self._bio_conservation_metrics is not None:
+            per_class_score["Total"] = 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
         df = pd.concat([df.transpose(), per_class_score], axis=1)
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE
         return df
@@ -302,7 +305,13 @@ class Benchmarker:
         # Do not want to plot what kind of metric it is
         plot_df = df.drop(_METRIC_TYPE, axis=0)
         # Sort by total score
-        plot_df = plot_df.sort_values(by="Total", ascending=False).astype(np.float64)
+        if self._batch_correction_metrics is not None and self._bio_conservation_metrics is not None:
+            sort_col = "Total"
+        elif self._batch_correction_metrics is not None:
+            sort_col = "Batch correction"
+        else:
+            sort_col = "Bio conservation"
+        plot_df = plot_df.sort_values(by=sort_col, ascending=False).astype(np.float64)
         plot_df["Method"] = plot_df.index
 
         # Split columns by metric type, using df as it doesn't have the new method col

@@ -160,7 +160,6 @@ class Benchmarker:
         if self._bio_conservation_metrics is None and self._batch_correction_metrics is None:
             raise ValueError("Either batch or bio metrics must be defined.")
 
-        
         self._metric_collection_dict = {}
         if self._bio_conservation_metrics is not None:
             self._metric_collection_dict.update({"Bio conservation": self._bio_conservation_metrics})

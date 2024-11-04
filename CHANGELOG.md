@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning][].
 ### Added
 
 -   Add `progress_bar` argument to {class}`scib_metrics.benchmark.Benchmarker` {pr}`152`.
+-   Add ability of {class}`scib_metrics.benchmark.Benchmarker` plotting code to handle missing sets of metrics {pr}`181`.
 
 ### Changed
 
--   Leiden clustering now has a seed argument for reproducibility {pr}`173`.
+-   Changed Leiden clustering now has a seed argument for reproducibility {pr}`173`.
+-   Changed passing `None` to `bio_conservation_metrics` or `batch_correction_metrics` in {class}`scib_metrics.benchmark.Benchmarker` now implies to skip this set of metrics {pr}`181`.
 
 ### Fixed
 

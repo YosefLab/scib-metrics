@@ -60,7 +60,7 @@ def ilisi_knn(X: NeighborsResults, batches: np.ndarray, perplexity: float = None
     Returns
     -------
     ilisi
-        Array of shape (n_cells,) with the iLISI score for each cell.
+        iLISI score.
     """
     batches = np.asarray(pd.Categorical(batches).codes)
     lisi = lisi_knn(X, batches, perplexity=perplexity)
@@ -92,7 +92,7 @@ def clisi_knn(X: NeighborsResults, labels: np.ndarray, perplexity: float = None,
     Returns
     -------
     clisi
-        Array of shape (n_cells,) with the cLISI score for each cell.
+        cLISI score.
     """
     labels = np.asarray(pd.Categorical(labels).codes)
     lisi = lisi_knn(X, labels, perplexity=perplexity)

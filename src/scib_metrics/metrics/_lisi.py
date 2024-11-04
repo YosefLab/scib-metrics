@@ -39,7 +39,7 @@ def lisi_knn(X: NeighborsResults, labels: np.ndarray, perplexity: float = None) 
     return 1 / simpson
 
 
-def ilisi_knn(X: NeighborsResults, batches: np.ndarray, perplexity: float = None, scale: bool = True) -> np.ndarray:
+def ilisi_knn(X: NeighborsResults, batches: np.ndarray, perplexity: float = None, scale: bool = True) -> float:
     """Compute the integration local inverse simpson index (iLISI) for each cell :cite:p:`korsunsky2019harmony`.
 
     Returns a scaled version of the iLISI score for each cell, by default :cite:p:`luecken2022benchmarking`.
@@ -60,7 +60,7 @@ def ilisi_knn(X: NeighborsResults, batches: np.ndarray, perplexity: float = None
     Returns
     -------
     ilisi
-        Array of shape (n_cells,) with the iLISI score for each cell.
+        iLISI score.
     """
     batches = np.asarray(pd.Categorical(batches).codes)
     lisi = lisi_knn(X, batches, perplexity=perplexity)
@@ -71,7 +71,7 @@ def ilisi_knn(X: NeighborsResults, batches: np.ndarray, perplexity: float = None
     return ilisi
 
 
-def clisi_knn(X: NeighborsResults, labels: np.ndarray, perplexity: float = None, scale: bool = True) -> np.ndarray:
+def clisi_knn(X: NeighborsResults, labels: np.ndarray, perplexity: float = None, scale: bool = True) -> float:
     """Compute the cell-type local inverse simpson index (cLISI) for each cell :cite:p:`korsunsky2019harmony`.
 
     Returns a scaled version of the cLISI score for each cell, by default :cite:p:`luecken2022benchmarking`.
@@ -92,7 +92,7 @@ def clisi_knn(X: NeighborsResults, labels: np.ndarray, perplexity: float = None,
     Returns
     -------
     clisi
-        Array of shape (n_cells,) with the cLISI score for each cell.
+        cLISI score.
     """
     labels = np.asarray(pd.Categorical(labels).codes)
     lisi = lisi_knn(X, labels, perplexity=perplexity)

@@ -115,13 +115,13 @@ We recommend using [readthedocs.org][] (RTD) to build and host the documentation
 To enable readthedocs, head over to [their website][readthedocs.org] and sign in with your GitHub account.
 On the RTD dashboard choose "Import a Project" and follow the instructions to add your repository.
 
--   Make sure to choose the correct name of the default branch. On GitHub, the name of the default branch should be `main` (it has
-    recently changed from `master` to `main`).
--   We recommend to enable documentation builds for pull requests (PRs). This ensures that a PR doesn't introduce changes
-    that break the documentation. To do so, got to `Admin -> Advanced Settings`, check the
-    `Build pull requests for this projects` option, and click `Save`. For more information, please refer to
-    the [official RTD documentation](https://docs.readthedocs.io/en/stable/pull-requests.html).
--   If you find the RTD builds are failing, you can disable the `fail_on_warning` option in `.readthedocs.yaml`.
+- Make sure to choose the correct name of the default branch. On GitHub, the name of the default branch should be `main` (it has
+  recently changed from `master` to `main`).
+- We recommend to enable documentation builds for pull requests (PRs). This ensures that a PR doesn't introduce changes
+  that break the documentation. To do so, got to `Admin -> Advanced Settings`, check the
+  `Build pull requests for this projects` option, and click `Save`. For more information, please refer to
+  the [official RTD documentation](https://docs.readthedocs.io/en/stable/pull-requests.html).
+- If you find the RTD builds are failing, you can disable the `fail_on_warning` option in `.readthedocs.yaml`.
 
 If your project is private, there are ways to enable docs rendering on [readthedocs.org][] but it is more cumbersome and requires a different subscription for read the docs. See a guide [here](https://docs.readthedocs.io/en/stable/guides/importing-private-repositories.html).
 
@@ -148,47 +148,47 @@ Once authorized, pre-commit.ci should automatically be activated.
 
 The following pre-commit hooks are for code style and format:
 
--   [black](https://black.readthedocs.io/en/stable/):
-    standard code formatter in Python.
--   [blacken-docs](https://github.com/asottile/blacken-docs):
-    black on Python code in docs.
--   [prettier](https://prettier.io/docs/en/index.html):
-    standard code formatter for non-Python files (e.g. YAML).
--   [ruff][] based checks:
-    -   [isort](https://beta.ruff.rs/docs/rules/#isort-i) (rule category: `I`):
-        sort module imports into sections and types.
-    -   [pydocstyle](https://beta.ruff.rs/docs/rules/#pydocstyle-d) (rule category: `D`):
-        pydocstyle extension of flake8.
-    -   [flake8-tidy-imports](https://beta.ruff.rs/docs/rules/#flake8-tidy-imports-tid) (rule category: `TID`):
-        tidy module imports.
-    -   [flake8-comprehensions](https://beta.ruff.rs/docs/rules/#flake8-comprehensions-c4) (rule category: `C4`):
-        write better list/set/dict comprehensions.
-    -   [pyupgrade](https://beta.ruff.rs/docs/rules/#pyupgrade-up) (rule category: `UP`):
-        upgrade syntax for newer versions of the language.
+- [black](https://black.readthedocs.io/en/stable/):
+  standard code formatter in Python.
+- [blacken-docs](https://github.com/asottile/blacken-docs):
+  black on Python code in docs.
+- [prettier](https://prettier.io/docs/en/index.html):
+  standard code formatter for non-Python files (e.g. YAML).
+- [ruff][] based checks:
+    - [isort](https://beta.ruff.rs/docs/rules/#isort-i) (rule category: `I`):
+      sort module imports into sections and types.
+    - [pydocstyle](https://beta.ruff.rs/docs/rules/#pydocstyle-d) (rule category: `D`):
+      pydocstyle extension of flake8.
+    - [flake8-tidy-imports](https://beta.ruff.rs/docs/rules/#flake8-tidy-imports-tid) (rule category: `TID`):
+      tidy module imports.
+    - [flake8-comprehensions](https://beta.ruff.rs/docs/rules/#flake8-comprehensions-c4) (rule category: `C4`):
+      write better list/set/dict comprehensions.
+    - [pyupgrade](https://beta.ruff.rs/docs/rules/#pyupgrade-up) (rule category: `UP`):
+      upgrade syntax for newer versions of the language.
 
 The following pre-commit hooks are for errors and inconsistencies:
 
--   [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks): generic pre-commit hooks for text files.
-    -   **detect-private-key**: checks for the existence of private keys.
-    -   **check-ast**: check whether files parse as valid python.
-    -   **end-of-file-fixer**: check files end in a newline and only a newline.
-    -   **mixed-line-ending**: checks mixed line ending.
-    -   **trailing-whitespace**: trims trailing whitespace.
-    -   **check-case-conflict**: check files that would conflict with case-insensitive file systems.
-    -   **forbid-to-commit**: Make sure that `*.rej` files cannot be commited.
-        These files are created by the [automated template sync](#automated-template-sync)
-        if there's a merge conflict and need to be addressed manually.
--   [ruff][] based checks:
-    -   [pyflakes](https://beta.ruff.rs/docs/rules/#pyflakes-f) (rule category: `F`):
-        various checks for errors.
-    -   [pycodestyle](https://beta.ruff.rs/docs/rules/#pycodestyle-e-w) (rule category: `E`, `W`):
-        various checks for errors.
-    -   [flake8-bugbear](https://beta.ruff.rs/docs/rules/#flake8-bugbear-b) (rule category: `B`):
-        find possible bugs and design issues in program.
-    -   [flake8-blind-except](https://beta.ruff.rs/docs/rules/#flake8-blind-except-ble) (rule category: `BLE`):
-        checks for blind, catch-all `except` statements.
-    -   [Ruff-specific rules](https://beta.ruff.rs/docs/rules/#ruff-specific-rules-ruf) (rule category: `RUF`):
-        -   `RUF100`: remove unneccesary `# noqa` comments ()
+- [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks): generic pre-commit hooks for text files.
+    - **detect-private-key**: checks for the existence of private keys.
+    - **check-ast**: check whether files parse as valid python.
+    - **end-of-file-fixer**: check files end in a newline and only a newline.
+    - **mixed-line-ending**: checks mixed line ending.
+    - **trailing-whitespace**: trims trailing whitespace.
+    - **check-case-conflict**: check files that would conflict with case-insensitive file systems.
+    - **forbid-to-commit**: Make sure that `*.rej` files cannot be commited.
+      These files are created by the [automated template sync](#automated-template-sync)
+      if there's a merge conflict and need to be addressed manually.
+- [ruff][] based checks:
+    - [pyflakes](https://beta.ruff.rs/docs/rules/#pyflakes-f) (rule category: `F`):
+      various checks for errors.
+    - [pycodestyle](https://beta.ruff.rs/docs/rules/#pycodestyle-e-w) (rule category: `E`, `W`):
+      various checks for errors.
+    - [flake8-bugbear](https://beta.ruff.rs/docs/rules/#flake8-bugbear-b) (rule category: `B`):
+      find possible bugs and design issues in program.
+    - [flake8-blind-except](https://beta.ruff.rs/docs/rules/#flake8-blind-except-ble) (rule category: `BLE`):
+      checks for blind, catch-all `except` statements.
+    - [Ruff-specific rules](https://beta.ruff.rs/docs/rules/#ruff-specific-rules-ruf) (rule category: `RUF`):
+        - `RUF100`: remove unneccesary `# noqa` comments ()
 
 #### How to add or remove pre-commit checks
 
@@ -262,10 +262,10 @@ add it to Ruff’s [`external = [...]`](https://beta.ruff.rs/docs/settings/#exte
 Scverse ecosystem packages should operate on [AnnData][] and/or [MuData][] data structures and typically use an API
 as originally [introduced by scanpy][scanpy-api] with the following submodules:
 
--   `pp` for preprocessing
--   `tl` for tools (that, compared to `pp` generate interpretable output, often associated with a corresponding plotting
-    function)
--   `pl` for plotting functions
+- `pp` for preprocessing
+- `tl` for tools (that, compared to `pp` generate interpretable output, often associated with a corresponding plotting
+  function)
+- `pl` for plotting functions
 
 You may add additional submodules as appropriate. While we encourage to follow a scanpy-like API for ecosystem packages,
 there may also be good reasons to choose a different approach, e.g. using an object-oriented API.
@@ -319,12 +319,12 @@ The pull request can only be merged after all `*.rej` files have been removed.
 :::{tip}
 The following hints may be useful to work with the template sync:
 
--   GitHub automatically disables scheduled actions if there has been not activity to the repository for 60 days.
-    You can re-enable or manually trigger the sync by navigating to `Actions` -> `Sync Template` in your GitHub repository.
--   If you want to ignore certain files from the template update, you can add them to the `[tool.cruft]` section in the
-    `pyproject.toml` file in the root of your repository. More details are described in the
-    [cruft documentation][cruft-update-project].
--   To disable the sync entirely, simply remove the file `.github/workflows/sync.yaml`.
+- GitHub automatically disables scheduled actions if there has been not activity to the repository for 60 days.
+  You can re-enable or manually trigger the sync by navigating to `Actions` -> `Sync Template` in your GitHub repository.
+- If you want to ignore certain files from the template update, you can add them to the `[tool.cruft]` section in the
+  `pyproject.toml` file in the root of your repository. More details are described in the
+  [cruft documentation][cruft-update-project].
+- To disable the sync entirely, simply remove the file `.github/workflows/sync.yaml`.
 
 :::
 
@@ -377,10 +377,10 @@ in the cookiecutter-scverse template.
 
 Please write documentation for your package. This project uses [sphinx][] with the following features:
 
--   the [myst][] extension allows to write documentation in markdown/Markedly Structured Text
--   [Numpy-style docstrings][numpydoc] (through the [napoloen][numpydoc-napoleon] extension).
--   Jupyter notebooks as tutorials through [myst-nb][] (See [Tutorials with myst-nb](#tutorials-with-myst-nb-and-jupyter-notebooks))
--   [Sphinx autodoc typehints][], to automatically reference annotated input and output types
+- the [myst][] extension allows to write documentation in markdown/Markedly Structured Text
+- [Numpy-style docstrings][numpydoc] (through the [napoloen][numpydoc-napoleon] extension).
+- Jupyter notebooks as tutorials through [myst-nb][] (See [Tutorials with myst-nb](#tutorials-with-myst-nb-and-jupyter-notebooks))
+- [Sphinx autodoc typehints][], to automatically reference annotated input and output types
 
 See the [scanpy developer docs](https://scanpy.readthedocs.io/en/latest/dev/documentation.html) for more information
 on how to write documentation.
@@ -397,10 +397,10 @@ repository.
 
 #### Hints
 
--   If you refer to objects from other packages, please add an entry to `intersphinx_mapping` in `docs/conf.py`. Only
-    if you do so can sphinx automatically create a link to the external documentation.
--   If building the documentation fails because of a missing link that is outside your control, you can add an entry to
-    the `nitpick_ignore` list in `docs/conf.py`
+- If you refer to objects from other packages, please add an entry to `intersphinx_mapping` in `docs/conf.py`. Only
+  if you do so can sphinx automatically create a link to the external documentation.
+- If building the documentation fails because of a missing link that is outside your control, you can add an entry to
+  the `nitpick_ignore` list in `docs/conf.py`
 
 #### Building the docs locally
 

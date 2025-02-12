@@ -10,10 +10,13 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.6.0 (unreleased)
 
+## 0.5.2 (2025-02-13)
+
 ### Added
 
 - Add `progress_bar` argument to {class}`scib_metrics.benchmark.Benchmarker` {pr}`152`.
 - Add ability of {class}`scib_metrics.benchmark.Benchmarker` plotting code to handle missing sets of metrics {pr}`181`.
+- Add random score in case of aggregate metrics not selected to be used in scib autotune in scvi-tools, {pr}`188`.
 
 ### Changed
 

@@ -282,6 +282,10 @@ class Benchmarker:
 
         # Compute scores
         per_class_score = df.groupby(_METRIC_TYPE).mean().transpose()
+        if "Batch correction" not in per_class_score.columns:
+            per_class_score["Batch correction"] = 0.5
+        if "Bio conservation" not in per_class_score.columns:
+            per_class_score["Bio conservation"] = 0.5
         # This is the default scIB weighting from the manuscript
         if self._batch_correction_metrics is not None and self._bio_conservation_metrics is not None:
             per_class_score["Total"] = (

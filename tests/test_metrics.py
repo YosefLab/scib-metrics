@@ -138,7 +138,7 @@ def test_isolated_labels():
     adata.obsm["embed"] = X
     adata.obs["batch"] = batch
     adata.obs["labels"] = labels
-    target = isolated_labels_asw(adata, "labels", "batch", "embed")
+    target = isolated_labels_asw(adata, "labels", "batch", "embed", iso_threshold=5)
     np.testing.assert_allclose(np.array(pred), np.array(target))
 
 

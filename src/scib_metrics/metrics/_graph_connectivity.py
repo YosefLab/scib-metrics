@@ -24,8 +24,8 @@ def graph_connectivity(X: NeighborsResults, labels: np.ndarray) -> float:
 
     for label in np.unique(labels):
         mask = labels == label
-        graph_sub = graph[mask]
-        graph_sub = graph_sub[:, mask]
+        graph_sub = graph[mask.values]
+        graph_sub = graph_sub[:, mask.values]
         _, comps = connected_components(graph_sub, connection="strong")
         tab = pd.value_counts(comps)
         clust_res.append(tab.max() / sum(tab))

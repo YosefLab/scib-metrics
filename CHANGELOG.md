@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.6.0 (unreleased)
 
+## 0.5.3 (2025-02-17)
+
+#### Removed
+
+- Reverted the change for scib-autotune in scvi-tools {pr}`189`.
+
 ## 0.5.2 (2025-02-13)
 
 ### Added

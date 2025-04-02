@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.6.0 (unreleased)
 
+### Added
+
+- Add batch removal adapted silhouette (BRAS) metric (`scib_metrics.metrics.bras`) {pr}`ToDo`, which addresses limitations of silhouette for scoring batch effect removal.
+- Add cosine distance implementation required for BRAS.
+
+### Changed
+
+- Changed `scib_metrics.utils.cdist` to support cosine distance.
+- Changed silhouette-related functions to be compatible with adaptions required for BRAS.
+
 ## 0.5.3 (2025-02-17)
 
 #### Removed

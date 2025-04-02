@@ -15,6 +15,7 @@ from .metrics import (
     pcr_comparison,
     silhouette_batch,
     silhouette_label,
+    bras,
 )
 from ._settings import settings
 
@@ -25,6 +26,7 @@ __all__ = [
     "pcr_comparison",
     "silhouette_label",
     "silhouette_batch",
+    "bras",
     "ilisi_knn",
     "clisi_knn",
     "lisi_knn",

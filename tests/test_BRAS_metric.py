@@ -144,10 +144,11 @@ def silhouette_samples_custom(X, cluster_labels, metric="euclidean", between_clu
         same_cluster[i] = False
 
         # a: Mean distance from i to all other points in the same cluster
-        if np.sum(same_cluster) > 0:
-            a = np.mean(distance_matrix[i, same_cluster])
-        else:
-            a = 0
+        if np.sum(same_cluster) == 0:
+            silhouette_scores[i] = 0
+            continue
+
+        a = np.mean(distance_matrix[i, same_cluster])
 
         # b: Mean distance from i to all points in the furthest different cluster
         if between_cluster_distances == "furthest":

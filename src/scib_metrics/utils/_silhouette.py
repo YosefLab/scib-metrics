@@ -73,7 +73,6 @@ def _silhouette_reduce(
     elif between_cluster_distances == "mean_other":
         clust_dists = clust_dists.at[intra_index].set(jnp.nan)
         total_other_dists = jnp.nansum(clust_dists, axis=1)
-        # total_other_count = jnp.sum(label_freqs) - label_freqs[labels[start:end]]
         total_other_count = jnp.sum(label_freqs) - label_freqs[jax.lax.dynamic_slice(labels, (start,), (D_chunk_len,))]
         inter_clust_dists = total_other_dists / total_other_count
     else:

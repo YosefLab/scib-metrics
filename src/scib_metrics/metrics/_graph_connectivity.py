@@ -24,6 +24,8 @@ def graph_connectivity(X: NeighborsResults, labels: np.ndarray) -> float:
 
     for label in np.unique(labels):
         mask = labels == label
+        if hasattr(mask, "values"):
+            mask = mask.values
         graph_sub = graph[mask]
         graph_sub = graph_sub[:, mask]
         _, comps = connected_components(graph_sub, connection="strong")

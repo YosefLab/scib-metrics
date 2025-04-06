@@ -7,7 +7,14 @@ from tests.utils.data import dummy_benchmarker_adata
 
 def test_benchmarker():
     ad, emb_keys, batch_key, labels_key = dummy_benchmarker_adata()
-    bm = Benchmarker(ad, batch_key, labels_key, emb_keys)
+    bm = Benchmarker(
+        ad,
+        batch_key,
+        labels_key,
+        emb_keys,
+        batch_correction_metrics=BatchCorrection(),
+        bio_conservation_metrics=BioConservation(),
+    )
     bm.benchmark()
     results = bm.get_results()
     assert isinstance(results, pd.DataFrame)
@@ -36,7 +43,9 @@ def test_benchmarker_custom_metric_booleans():
 def test_benchmarker_custom_metric_callable():
     bioc = BioConservation(clisi_knn={"perplexity": 10})
     ad, emb_keys, batch_key, labels_key = dummy_benchmarker_adata()
-    bm = Benchmarker(ad, batch_key, labels_key, emb_keys, bio_conservation_metrics=bioc)
+    bm = Benchmarker(
+        ad, batch_key, labels_key, emb_keys, bio_conservation_metrics=bioc, batch_correction_metrics=BatchCorrection()
+    )
     bm.benchmark()
     results = bm.get_results(clean_names=False)
     assert "clisi_knn" in results.columns
@@ -44,7 +53,14 @@ def test_benchmarker_custom_metric_callable():
 
 def test_benchmarker_custom_near_neighs():
     ad, emb_keys, batch_key, labels_key = dummy_benchmarker_adata()
-    bm = Benchmarker(ad, batch_key, labels_key, emb_keys)
+    bm = Benchmarker(
+        ad,
+        batch_key,
+        labels_key,
+        emb_keys,
+        bio_conservation_metrics=BioConservation(),
+        batch_correction_metrics=BatchCorrection(),
+    )
     bm.prepare(neighbor_computer=jax_approx_min_k)
     bm.benchmark()
     results = bm.get_results()

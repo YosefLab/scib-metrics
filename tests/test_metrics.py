@@ -32,6 +32,12 @@ def test_cdist():
     assert np.allclose(scib_metrics.utils.cdist(x, y), sp_cdist(x, y))
 
 
+def test_cdist_cosine():
+    x = jnp.array([[1, 2], [3, 4]])
+    y = jnp.array([[5, 6], [7, 8]])
+    assert np.allclose(scib_metrics.utils.cdist(x, y, metric="cosine"), sp_cdist(x, y, metric="cosine"), atol=1e-5)
+
+
 def test_pdist():
     x = jnp.array([[1, 2], [3, 4]])
     assert np.allclose(scib_metrics.utils.pdist_squareform(x), squareform(pdist(x)))

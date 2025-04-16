@@ -75,11 +75,13 @@ def _silhouette_reduce(
         total_other_dists = jnp.nansum(clust_dists, axis=1)
         total_other_count = jnp.sum(label_freqs) - label_freqs[jax.lax.dynamic_slice(labels, (start,), (D_chunk_len,))]
         inter_clust_dists = total_other_dists / total_other_count
-    else:
+    elif between_cluster_distances == "nearest":
         # of the remaining distances we normalise and extract the minimum
         clust_dists = clust_dists.at[intra_index].set(jnp.inf)
         clust_dists /= label_freqs
         inter_clust_dists = clust_dists.min(axis=1)
+    else:
+        raise ValueError("Parameter 'between_cluster_distances' must be one of ['nearest', 'mean_other', 'furthest'].")
     return intra_clust_dists, inter_clust_dists
 
 

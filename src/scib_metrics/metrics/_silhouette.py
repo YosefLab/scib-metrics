@@ -53,7 +53,7 @@ def silhouette_batch(
 
     Default parameters ('euclidean', 'nearest') match scIB implementation.
 
-    Additional options enable BRAS compatible usage (see `bras()` documentation).
+    Additional options enable BRAS compatible usage (see :func:`~scib_metrics.metrics.bras` documentation).
 
     Parameters
     ----------

@@ -23,7 +23,7 @@ def _silhouette_reduce(
     Follows scikit-learn implementation with default parameter usage ('nearest').
 
     Additional options enable BRAS compatible usage, addressing specific limitations of using silhouette in the context
-     of evaluating data integration (see `bras()` documentation).
+     of evaluating data integration (see :func:`~scib_metrics.metrics.bras` documentation).
 
 
     Parameters

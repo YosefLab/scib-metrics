@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.5.4 (2025-04-23)
 
-### Fix
+### Fixed
 
 - Apply default values for benchmarker metrics {pr}`203`.
 

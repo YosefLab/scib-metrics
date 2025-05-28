@@ -21,6 +21,20 @@ def test_benchmarker():
     bm.plot_results_table()
 
 
+def test_benchmarker_default():
+    ad, emb_keys, batch_key, labels_key = dummy_benchmarker_adata()
+    bm = Benchmarker(
+        ad,
+        batch_key,
+        labels_key,
+        emb_keys,
+    )
+    bm.benchmark()
+    results = bm.get_results()
+    assert isinstance(results, pd.DataFrame)
+    bm.plot_results_table()
+
+
 def test_benchmarker_custom_metric_booleans():
     bioc = BioConservation(
         isolated_labels=False, nmi_ari_cluster_labels_leiden=False, silhouette_label=False, clisi_knn=True

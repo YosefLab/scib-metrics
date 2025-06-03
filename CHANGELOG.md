@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.6.0 (unreleased)
 
+## 0.5.5 (2025-06-03)
+
 ### Added
 
 - Add batch removal adapted silhouette (BRAS) metric ({func}`scib_metrics.metrics.bras`) {pr}`197`, which addresses limitations of silhouette for scoring batch effect removal.

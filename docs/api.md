@@ -42,6 +42,7 @@ scib_metrics.ilisi_knn(...)
     pcr_comparison
     silhouette_label
     silhouette_batch
+    bras
     ilisi_knn
     clisi_knn
     kbet

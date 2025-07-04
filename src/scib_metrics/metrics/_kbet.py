@@ -138,14 +138,8 @@ def kbet_per_label(
     conn_graph = X.knn_graph_connectivities
 
     # prepare call of kBET per cluster
-    clusters = []
-    clusters, counts = np.unique(labels, return_counts=True)
-    skipped = clusters[counts > 10]
-    clusters = clusters[counts <= 10]
-    kbet_scores = {"cluster": list(skipped), "kBET": [np.nan] * len(skipped)}
-    logger.info(f"{len(skipped)} clusters consist of a single batch or are too small. Skip.")
-
-    for clus in clusters:
+    kbet_scores = {"cluster": [], "kBET": []}
+    for clus in np.unique(labels):
         # subset by label
         mask = labels == clus
         conn_graph_sub = conn_graph[mask, :][:, mask]
@@ -153,55 +147,60 @@ def kbet_per_label(
         n_obs = conn_graph_sub.shape[0]
         batches_sub = batches[mask]
 
-        quarter_mean = np.floor(np.mean(pd.Series(batches_sub).value_counts()) / 4).astype("int")
-        k0 = np.min([70, np.max([10, quarter_mean])])
-        # check k0 for reasonability
-        if k0 * n_obs >= size_max:
-            k0 = np.floor(size_max / n_obs).astype("int")
-
-        n_comp, labs = scipy.sparse.csgraph.connected_components(conn_graph_sub, connection="strong")
-
-        if n_comp == 1:  # a single component to compute kBET on
-            try:
-                diffusion_n_comps = np.min([diffusion_n_comps, n_obs - 1])
-                nn_graph_sub = diffusion_nn(conn_graph_sub, k=k0, n_comps=diffusion_n_comps)
-                # call kBET
-                score, _, _ = kbet(
-                    nn_graph_sub,
-                    batches=batches_sub,
-                    alpha=alpha,
-                )
-            except ValueError:
-                logger.info("Diffusion distance failed. Skip.")
-                score = 0  # i.e. 100% rejection
-
+        # check if neighborhood size too small or only one batch in subset
+        if np.logical_or(n_obs < 10, len(np.unique(batches_sub)) == 1):
+            logger.info(f"{clus} consists of a single batch or is too small. Skip.")
+            score = np.nan
         else:
-            # check the number of components where kBET can be computed upon
-            comp_size = pd.Series(labs).value_counts()
-            # check which components are small
-            comp_size_thresh = 3 * k0
-            idx_nonan = np.flatnonzero(np.in1d(labs, comp_size[comp_size >= comp_size_thresh].index))
+            quarter_mean = np.floor(np.mean(pd.Series(batches_sub).value_counts()) / 4).astype("int")
+            k0 = np.min([70, np.max([10, quarter_mean])])
+            # check k0 for reasonability
+            if k0 * n_obs >= size_max:
+                k0 = np.floor(size_max / n_obs).astype("int")
 
-            # check if 75% of all cells can be used for kBET run
-            if len(idx_nonan) / len(labs) >= 0.75:
-                # create another subset of components, assume they are not visited in a diffusion process
-                conn_graph_sub_sub = conn_graph_sub[idx_nonan, :][:, idx_nonan]
-                conn_graph_sub_sub.sort_indices()
+            n_comp, labs = scipy.sparse.csgraph.connected_components(conn_graph_sub, connection="strong")
 
+            if n_comp == 1:  # a single component to compute kBET on
                 try:
-                    diffusion_n_comps = np.min([diffusion_n_comps, conn_graph_sub_sub.shape[0] - 1])
-                    nn_results_sub_sub = diffusion_nn(conn_graph_sub_sub, k=k0, n_comps=diffusion_n_comps)
+                    diffusion_n_comps = np.min([diffusion_n_comps, n_obs - 1])
+                    nn_graph_sub = diffusion_nn(conn_graph_sub, k=k0, n_comps=diffusion_n_comps)
                     # call kBET
                     score, _, _ = kbet(
-                        nn_results_sub_sub,
-                        batches=batches_sub[idx_nonan],
+                        nn_graph_sub,
+                        batches=batches_sub,
                         alpha=alpha,
                     )
                 except ValueError:
                     logger.info("Diffusion distance failed. Skip.")
                     score = 0  # i.e. 100% rejection
-            else:  # if there are too many too small connected components, set kBET score to 0
-                score = 0  # i.e. 100% rejection
+
+            else:
+                # check the number of components where kBET can be computed upon
+                comp_size = pd.Series(labs).value_counts()
+                # check which components are small
+                comp_size_thresh = 3 * k0
+                idx_nonan = np.flatnonzero(np.in1d(labs, comp_size[comp_size >= comp_size_thresh].index))
+
+                # check if 75% of all cells can be used for kBET run
+                if len(idx_nonan) / len(labs) >= 0.75:
+                    # create another subset of components, assume they are not visited in a diffusion process
+                    conn_graph_sub_sub = conn_graph_sub[idx_nonan, :][:, idx_nonan]
+                    conn_graph_sub_sub.sort_indices()
+
+                    try:
+                        diffusion_n_comps = np.min([diffusion_n_comps, conn_graph_sub_sub.shape[0] - 1])
+                        nn_results_sub_sub = diffusion_nn(conn_graph_sub_sub, k=k0, n_comps=diffusion_n_comps)
+                        # call kBET
+                        score, _, _ = kbet(
+                            nn_results_sub_sub,
+                            batches=batches_sub[idx_nonan],
+                            alpha=alpha,
+                        )
+                    except ValueError:
+                        logger.info("Diffusion distance failed. Skip.")
+                        score = 0  # i.e. 100% rejection
+                else:  # if there are too many too small connected components, set kBET score to 0
+                    score = 0  # i.e. 100% rejection
 
         kbet_scores["cluster"].append(clus)
         kbet_scores["kBET"].append(score)

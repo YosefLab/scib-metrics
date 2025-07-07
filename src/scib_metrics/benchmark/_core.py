@@ -251,7 +251,7 @@ class Benchmarker:
 
         self._benchmarked = True
 
-    def get_results(self, min_max_scale: bool = True, clean_names: bool = True) -> pd.DataFrame:
+    def get_results(self, min_max_scale: bool = False, clean_names: bool = True) -> pd.DataFrame:
         """Return the benchmarking results.
 
         Parameters
@@ -291,7 +291,7 @@ class Benchmarker:
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE
         return df
 
-    def plot_results_table(self, min_max_scale: bool = True, show: bool = True, save_dir: str | None = None) -> Table:
+    def plot_results_table(self, min_max_scale: bool = False, show: bool = True, save_dir: str | None = None) -> Table:
         """Plot the benchmarking results.
 
         Parameters

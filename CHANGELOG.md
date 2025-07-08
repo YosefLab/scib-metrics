@@ -10,6 +10,21 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.6.0 (unreleased)
 
+## 0.5.6 (2025-07-08)
+
+### Added
+
+- Add BRAS to Benchmarker as default, instead of regular silhouette batch {pr}`217`
+- Added the option to manually set the KNN graphs before running a benchmarker.
+
+### Changed
+
+- Changed default of min_max_scale in {func}`scib_metrics.benchmark.get_results` to False {pr}`215`.
+
+### Fixed
+
+- Reverted Skip labels before loop {pr}`180`, which caused wrong selection of clusters {pr}`213`.
+
 ## 0.5.5 (2025-06-03)
 
 ### Added

@@ -42,6 +42,7 @@ metric_name_cleaner = {
     "clisi_knn": "cLISI",
     "ilisi_knn": "iLISI",
     "kbet_per_label": "KBET",
+    "bras": "BRAS",
     "graph_connectivity": "Graph connectivity",
     "pcr_comparison": "PCR comparison",
 }
@@ -72,7 +73,7 @@ class BatchCorrection:
     parameters, such as `X` or `labels`.
     """
 
-    silhouette_batch: MetricType = True
+    bras: MetricType = True
     ilisi_knn: MetricType = True
     kbet_per_label: MetricType = True
     graph_connectivity: MetricType = True
@@ -88,7 +89,7 @@ class MetricAnnDataAPI(Enum):
     silhouette_label = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
     clisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_LABELS])
     graph_connectivity = lambda ad, fn: fn(ad.uns["15_neighbor_res"], ad.obs[_LABELS])
-    silhouette_batch = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
+    bras = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
     pcr_comparison = lambda ad, fn: fn(ad.obsm[_X_PRE], ad.X, ad.obs[_BATCH], categorical=True)
     ilisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_BATCH])
     kbet_per_label = lambda ad, fn: fn(ad.uns["50_neighbor_res"], ad.obs[_BATCH], ad.obs[_LABELS])
@@ -156,6 +157,7 @@ class Benchmarker:
         self._label_key = label_key
         self._n_jobs = n_jobs
         self._progress_bar = progress_bar
+        self._compute_neighbors = True
 
         if self._bio_conservation_metrics is None and self._batch_correction_metrics is None:
             raise ValueError("Either batch or bio metrics must be defined.")
@@ -191,19 +193,25 @@ class Benchmarker:
             self._emb_adatas[emb_key].obsm[_X_PRE] = self._adata.obsm[self._pre_integrated_embedding_obsm_key]
 
         # Compute neighbors
-        progress = self._emb_adatas.values()
-        if self._progress_bar:
-            progress = tqdm(progress, desc="Computing neighbors")
+        if self._compute_neighbors:
+            progress = self._emb_adatas.values()
+            if self._progress_bar:
+                progress = tqdm(progress, desc="Computing neighbors")
 
-        for ad in progress:
-            if neighbor_computer is not None:
-                neigh_result = neighbor_computer(ad.X, max(self._neighbor_values))
-            else:
-                neigh_result = pynndescent(
-                    ad.X, n_neighbors=max(self._neighbor_values), random_state=0, n_jobs=self._n_jobs
-                )
-            for n in self._neighbor_values:
-                ad.uns[f"{n}_neighbor_res"] = neigh_result.subset_neighbors(n=n)
+            for ad in progress:
+                if neighbor_computer is not None:
+                    neigh_result = neighbor_computer(ad.X, max(self._neighbor_values))
+                else:
+                    neigh_result = pynndescent(
+                        ad.X, n_neighbors=max(self._neighbor_values), random_state=0, n_jobs=self._n_jobs
+                    )
+                for n in self._neighbor_values:
+                    ad.uns[f"{n}_neighbor_res"] = neigh_result.subset_neighbors(n=n)
+        else:
+            warnings.warn(
+                "Computing Neighbors Skipped",
+                UserWarning,
+            )
 
         self._prepared = True
 

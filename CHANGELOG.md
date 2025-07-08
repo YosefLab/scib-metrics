@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.6.0 (unreleased)
 
-## 0.5.6 (2025-XX-XX)
+## 0.5.6 (2025-07-08)
 
 ### Added
 

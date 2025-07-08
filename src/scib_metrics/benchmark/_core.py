@@ -42,6 +42,7 @@ metric_name_cleaner = {
     "clisi_knn": "cLISI",
     "ilisi_knn": "iLISI",
     "kbet_per_label": "KBET",
+    "bras": "BRAS",
     "graph_connectivity": "Graph connectivity",
     "pcr_comparison": "PCR comparison",
 }
@@ -72,7 +73,7 @@ class BatchCorrection:
     parameters, such as `X` or `labels`.
     """
 
-    silhouette_batch: MetricType = True
+    bras: MetricType = True
     ilisi_knn: MetricType = True
     kbet_per_label: MetricType = True
     graph_connectivity: MetricType = True
@@ -88,7 +89,7 @@ class MetricAnnDataAPI(Enum):
     silhouette_label = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
     clisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_LABELS])
     graph_connectivity = lambda ad, fn: fn(ad.uns["15_neighbor_res"], ad.obs[_LABELS])
-    silhouette_batch = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
+    bras = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
     pcr_comparison = lambda ad, fn: fn(ad.obsm[_X_PRE], ad.X, ad.obs[_BATCH], categorical=True)
     ilisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_BATCH])
     kbet_per_label = lambda ad, fn: fn(ad.uns["50_neighbor_res"], ad.obs[_BATCH], ad.obs[_LABELS])

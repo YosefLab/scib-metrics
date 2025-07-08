@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
-- Add BRAS to Benchmarker as default, instead of regular silhouette batch {pr}`220`
+- Add BRAS to Benchmarker as default, instead of regular silhouette batch {pr}`217`
 
 ### Changed
 

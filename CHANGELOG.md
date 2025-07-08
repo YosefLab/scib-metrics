@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.6.0 (unreleased)
 
+## 0.5.6 (2025-XX-XX)
+
+### Added
+
+- Add BRAS to Benchmarker as default, instead of regular silhouette batch {pr}`220`
+
+### Changed
+
+- Changed default of min_max_scale in {func}`scib_metrics.benchmark.get_results` to False {pr}`215`.
+
+### Fixed
+
+- Reverted Skip labels before loop {pr}`180`, which caused wrong selection of clusters {pr}`213`.
+
 ## 0.5.5 (2025-06-03)
 
 ### Added

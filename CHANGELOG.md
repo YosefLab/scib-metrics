@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning][].
 ### Added
 
 - Add BRAS to Benchmarker as default, instead of regular silhouette batch {pr}`217`
+- Added the option to manually set the KNN graphs before running a benchmarker.
 
 ### Changed
 

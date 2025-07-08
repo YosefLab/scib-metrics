@@ -208,7 +208,10 @@ class Benchmarker:
                 for n in self._neighbor_values:
                     ad.uns[f"{n}_neighbor_res"] = neigh_result.subset_neighbors(n=n)
         else:
-            print("Computing Neighbors Skipped")
+            warnings.warn(
+                "Computing Neighbors Skipped",
+                UserWarning,
+            )
 
         self._prepared = True
 

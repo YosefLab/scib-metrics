@@ -157,6 +157,7 @@ class Benchmarker:
         self._label_key = label_key
         self._n_jobs = n_jobs
         self._progress_bar = progress_bar
+        self._compute_neighbors = True
 
         if self._bio_conservation_metrics is None and self._batch_correction_metrics is None:
             raise ValueError("Either batch or bio metrics must be defined.")
@@ -192,19 +193,22 @@ class Benchmarker:
             self._emb_adatas[emb_key].obsm[_X_PRE] = self._adata.obsm[self._pre_integrated_embedding_obsm_key]
 
         # Compute neighbors
-        progress = self._emb_adatas.values()
-        if self._progress_bar:
-            progress = tqdm(progress, desc="Computing neighbors")
+        if self._compute_neighbors:
+            progress = self._emb_adatas.values()
+            if self._progress_bar:
+                progress = tqdm(progress, desc="Computing neighbors")
 
-        for ad in progress:
-            if neighbor_computer is not None:
-                neigh_result = neighbor_computer(ad.X, max(self._neighbor_values))
-            else:
-                neigh_result = pynndescent(
-                    ad.X, n_neighbors=max(self._neighbor_values), random_state=0, n_jobs=self._n_jobs
-                )
-            for n in self._neighbor_values:
-                ad.uns[f"{n}_neighbor_res"] = neigh_result.subset_neighbors(n=n)
+            for ad in progress:
+                if neighbor_computer is not None:
+                    neigh_result = neighbor_computer(ad.X, max(self._neighbor_values))
+                else:
+                    neigh_result = pynndescent(
+                        ad.X, n_neighbors=max(self._neighbor_values), random_state=0, n_jobs=self._n_jobs
+                    )
+                for n in self._neighbor_values:
+                    ad.uns[f"{n}_neighbor_res"] = neigh_result.subset_neighbors(n=n)
+        else:
+            print("Computing Neighbors Skipped")
 
         self._prepared = True
 

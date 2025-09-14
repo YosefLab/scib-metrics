@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import partial
 from typing import Any
+import gc
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -120,6 +121,8 @@ class Benchmarker:
     progress_bar
         Whether to show a progress bar for :meth:`~scib_metrics.benchmark.Benchmarker.prepare` and
         :meth:`~scib_metrics.benchmark.Benchmarker.benchmark`.
+    solver
+        SVD solver to use during PCA. can help stability issues. Choose from: "arpack", "randomized" or "auto"
 
     Notes
     -----
@@ -142,6 +145,7 @@ class Benchmarker:
         pre_integrated_embedding_obsm_key: str | None = None,
         n_jobs: int = 1,
         progress_bar: bool = True,
+        solver: str="arpack",
     ):
         self._adata = adata
         self._embedding_obsm_keys = embedding_obsm_keys
@@ -158,6 +162,7 @@ class Benchmarker:
         self._n_jobs = n_jobs
         self._progress_bar = progress_bar
         self._compute_neighbors = True
+        self._solver = solver
 
         if self._bio_conservation_metrics is None and self._batch_correction_metrics is None:
             raise ValueError("Either batch or bio metrics must be defined.")
@@ -179,11 +184,13 @@ class Benchmarker:
             the data and the number of neighbors to compute and return a :class:`~scib_metrics.utils.nearest_neighbors.NeighborsResults`
             object.
         """
+        gc.collect()
+
         # Compute PCA
         if self._pre_integrated_embedding_obsm_key is None:
             # This is how scib does it
             # https://github.com/theislab/scib/blob/896f689e5fe8c57502cb012af06bed1a9b2b61d2/scib/metrics/pcr.py#L197
-            sc.tl.pca(self._adata, use_highly_variable=False)
+            sc.tl.pca(self._adata, svd_solver=self._solver, use_highly_variable=False)
             self._pre_integrated_embedding_obsm_key = "X_pca"
 
         for emb_key in self._embedding_obsm_keys:
@@ -240,6 +247,7 @@ class Benchmarker:
                 pbar = tqdm(total=num_metrics, desc="Metrics", position=1, leave=False, colour="blue")
             for metric_type, metric_collection in self._metric_collection_dict.items():
                 for metric_name, use_metric_or_kwargs in asdict(metric_collection).items():
+                    gc.collect()
                     if use_metric_or_kwargs:
                         pbar.set_postfix_str(f"{metric_type}: {metric_name}") if pbar is not None else None
                         metric_fn = getattr(scib_metrics, metric_name)

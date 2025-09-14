@@ -1,3 +1,4 @@
+import gc
 import os
 import warnings
 from collections.abc import Callable
@@ -5,7 +6,6 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import partial
 from typing import Any
-import gc
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -145,7 +145,7 @@ class Benchmarker:
         pre_integrated_embedding_obsm_key: str | None = None,
         n_jobs: int = 1,
         progress_bar: bool = True,
-        solver: str="arpack",
+        solver: str = "arpack",
     ):
         self._adata = adata
         self._embedding_obsm_keys = embedding_obsm_keys

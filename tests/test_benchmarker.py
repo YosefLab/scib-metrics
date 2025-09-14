@@ -84,16 +84,10 @@ def test_benchmarker_custom_near_neighs():
     bm.plot_results_table()
 
 
-@pytest.mark.parametrize("solver", ["arpack","randomized"])
+@pytest.mark.parametrize("solver", ["arpack", "randomized"])
 def test_benchmarker_different_solvers(solver):
     ad, emb_keys, batch_key, labels_key = dummy_benchmarker_adata()
-    bm = Benchmarker(
-        ad,
-        batch_key,
-        labels_key,
-        emb_keys,
-        solver=solver
-    )
+    bm = Benchmarker(ad, batch_key, labels_key, emb_keys, solver=solver)
     bm.benchmark()
     results = bm.get_results()
     assert isinstance(results, pd.DataFrame)

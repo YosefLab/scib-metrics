@@ -8,7 +8,7 @@ name = "scib-metrics"
 version = "0.5.7"
 description = "Accelerated and Python-only scIB metrics"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [{ name = "Adam Gayoso" }]
 maintainers = [{ name = "Adam Gayoso", email = "adamgayoso@berkeley.edu" }]

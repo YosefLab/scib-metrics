@@ -1,3 +1,4 @@
+from mudata import MuData
 import anndata
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -41,3 +42,18 @@ def dummy_benchmarker_adata():
         adata.obsm[key] = X
         embedding_keys.append(key)
     return adata, embedding_keys, labels_key, batch_key
+
+def dummy_benchmarker_mdata():
+    X, labels, batch = dummy_x_labels_batch(x_is_neighbors_results=False)
+    adata = anndata.AnnData(X)
+    mdata = MuData({"rna": adata})
+    labels_key = "labels"
+    batch_key = "batch"
+    mdata.obs[labels_key] = labels
+    mdata.obs[batch_key] = batch
+    embedding_keys = []
+    for i in range(3):
+        key = f"X_emb_{i}"
+        mdata.obsm[key] = X
+        embedding_keys.append(key)
+    return mdata, embedding_keys, labels_key, batch_key

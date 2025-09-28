@@ -3,7 +3,7 @@ import pytest
 
 from scib_metrics.benchmark import BatchCorrection, Benchmarker, BioConservation
 from scib_metrics.nearest_neighbors import jax_approx_min_k
-from tests.utils.data import dummy_benchmarker_adata
+from tests.utils.data import dummy_benchmarker_adata, dummy_benchmarker_mdata
 
 
 def test_benchmarker():
@@ -20,6 +20,22 @@ def test_benchmarker():
     results = bm.get_results()
     assert isinstance(results, pd.DataFrame)
     bm.plot_results_table()
+
+
+def test_benchmarker_mdata():
+    mdata, emb_keys, batch_key, labels_key = dummy_benchmarker_mdata()
+    bm = Benchmarker(
+        mdata,
+        batch_key,
+        labels_key,
+        emb_keys,
+        batch_correction_metrics=BatchCorrection(),
+        bio_conservation_metrics=BioConservation(),
+    )
+    bm.benchmark()
+    results = bm.get_results()
+    assert isinstance(results, pd.DataFrame)
+    assert len(results) == 4
 
 
 def test_benchmarker_default():

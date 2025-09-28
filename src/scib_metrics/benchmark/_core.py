@@ -148,6 +148,14 @@ class Benchmarker:
         solver: str = "arpack",
     ):
         self._adata = adata
+        self._batch_key = batch_key
+        self._label_key = label_key
+        if type(adata).__name__=='MuData':
+            # Turn the mdata to dummy adata just for the benchmarker
+            self._adata = AnnData(X=adata.mod["rna"].X,
+                                  obs={_BATCH: adata.obs[self._batch_key],
+                                       _LABELS: adata.obs[self._label_key]},
+                                  obsm=adata.obsm)
         self._embedding_obsm_keys = embedding_obsm_keys
         self._pre_integrated_embedding_obsm_key = pre_integrated_embedding_obsm_key
         self._bio_conservation_metrics = bio_conservation_metrics
@@ -157,8 +165,6 @@ class Benchmarker:
         self._neighbor_values = (15, 50, 90)
         self._prepared = False
         self._benchmarked = False
-        self._batch_key = batch_key
-        self._label_key = label_key
         self._n_jobs = n_jobs
         self._progress_bar = progress_bar
         self._compute_neighbors = True

@@ -1,6 +1,6 @@
-from mudata import MuData
 import anndata
 import numpy as np
+from mudata import MuData
 from scipy.sparse import csr_matrix
 from sklearn.neighbors import NearestNeighbors
 
@@ -42,6 +42,7 @@ def dummy_benchmarker_adata():
         adata.obsm[key] = X
         embedding_keys.append(key)
     return adata, embedding_keys, labels_key, batch_key
+
 
 def dummy_benchmarker_mdata():
     X, labels, batch = dummy_x_labels_batch(x_is_neighbors_results=False)

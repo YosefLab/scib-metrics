@@ -10,6 +10,27 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.6.0 (unreleased)
 
+## 0.5.8 (2025-XX-XX)
+
+### Added
+
+- Add set seed if using Leiden, {pr}`240`.
+
+### Changed
+
+### Fixed
+
+## 0.5.7 (2025-09-14)
+
+### Added
+
+- Add added solver selection to benchmarker for arpack stability issues {pr}`229`.
+- Add support for Python 3.13 and removed support for 3.10 {pr}`229`.
+
+### Changed
+
+### Fixed
+
 ## 0.5.6 (2025-07-08)
 
 ### Added

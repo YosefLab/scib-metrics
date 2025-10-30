@@ -120,7 +120,7 @@ def nmi_ari_cluster_labels_leiden(
             from joblib import Parallel, delayed
 
             out = Parallel(n_jobs=n_jobs)(
-                delayed(_compute_nmi_ari_cluster_labels)(conn_graph, labels, r) for r in resolutions
+                delayed(_compute_nmi_ari_cluster_labels)(conn_graph, labels, r, seed=seed) for r in resolutions
             )
         except ImportError:
             warnings.warn("Using for loop over clustering resolutions. `pip install joblib` for parallelization.")
@@ -130,6 +130,6 @@ def nmi_ari_cluster_labels_leiden(
         nmi, ari = nmi_ari[nmi_ind, :]
         return {"nmi": nmi, "ari": ari}
     else:
-        nmi, ari = _compute_nmi_ari_cluster_labels(conn_graph, labels, resolution)
+        nmi, ari = _compute_nmi_ari_cluster_labels(conn_graph, labels, resolution, seed=seed)
 
     return {"nmi": nmi, "ari": ari}

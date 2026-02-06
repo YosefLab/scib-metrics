@@ -68,7 +68,13 @@ If you found a bug, please use the [issue tracker][issue-tracker].
 
 ## Citation
 
-References for individual metrics can be found in the corresponding documentation. This package is heavily inspired by the single-cell integration benchmarking work:
+Please cite:
+
+```
+Adam Gayoso, Martin Kim, Ori Kronfeld, Justin Hong, & Yosef, N. (2026). YosefLab/scib-metrics: scib-metrics 0.5.8 (v0.5.8). Zenodo. https://doi.org/10.5281/zenodo.18504367
+```
+
+In addition, please cite the original single-cell integration benchmarking work:
 
 ```
 @article{luecken2022benchmarking,
@@ -82,6 +88,8 @@ References for individual metrics can be found in the corresponding documentatio
   publisher={Nature Publishing Group}
 }
 ```
+
+References for individual metrics can be also found in the corresponding documentation. 
 
 [scverse-discourse]: https://discourse.scverse.org/
 [issue-tracker]: https://github.com/YosefLab/scib-metrics/issues

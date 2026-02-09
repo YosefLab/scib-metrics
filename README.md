@@ -89,7 +89,7 @@ In addition, please cite the original single-cell integration benchmarking work:
 }
 ```
 
-References for individual metrics can be also found in the corresponding documentation. 
+References for individual metrics can be also found in the corresponding documentation.
 
 [scverse-discourse]: https://discourse.scverse.org/
 [issue-tracker]: https://github.com/YosefLab/scib-metrics/issues

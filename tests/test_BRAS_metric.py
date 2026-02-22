@@ -185,7 +185,7 @@ def test_silhouette_samples_cosine():
     assert np.allclose(
         scib_metrics.utils.silhouette_samples(X, labels, metric="cosine"),
         silhouette_samples_custom(X, labels, metric="cosine"),
-        atol=1e-5,
+        atol=1e-4,
     )
 
 

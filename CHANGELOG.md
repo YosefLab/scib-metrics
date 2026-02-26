@@ -10,7 +10,17 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.6.0 (unreleased)
 
-## 0.5.8 (2025-XX-XX)
+## 0.5.9 (2025-02-26)
+
+### Added
+
+### Change 
+
+- Change kbet calculation to work with new numpy version, {pr}`254`.
+  
+### Fixed
+
+## 0.5.8 (2025-02-06)
 
 ### Added
 

@@ -8,7 +8,6 @@ import scib_metrics
 from scib_metrics.benchmark import BatchCorrection, Benchmarker, BioConservation, SpatialConservation
 from tests.utils.data import dummy_benchmarker_adata, dummy_spatial_benchmarker_adata
 
-
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def _compact_data(seed=0):
@@ -176,21 +175,26 @@ def test_benchmarker_spatial_with_bio_and_batch():
 def test_benchmarker_spatial_weight_in_total():
     """Non-zero spatial_conservation_weight should shift the Total score."""
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
-    kwargs = dict(
-        bio_conservation_metrics=BioConservation(
-            isolated_labels=False, nmi_ari_cluster_labels_leiden=False,
-            nmi_ari_cluster_labels_kmeans=True, silhouette_label=True, clisi_knn=False,
-        ),
-        batch_correction_metrics=BatchCorrection(
-            bras=True, ilisi_knn=False, kbet_per_label=False,
-            graph_connectivity=False, pcr_comparison=False,
-        ),
-        spatial_key="spatial",
+    bio = BioConservation(
+        isolated_labels=False, nmi_ari_cluster_labels_leiden=False,
+        nmi_ari_cluster_labels_kmeans=True, silhouette_label=True, clisi_knn=False,
     )
-    bm0 = Benchmarker(adata, batch_key, labels_key, emb_keys, spatial_conservation_weight=0.0, **kwargs)
+    batch = BatchCorrection(
+        bras=True, ilisi_knn=False, kbet_per_label=False,
+        graph_connectivity=False, pcr_comparison=False,
+    )
+    bm0 = Benchmarker(
+        adata, batch_key, labels_key, emb_keys,
+        bio_conservation_metrics=bio, batch_correction_metrics=batch,
+        spatial_key="spatial", spatial_conservation_weight=0.0,
+    )
     bm0.benchmark()
 
-    bm1 = Benchmarker(adata, batch_key, labels_key, emb_keys, spatial_conservation_weight=0.2, **kwargs)
+    bm1 = Benchmarker(
+        adata, batch_key, labels_key, emb_keys,
+        bio_conservation_metrics=bio, batch_correction_metrics=batch,
+        spatial_key="spatial", spatial_conservation_weight=0.2,
+    )
     bm1.benchmark()
 
     # Drop the "Metric Type" row (which contains string "Aggregate score") before casting

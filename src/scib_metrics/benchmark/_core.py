@@ -199,13 +199,13 @@ class Benchmarker:
         embedding_obsm_keys: list[str],
         bio_conservation_metrics: BioConservation | None = BioConservation(),
         batch_correction_metrics: BatchCorrection | None = BatchCorrection(),
-        spatial_conservation_metrics: SpatialConservation | None = _SPATIAL_UNSET,  # type: ignore[assignment]
-        spatial_key: str | None = None,
-        spatial_conservation_weight: float = 0.0,
         pre_integrated_embedding_obsm_key: str | None = None,
         n_jobs: int = 1,
         progress_bar: bool = True,
         solver: str = "arpack",
+        spatial_conservation_metrics: SpatialConservation | None = _SPATIAL_UNSET,  # type: ignore[assignment]
+        spatial_key: str | None = None,
+        spatial_conservation_weight: float = 0.0,
     ):
         self._adata = adata
         self._embedding_obsm_keys = embedding_obsm_keys

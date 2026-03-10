@@ -17,9 +17,11 @@ Chen et al. (2025) A comprehensive benchmarking for spatially resolved
 MuST (2023) Multi-modal spatial transcriptomics benchmark.
 """
 
+import warnings
+
 import numpy as np
 from scipy.spatial.distance import pdist
-from scipy.stats import spearmanr
+from scipy.stats import ConstantInputWarning, spearmanr
 from sklearn.neighbors import NearestNeighbors
 
 
@@ -73,6 +75,8 @@ def spatial_mrre(
         n = max_cells
 
     k = min(k, n - 1)
+    if k == 0:
+        return 1.0
     kp1 = k + 1
 
     nn_s = NearestNeighbors(n_neighbors=kp1, algorithm="kd_tree").fit(spatial_coords)
@@ -142,6 +146,8 @@ def spatial_knn_overlap(
         n = max_cells
 
     k = min(k, n - 1)
+    if k == 0:
+        return 1.0
     kp1 = k + 1
 
     nn_s = NearestNeighbors(n_neighbors=kp1, algorithm="kd_tree").fit(spatial_coords)
@@ -152,10 +158,7 @@ def spatial_knn_overlap(
     _, l_inds = nn_l.kneighbors(X_embedding)
     l_inds = l_inds[:, 1:]
 
-    overlaps = np.array([
-        np.sum(np.isin(s_inds[i], l_inds[i])) / k
-        for i in range(n)
-    ])
+    overlaps = np.array([np.sum(np.isin(s_inds[i], l_inds[i])) / k for i in range(n)])
     return float(np.mean(overlaps))
 
 
@@ -205,8 +208,14 @@ def spatial_distance_correlation(
     sp_dists = pdist(spatial_coords, metric="euclidean")
     lat_dists = pdist(X_embedding, metric="euclidean")
 
-    corr, _ = spearmanr(sp_dists, lat_dists)
-    return float((float(corr) + 1.0) / 2.0)
+    if len(sp_dists) < 2:
+        return 1.0
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConstantInputWarning)
+        corr, _ = spearmanr(sp_dists, lat_dists)
+    corr = 0.0 if np.isnan(corr) else float(corr)
+    return float((corr + 1.0) / 2.0)
 
 
 def spatial_morans_i(

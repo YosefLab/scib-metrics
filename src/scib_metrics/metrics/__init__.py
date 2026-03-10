@@ -5,6 +5,12 @@ from ._lisi import clisi_knn, ilisi_knn, lisi_knn
 from ._nmi_ari import nmi_ari_cluster_labels_kmeans, nmi_ari_cluster_labels_leiden
 from ._pcr_comparison import pcr_comparison
 from ._silhouette import bras, silhouette_batch, silhouette_label
+from ._spatial import (
+    spatial_mrre,
+    spatial_knn_overlap,
+    spatial_distance_correlation,
+    spatial_morans_i,
+)
 
 __all__ = [
     "isolated_labels",
@@ -20,4 +26,8 @@ __all__ = [
     "kbet",
     "kbet_per_label",
     "graph_connectivity",
+    "spatial_mrre",
+    "spatial_knn_overlap",
+    "spatial_distance_correlation",
+    "spatial_morans_i",
 ]

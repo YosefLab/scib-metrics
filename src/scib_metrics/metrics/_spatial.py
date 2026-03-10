@@ -152,10 +152,7 @@ def spatial_knn_overlap(
     _, l_inds = nn_l.kneighbors(X_embedding)
     l_inds = l_inds[:, 1:]
 
-    overlaps = np.array([
-        np.sum(np.isin(s_inds[i], l_inds[i])) / k
-        for i in range(n)
-    ])
+    overlaps = np.array([np.sum(np.isin(s_inds[i], l_inds[i])) / k for i in range(n)])
     return float(np.mean(overlaps))
 
 

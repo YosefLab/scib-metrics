@@ -8,8 +8,8 @@ import scib_metrics
 from scib_metrics.benchmark import BatchCorrection, Benchmarker, BioConservation, SpatialConservation
 from tests.utils.data import dummy_benchmarker_adata, dummy_spatial_benchmarker_adata
 
-
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 def _compact_data(seed=0):
     """4 tight spatial blobs with matching labels."""
@@ -122,7 +122,10 @@ def test_spatial_morans_i_spatially_smooth_higher():
 def test_benchmarker_with_spatial_conservation():
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
     bm = Benchmarker(
-        adata, batch_key, labels_key, emb_keys,
+        adata,
+        batch_key,
+        labels_key,
+        emb_keys,
         bio_conservation_metrics=None,
         batch_correction_metrics=None,
         spatial_conservation_metrics=SpatialConservation(),
@@ -140,7 +143,10 @@ def test_benchmarker_spatial_aggregate_present():
     """Spatial conservation aggregate column should appear in results."""
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
     bm = Benchmarker(
-        adata, batch_key, labels_key, emb_keys,
+        adata,
+        batch_key,
+        labels_key,
+        emb_keys,
         bio_conservation_metrics=None,
         batch_correction_metrics=None,
         spatial_key="spatial",
@@ -154,14 +160,23 @@ def test_benchmarker_spatial_with_bio_and_batch():
     """All three metric categories run together; spatial not in Total (weight=0)."""
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
     bm = Benchmarker(
-        adata, batch_key, labels_key, emb_keys,
+        adata,
+        batch_key,
+        labels_key,
+        emb_keys,
         bio_conservation_metrics=BioConservation(
-            isolated_labels=False, nmi_ari_cluster_labels_leiden=False,
-            nmi_ari_cluster_labels_kmeans=True, silhouette_label=True, clisi_knn=False,
+            isolated_labels=False,
+            nmi_ari_cluster_labels_leiden=False,
+            nmi_ari_cluster_labels_kmeans=True,
+            silhouette_label=True,
+            clisi_knn=False,
         ),
         batch_correction_metrics=BatchCorrection(
-            bras=True, ilisi_knn=False, kbet_per_label=False,
-            graph_connectivity=False, pcr_comparison=False,
+            bras=True,
+            ilisi_knn=False,
+            kbet_per_label=False,
+            graph_connectivity=False,
+            pcr_comparison=False,
         ),
         spatial_key="spatial",
     )
@@ -178,12 +193,18 @@ def test_benchmarker_spatial_weight_in_total():
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
     kwargs = dict(
         bio_conservation_metrics=BioConservation(
-            isolated_labels=False, nmi_ari_cluster_labels_leiden=False,
-            nmi_ari_cluster_labels_kmeans=True, silhouette_label=True, clisi_knn=False,
+            isolated_labels=False,
+            nmi_ari_cluster_labels_leiden=False,
+            nmi_ari_cluster_labels_kmeans=True,
+            silhouette_label=True,
+            clisi_knn=False,
         ),
         batch_correction_metrics=BatchCorrection(
-            bras=True, ilisi_knn=False, kbet_per_label=False,
-            graph_connectivity=False, pcr_comparison=False,
+            bras=True,
+            ilisi_knn=False,
+            kbet_per_label=False,
+            graph_connectivity=False,
+            pcr_comparison=False,
         ),
         spatial_key="spatial",
     )
@@ -204,7 +225,10 @@ def test_benchmarker_embedding_spatial_scores_vary():
     """Embedding-based spatial metrics should differ across different embeddings."""
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata(n_spots=200, seed=0)
     bm = Benchmarker(
-        adata, batch_key, labels_key, emb_keys,
+        adata,
+        batch_key,
+        labels_key,
+        emb_keys,
         bio_conservation_metrics=None,
         batch_correction_metrics=None,
         spatial_key="spatial",
@@ -221,7 +245,10 @@ def test_benchmarker_spatial_scores_in_unit_interval():
     """All spatial metric values should be in [0, 1]."""
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
     bm = Benchmarker(
-        adata, batch_key, labels_key, emb_keys,
+        adata,
+        batch_key,
+        labels_key,
+        emb_keys,
         bio_conservation_metrics=None,
         batch_correction_metrics=None,
         spatial_key="spatial",
@@ -249,8 +276,12 @@ def test_benchmarker_no_spatial_key_no_spatial_metrics():
 def test_benchmarker_spatial_key_auto_enables_spatial_metrics():
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
     bm = Benchmarker(
-        adata, batch_key, labels_key, emb_keys,
-        bio_conservation_metrics=None, batch_correction_metrics=None,
+        adata,
+        batch_key,
+        labels_key,
+        emb_keys,
+        bio_conservation_metrics=None,
+        batch_correction_metrics=None,
         spatial_key="spatial",
     )
     bm.benchmark()
@@ -262,11 +293,17 @@ def test_benchmarker_spatial_key_auto_enables_spatial_metrics():
 def test_benchmarker_spatial_key_explicit_none_disables_spatial():
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
     bm = Benchmarker(
-        adata, batch_key, labels_key, emb_keys,
+        adata,
+        batch_key,
+        labels_key,
+        emb_keys,
         bio_conservation_metrics=None,
         batch_correction_metrics=BatchCorrection(
-            bras=True, ilisi_knn=False, kbet_per_label=False,
-            graph_connectivity=False, pcr_comparison=False,
+            bras=True,
+            ilisi_knn=False,
+            kbet_per_label=False,
+            graph_connectivity=False,
+            pcr_comparison=False,
         ),
         spatial_conservation_metrics=None,
         spatial_key="spatial",
@@ -280,10 +317,15 @@ def test_benchmarker_spatial_key_explicit_none_disables_spatial():
 def test_benchmarker_spatial_partial_config():
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
     bm = Benchmarker(
-        adata, batch_key, labels_key, emb_keys,
-        bio_conservation_metrics=None, batch_correction_metrics=None,
+        adata,
+        batch_key,
+        labels_key,
+        emb_keys,
+        bio_conservation_metrics=None,
+        batch_correction_metrics=None,
         spatial_conservation_metrics=SpatialConservation(
-            spatial_knn_overlap=False, spatial_distance_correlation=False,
+            spatial_knn_overlap=False,
+            spatial_distance_correlation=False,
         ),
         spatial_key="spatial",
     )
@@ -299,8 +341,12 @@ def test_benchmarker_spatial_missing_key_raises():
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
     with pytest.raises(ValueError, match="spatial_key must be provided"):
         Benchmarker(
-            adata, batch_key, labels_key, emb_keys,
-            bio_conservation_metrics=None, batch_correction_metrics=None,
+            adata,
+            batch_key,
+            labels_key,
+            emb_keys,
+            bio_conservation_metrics=None,
+            batch_correction_metrics=None,
             spatial_conservation_metrics=SpatialConservation(),
             spatial_key=None,
         )
@@ -310,7 +356,10 @@ def test_benchmarker_spatial_wrong_key_raises():
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
     with pytest.raises(ValueError, match="not found in adata.obsm"):
         Benchmarker(
-            adata, batch_key, labels_key, emb_keys,
+            adata,
+            batch_key,
+            labels_key,
+            emb_keys,
             spatial_conservation_metrics=SpatialConservation(),
             spatial_key="nonexistent_key",
         )

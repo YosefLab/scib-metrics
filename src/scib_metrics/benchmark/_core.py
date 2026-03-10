@@ -244,7 +244,6 @@ class Benchmarker:
                 "Typically this is 'spatial' (adata.obsm['spatial'])."
             )
 
-
         if self._spatial_key is not None and self._spatial_key not in self._adata.obsm:
             raise ValueError(
                 f"spatial_key '{self._spatial_key}' not found in adata.obsm. "
@@ -392,10 +391,7 @@ class Benchmarker:
         # placeholder weight that defaults to 0.0 so it does not affect the
         # total until explicitly enabled by the user.
         if self._batch_correction_metrics is not None and self._bio_conservation_metrics is not None:
-            total = (
-                0.4 * per_class_score["Batch correction"]
-                + 0.6 * per_class_score["Bio conservation"]
-            )
+            total = 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
             if (
                 self._spatial_conservation_metrics is not None
                 and self._spatial_conservation_weight > 0.0
@@ -420,6 +416,7 @@ class Benchmarker:
         save_dir
             The directory to save the plot to. If `None`, the plot is not saved.
         """
+
         def _fmt(x: float) -> str:
             """Format to 2 d.p., mapping -0.00 → 0.00."""
             v = round(float(x), 2)

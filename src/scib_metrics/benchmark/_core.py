@@ -33,6 +33,7 @@ _LABELS = "labels"
 _BATCH = "batch"
 _X_PRE = "X_pre"
 _SPATIAL = "spatial"
+_X_EXPR = "X_expr_pre"  # pre-integrated PCA stored for niche metrics
 _METRIC_TYPE = "Metric Type"
 _AGGREGATE_SCORE = "Aggregate score"
 
@@ -51,10 +52,16 @@ metric_name_cleaner = {
     "bras": "BRAS",
     "graph_connectivity": "Graph connectivity",
     "pcr_comparison": "PCR comparison",
+    # Coordinate preservation
     "spatial_mrre": "MRRE",
     "spatial_knn_overlap": "kNN overlap",
     "spatial_distance_correlation": "Distance corr.",
     "spatial_morans_i": "Moran's I",
+    # Niche preservation
+    "spatial_niche_knn_overlap": "Niche kNN",
+    # Domain boundary
+    "spatial_pas": "PAS",
+    "spatial_chaos": "CHAOS",
 }
 
 
@@ -91,26 +98,30 @@ class BatchCorrection:
 
 
 @dataclass(frozen=True)
-class SpatialConservation:
-    """Specification of spatial conservation metrics to run in the pipeline.
+class CoordinatePreservation:
+    """Coordinate-preservation metrics: does the latent reproduce XY geometry?
 
-    These embedding-based metrics compare each model's latent representation
-    against the physical spot coordinates to quantify how well spatial
-    structure is preserved.  All scores are in ``[0, 1]`` with higher better,
-    and they vary across embeddings.
+    These metrics compare each model's latent representation directly against
+    the physical spot coordinates.  They are most meaningful for spatial graph
+    autoencoders (STAGATE-style) whose latent is explicitly trained as a
+    surrogate for tissue coordinates.
 
-    Metrics can be included using a boolean flag. Custom keyword args can be
-    used by passing a dictionary here. Keyword args should not set data-related
-    parameters such as ``X_embedding`` or ``spatial_coords``.
+    For models like scVIVA, resolVI, gimVI, or DestVI — where the latent
+    captures expression state, niche structure, denoising, or deconvolution —
+    these metrics measure a property the model was not trained to optimise.
+    Use :class:`NichePreservation` and :class:`DomainBoundary` instead to
+    assess those models on their intended objectives.
 
-    Direction of each metric (all higher = better):
+    All scores are in ``[0, 1]`` with higher better.
 
-    * ``spatial_mrre`` — 1 minus normalised mean relative rank error of spatial
-      neighbours in the latent space.
-    * ``spatial_knn_overlap`` — mean Jaccard overlap of spatial vs. latent
-      k-NN sets per spot.
-    * ``spatial_distance_correlation`` — Spearman rank correlation of
-      pairwise spatial vs. latent distances, rescaled to ``[0, 1]``.
+    Metrics (all higher = better):
+
+    * ``spatial_mrre`` — 1 minus normalised mean relative rank error of
+      spatial neighbours in the latent space.
+    * ``spatial_knn_overlap`` — chance-normalised overlap of spatial vs.
+      latent k-NN sets per spot.
+    * ``spatial_distance_correlation`` — Spearman correlation of pairwise
+      spatial vs. latent distances, rescaled to ``[0, 1]``.
     * ``spatial_morans_i`` — mean Moran's I of latent dimensions using the
       spatial weight graph, rescaled to ``[0, 1]``.
     """
@@ -119,6 +130,56 @@ class SpatialConservation:
     spatial_knn_overlap: MetricType = True
     spatial_distance_correlation: MetricType = True
     spatial_morans_i: MetricType = True
+
+
+# Backward-compatible alias — ``SpatialConservation`` maps to the coordinate-
+# preservation axis so that existing code continues to work unchanged.
+SpatialConservation = CoordinatePreservation
+
+
+@dataclass(frozen=True)
+class NichePreservation:
+    """Niche-preservation metrics: does the latent capture microenvironment?
+
+    Asks whether cells that share a similar local microenvironment (similar
+    average expression of spatial neighbours) are also close in latent space.
+    This is a direct measure of what niche-aware models such as scVIVA are
+    trained to do, and provides a complementary axis to raw coordinate
+    preservation.
+
+    Niche features are computed as the mean pre-integrated embedding (PCA)
+    of spatial neighbours, keeping them low-dimensional and independent of
+    the model being evaluated.
+
+    Metrics (all higher = better):
+
+    * ``spatial_niche_knn_overlap`` — chance-normalised overlap of niche-
+      feature k-NN vs. latent k-NN per spot.
+    """
+
+    spatial_niche_knn_overlap: MetricType = True
+
+
+@dataclass(frozen=True)
+class DomainBoundary:
+    """Domain-boundary metrics: do latent clusters align with tissue domains?
+
+    Clusters the latent embedding with k-means and measures how spatially
+    coherent the resulting domains are.  High scores indicate that
+    latent-derived clusters occupy compact, contiguous patches of tissue
+    rather than scattered fragments — directly relevant for models aimed at
+    spatial domain identification.
+
+    Metrics (all higher = better):
+
+    * ``spatial_pas`` — 1 minus Proportion of Abnormal Spots; fraction of
+      spatial neighbours in the same cluster (higher = more coherent).
+    * ``spatial_chaos`` — 1 minus normalised mean intra-cluster spatial
+      distance (higher = more spatially compact clusters).
+    """
+
+    spatial_pas: MetricType = True
+    spatial_chaos: MetricType = True
 
 
 class MetricAnnDataAPI(Enum):
@@ -134,11 +195,16 @@ class MetricAnnDataAPI(Enum):
     pcr_comparison = lambda ad, fn: fn(ad.obsm[_X_PRE], ad.X, ad.obs[_BATCH], categorical=True)
     ilisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_BATCH])
     kbet_per_label = lambda ad, fn: fn(ad.uns["50_neighbor_res"], ad.obs[_BATCH], ad.obs[_LABELS])
-    # Spatial conservation — embedding-based (latent embedding + spatial coords)
+    # Coordinate preservation — latent embedding vs physical XY coordinates
     spatial_mrre = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
     spatial_knn_overlap = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
     spatial_distance_correlation = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
     spatial_morans_i = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
+    # Niche preservation — latent kNN vs niche-feature kNN (pre-integrated PCA)
+    spatial_niche_knn_overlap = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], ad.obsm.get(_X_EXPR))
+    # Domain boundary — derived from k-means clustering of latent embedding
+    spatial_pas = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
+    spatial_chaos = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
 
 
 class Benchmarker:
@@ -203,20 +269,24 @@ class Benchmarker:
         n_jobs: int = 1,
         progress_bar: bool = True,
         solver: str = "arpack",
-        spatial_conservation_metrics: SpatialConservation | None = _SPATIAL_UNSET,  # type: ignore[assignment]
+        spatial_conservation_metrics: CoordinatePreservation | None = _SPATIAL_UNSET,  # type: ignore[assignment]
         spatial_key: str | None = None,
         spatial_conservation_weight: float = 0.0,
+        niche_preservation: NichePreservation | None = None,
+        domain_boundary: DomainBoundary | None = None,
     ):
         self._adata = adata
         self._embedding_obsm_keys = embedding_obsm_keys
         self._pre_integrated_embedding_obsm_key = pre_integrated_embedding_obsm_key
         self._bio_conservation_metrics = bio_conservation_metrics
         self._batch_correction_metrics = batch_correction_metrics
-        # Auto-enable spatial metrics when spatial_key is provided and the
+        # Auto-enable coordinate preservation when spatial_key is provided and the
         # caller has not explicitly set spatial_conservation_metrics.
         if spatial_conservation_metrics is _SPATIAL_UNSET:
-            spatial_conservation_metrics = SpatialConservation() if spatial_key is not None else None
+            spatial_conservation_metrics = CoordinatePreservation() if spatial_key is not None else None
         self._spatial_conservation_metrics = spatial_conservation_metrics
+        self._niche_preservation = niche_preservation
+        self._domain_boundary = domain_boundary
         self._spatial_key = spatial_key
         self._spatial_conservation_weight = spatial_conservation_weight
         self._results = pd.DataFrame(columns=list(self._embedding_obsm_keys) + [_METRIC_TYPE])
@@ -231,16 +301,31 @@ class Benchmarker:
         self._compute_neighbors = True
         self._solver = solver
 
+        _any_spatial = (
+            self._spatial_conservation_metrics is not None
+            or self._niche_preservation is not None
+            or self._domain_boundary is not None
+        )
         if (
             self._bio_conservation_metrics is None
             and self._batch_correction_metrics is None
-            and self._spatial_conservation_metrics is None
+            and not _any_spatial
         ):
             raise ValueError("At least one of batch, bio, or spatial metrics must be defined.")
 
         if self._spatial_conservation_metrics is not None and self._spatial_key is None:
             raise ValueError(
                 "spatial_key must be provided when spatial_conservation_metrics is set. "
+                "Typically this is 'spatial' (adata.obsm['spatial'])."
+            )
+        if self._niche_preservation is not None and self._spatial_key is None:
+            raise ValueError(
+                "spatial_key must be provided when niche_preservation is set. "
+                "Typically this is 'spatial' (adata.obsm['spatial'])."
+            )
+        if self._domain_boundary is not None and self._spatial_key is None:
+            raise ValueError(
+                "spatial_key must be provided when domain_boundary is set. "
                 "Typically this is 'spatial' (adata.obsm['spatial'])."
             )
 
@@ -256,7 +341,11 @@ class Benchmarker:
         if self._batch_correction_metrics is not None:
             self._metric_collection_dict.update({"Batch correction": self._batch_correction_metrics})
         if self._spatial_conservation_metrics is not None:
-            self._metric_collection_dict.update({"Spatial conservation": self._spatial_conservation_metrics})
+            self._metric_collection_dict.update({"Coordinate preservation": self._spatial_conservation_metrics})
+        if self._niche_preservation is not None:
+            self._metric_collection_dict.update({"Niche preservation": self._niche_preservation})
+        if self._domain_boundary is not None:
+            self._metric_collection_dict.update({"Domain boundary": self._domain_boundary})
 
     def prepare(self, neighbor_computer: Callable[[np.ndarray, int], NeighborsResults] | None = None) -> None:
         """Prepare the data for benchmarking.
@@ -285,6 +374,11 @@ class Benchmarker:
             self._emb_adatas[emb_key].obsm[_X_PRE] = self._adata.obsm[self._pre_integrated_embedding_obsm_key]
             if self._spatial_key is not None:
                 self._emb_adatas[emb_key].obsm[_SPATIAL] = np.asarray(self._adata.obsm[self._spatial_key])
+                # Store pre-integrated embedding as niche feature proxy for
+                # spatial_niche_knn_overlap; set after PCA so the key exists.
+                self._emb_adatas[emb_key].obsm[_X_EXPR] = np.asarray(
+                    self._adata.obsm[self._pre_integrated_embedding_obsm_key]
+                )
 
         # Compute neighbors
         if self._compute_neighbors:
@@ -387,17 +481,20 @@ class Benchmarker:
         per_class_score = df.groupby(_METRIC_TYPE).mean().transpose()
 
         # Build Total score.  Weights follow the original scIB manuscript
-        # (0.4 batch + 0.6 bio).  Spatial conservation is added with a
-        # placeholder weight that defaults to 0.0 so it does not affect the
-        # total until explicitly enabled by the user.
+        # (0.4 batch + 0.6 bio).  Spatial axes are averaged across all enabled
+        # spatial groups and added with spatial_conservation_weight (default 0.0
+        # so they do not affect Total unless explicitly enabled).
         if self._batch_correction_metrics is not None and self._bio_conservation_metrics is not None:
             total = 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
-            if (
-                self._spatial_conservation_metrics is not None
-                and self._spatial_conservation_weight > 0.0
-                and "Spatial conservation" in per_class_score.columns
-            ):
-                total = total + self._spatial_conservation_weight * per_class_score["Spatial conservation"]
+            if self._spatial_conservation_weight > 0.0:
+                _spatial_groups = [
+                    g
+                    for g in ("Coordinate preservation", "Niche preservation", "Domain boundary")
+                    if g in per_class_score.columns
+                ]
+                if _spatial_groups:
+                    spatial_mean = sum(per_class_score[g] for g in _spatial_groups) / len(_spatial_groups)
+                    total = total + self._spatial_conservation_weight * spatial_mean
             per_class_score["Total"] = total
 
         df = pd.concat([df.transpose(), per_class_score], axis=1)

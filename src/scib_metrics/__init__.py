@@ -20,6 +20,9 @@ from .metrics import (
     spatial_knn_overlap,
     spatial_distance_correlation,
     spatial_morans_i,
+    spatial_niche_knn_overlap,
+    spatial_pas,
+    spatial_chaos,
 )
 from ._settings import settings
 
@@ -43,6 +46,9 @@ __all__ = [
     "spatial_knn_overlap",
     "spatial_distance_correlation",
     "spatial_morans_i",
+    "spatial_niche_knn_overlap",
+    "spatial_pas",
+    "spatial_chaos",
     "settings",
 ]
 

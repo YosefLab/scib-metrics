@@ -511,8 +511,7 @@ def test_morans_i_uniquely_captures_spatial_smoothness():
     assert knn < 0.40, f"knn_overlap should be low: {knn:.3f}"
     assert mrre < 0.65, f"mrre should be low: {mrre:.3f}"
     assert morans > knn + 0.50, (
-        f"spatial_morans_i ({morans:.3f}) should clearly exceed "
-        f"knn_overlap ({knn:.3f}) for a cluster-smooth embedding"
+        f"spatial_morans_i ({morans:.3f}) should clearly exceed knn_overlap ({knn:.3f}) for a cluster-smooth embedding"
     )
 
 
@@ -548,8 +547,7 @@ def test_mrre_uniquely_sensitive_to_rank_order_within_knn():
     assert knn > 0.90, f"knn_overlap should be near 1 (same members): {knn:.3f}"
     assert mrre < 0.65, f"mrre should be low (reversed ranks): {mrre:.3f}"
     assert knn > mrre + 0.30, (
-        f"knn_overlap ({knn:.3f}) should clearly exceed "
-        f"mrre ({mrre:.3f}) when rank order within k-NN is reversed"
+        f"knn_overlap ({knn:.3f}) should clearly exceed mrre ({mrre:.3f}) when rank order within k-NN is reversed"
     )
 
 
@@ -683,6 +681,7 @@ def test_domain_boundary_benchmarker():
         assert np.all(vals >= 0.0) and np.all(vals <= 1.0)
     bm.plot_results_table()
 
+
 def test_all_three_spatial_axes_together():
     """All three spatial axes run together and produce three aggregate columns."""
     adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
@@ -703,6 +702,7 @@ def test_all_three_spatial_axes_together():
     for col in ("Coordinate preservation", "Niche preservation", "Domain boundary"):
         assert col in results.columns, f"Missing aggregate column: {col}"
     bm.plot_results_table()
+
 
 def test_spatial_conservation_alias_still_works():
     """SpatialConservation is still a valid alias for CoordinatePreservation."""

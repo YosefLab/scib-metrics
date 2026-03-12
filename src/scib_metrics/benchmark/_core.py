@@ -306,11 +306,7 @@ class Benchmarker:
             or self._niche_preservation is not None
             or self._domain_boundary is not None
         )
-        if (
-            self._bio_conservation_metrics is None
-            and self._batch_correction_metrics is None
-            and not _any_spatial
-        ):
+        if self._bio_conservation_metrics is None and self._batch_correction_metrics is None and not _any_spatial:
             raise ValueError("At least one of batch, bio, or spatial metrics must be defined.")
 
         if self._spatial_conservation_metrics is not None and self._spatial_key is None:

@@ -499,7 +499,7 @@ class Benchmarker:
 
         for emb_key, label_adatas in self._region_emb_adatas.items():
             for label_val, ad in label_adatas.items():
-                for metric_type, metric_collection in region_metric_dict.items():
+                for _metric_type, metric_collection in region_metric_dict.items():
                     for metric_name, use_metric_or_kwargs in asdict(metric_collection).items():
                         if not use_metric_or_kwargs:
                             continue
@@ -508,7 +508,7 @@ class Benchmarker:
                             if isinstance(use_metric_or_kwargs, dict):
                                 metric_fn = partial(metric_fn, **use_metric_or_kwargs)
                             metric_value = getattr(MetricAnnDataAPI, metric_name)(ad, metric_fn)
-                        except Exception as exc:
+                        except (ValueError, KeyError, RuntimeError, AttributeError) as exc:
                             warnings.warn(
                                 f"Region metric '{metric_name}' failed for label '{label_val}' "
                                 f"(emb '{emb_key}'): {exc}",

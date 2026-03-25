@@ -1,5 +1,6 @@
 """Tests for spatial transcriptomics metrics."""
 
+import anndata
 import numpy as np
 import pandas as pd
 import pytest
@@ -749,3 +750,189 @@ def test_niche_domain_missing_spatial_key_raises():
             domain_boundary=DomainBoundary(),
             spatial_key=None,
         )
+
+
+# ── region_key: per-label-value regional scoring ─────────────────────────────
+
+
+def _region_benchmarker_adata(n_per_celltype: int = 150, seed: int = 0):
+    """AnnData with cell_type and region columns for region_key tests.
+
+    3 cell types × 150 cells each = 450 total.
+    2 regions, 2 batches.  One embedding is spatially structured, one is random.
+    """
+    rng = np.random.default_rng(seed)
+    n = n_per_celltype * 3
+    cell_type = np.repeat(["A", "B", "C"], n_per_celltype)
+    region = np.tile(["R1", "R2"], n // 2)
+    batch = np.tile(["b1", "b2"], n // 2)
+    x_data = rng.normal(size=(n, 20))
+    ad = anndata.AnnData(X=x_data)
+    ad.obs["cell_type"] = cell_type
+    ad.obs["region"] = region
+    ad.obs["batch"] = batch
+    ad.obsm["X_good"] = rng.normal(size=(n, 10))
+    ad.obsm["X_rand"] = rng.normal(size=(n, 10))
+    return ad
+
+
+_FAST_BIO = BioConservation(
+    silhouette_label=True,
+    nmi_ari_cluster_labels_kmeans=False,
+    isolated_labels=False,
+    clisi_knn=False,
+)
+_FAST_BATCH = BatchCorrection(
+    bras=False,
+    ilisi_knn=False,
+    kbet_per_label=False,
+    graph_connectivity=False,
+    pcr_comparison=True,
+)
+
+
+def test_region_key_produces_region_conservation_columns():
+    """region_key should add 'Region Bio conservation' and 'Region Batch correction' columns."""
+    adata = _region_benchmarker_adata()
+    bm = Benchmarker(
+        adata,
+        batch_key="batch",
+        label_key="cell_type",
+        embedding_obsm_keys=["X_good"],
+        bio_conservation_metrics=_FAST_BIO,
+        batch_correction_metrics=_FAST_BATCH,
+        region_key="region",
+        n_jobs=1,
+        progress_bar=False,
+    )
+    bm.benchmark()
+    results = bm.get_results()
+    assert "Region Bio conservation" in results.columns
+    assert "Region Batch correction" in results.columns
+
+
+def test_region_key_group_header_is_region_conservation():
+    """The Metric Type row for region columns should read 'Region conservation'."""
+    adata = _region_benchmarker_adata()
+    bm = Benchmarker(
+        adata,
+        batch_key="batch",
+        label_key="cell_type",
+        embedding_obsm_keys=["X_good"],
+        bio_conservation_metrics=_FAST_BIO,
+        batch_correction_metrics=_FAST_BATCH,
+        region_key="region",
+        n_jobs=1,
+        progress_bar=False,
+    )
+    bm.benchmark()
+    results = bm.get_results()
+    assert results.loc["Metric Type", "Region Bio conservation"] == "Region conservation"
+    assert results.loc["Metric Type", "Region Batch correction"] == "Region conservation"
+
+
+def test_region_key_scores_in_unit_interval():
+    """Region aggregate scores should be in [0, 1]."""
+    adata = _region_benchmarker_adata()
+    bm = Benchmarker(
+        adata,
+        batch_key="batch",
+        label_key="cell_type",
+        embedding_obsm_keys=["X_good", "X_rand"],
+        bio_conservation_metrics=_FAST_BIO,
+        batch_correction_metrics=_FAST_BATCH,
+        region_key="region",
+        n_jobs=1,
+        progress_bar=False,
+    )
+    bm.benchmark()
+    results = bm.get_results()
+    for col in ("Region Bio conservation", "Region Batch correction"):
+        vals = results.loc[["X_good", "X_rand"], col].astype(float).values
+        assert np.all(vals >= 0.0), f"'{col}' has values < 0: {vals}"
+        assert np.all(vals <= 1.0), f"'{col}' has values > 1: {vals}"
+
+
+def test_region_key_none_does_not_add_region_columns():
+    """Without region_key the results table should not contain region columns."""
+    adata = _region_benchmarker_adata()
+    bm = Benchmarker(
+        adata,
+        batch_key="batch",
+        label_key="cell_type",
+        embedding_obsm_keys=["X_good"],
+        bio_conservation_metrics=_FAST_BIO,
+        batch_correction_metrics=_FAST_BATCH,
+        n_jobs=1,
+        progress_bar=False,
+    )
+    bm.benchmark()
+    results = bm.get_results()
+    assert "Region Bio conservation" not in results.columns
+    assert "Region Batch correction" not in results.columns
+
+
+def test_region_key_invalid_column_raises():
+    """Passing a non-existent region_key should raise ValueError at construction."""
+    adata = _region_benchmarker_adata()
+    with pytest.raises(ValueError, match="region_key 'nonexistent'"):
+        Benchmarker(
+            adata,
+            batch_key="batch",
+            label_key="cell_type",
+            embedding_obsm_keys=["X_good"],
+            bio_conservation_metrics=_FAST_BIO,
+            region_key="nonexistent",
+        )
+
+
+def test_region_key_small_subset_skipped_with_warning():
+    """Cell types with fewer than min_cells cells should be skipped with a warning."""
+    rng = np.random.default_rng(42)
+    # 200 cells for type A, but only 50 for type B (< 91 = max_neighbors + 1)
+    cell_type = np.array(["A"] * 200 + ["B"] * 50)
+    region = np.tile(["R1", "R2"], 125)
+    batch = np.tile(["b1", "b2"], 125)
+    x_data = rng.normal(size=(250, 20))
+    adata = anndata.AnnData(X=x_data)
+    adata.obs["cell_type"] = cell_type
+    adata.obs["region"] = region
+    adata.obs["batch"] = batch
+    adata.obsm["X_emb"] = rng.normal(size=(250, 10))
+
+    bm = Benchmarker(
+        adata,
+        batch_key="batch",
+        label_key="cell_type",
+        embedding_obsm_keys=["X_emb"],
+        bio_conservation_metrics=_FAST_BIO,
+        batch_correction_metrics=None,
+        region_key="region",
+        n_jobs=1,
+        progress_bar=False,
+    )
+    with pytest.warns(UserWarning, match="Skipping region scoring for label 'B'"):
+        bm.benchmark()
+    # Region Bio conservation should still appear (computed for type A)
+    results = bm.get_results()
+    assert "Region Bio conservation" in results.columns
+
+
+def test_region_key_only_bio_metrics_enabled():
+    """When batch_correction_metrics=None, only Region Bio conservation column appears."""
+    adata = _region_benchmarker_adata()
+    bm = Benchmarker(
+        adata,
+        batch_key="batch",
+        label_key="cell_type",
+        embedding_obsm_keys=["X_good"],
+        bio_conservation_metrics=_FAST_BIO,
+        batch_correction_metrics=None,
+        region_key="region",
+        n_jobs=1,
+        progress_bar=False,
+    )
+    bm.benchmark()
+    results = bm.get_results()
+    assert "Region Bio conservation" in results.columns
+    assert "Region Batch correction" not in results.columns

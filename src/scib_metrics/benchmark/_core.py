@@ -36,6 +36,7 @@ _SPATIAL = "spatial"
 _X_EXPR = "X_expr_pre"  # pre-integrated PCA stored for niche metrics
 _METRIC_TYPE = "Metric Type"
 _AGGREGATE_SCORE = "Aggregate score"
+_REGION_SCORE = "Region conservation"
 
 # Mapping of metric fn names to clean DataFrame column names
 metric_name_cleaner = {
@@ -99,7 +100,7 @@ class BatchCorrection:
 
 @dataclass(frozen=True)
 class CoordinatePreservation:
-    """Coordinate-preservation metrics: does the latent reproduce XY geometry?
+    """Coordinate-preservation metrics: does the latent reproduce XY geometry.
 
     These metrics compare each model's latent representation directly against
     the physical spot coordinates.  They are most meaningful for spatial graph
@@ -139,7 +140,7 @@ SpatialConservation = CoordinatePreservation
 
 @dataclass(frozen=True)
 class NichePreservation:
-    """Niche-preservation metrics: does the latent capture microenvironment?
+    """Niche-preservation metrics: does the latent capture microenvironment.
 
     Asks whether cells that share a similar local microenvironment (similar
     average expression of spatial neighbours) are also close in latent space.
@@ -162,7 +163,7 @@ class NichePreservation:
 
 @dataclass(frozen=True)
 class DomainBoundary:
-    """Domain-boundary metrics: do latent clusters align with tissue domains?
+    """Domain-boundary metrics: do latent clusters align with tissue domains.
 
     Clusters the latent embedding with k-means and measures how spatially
     coherent the resulting domains are.  High scores indicate that
@@ -236,6 +237,15 @@ class Benchmarker:
         using the default :class:`SpatialConservation` configuration unless
         ``spatial_conservation_metrics`` is explicitly passed as ``None``
         to opt out.  Spatial metrics are never computed when this is ``None``.
+    region_key
+        Optional key in ``adata.obs`` containing spatial region labels (e.g.
+        brain region, tissue zone).  When provided, bio-conservation and
+        batch-correction metrics are re-computed **for each unique value in**
+        ``label_key`` (typically cell type) using ``region_key`` as the label,
+        then averaged across label values.  Results appear as
+        "Region bio conservation" and "Region batch correction" aggregate
+        columns.  This quantifies how well embeddings preserve regional
+        identity *within* each cell type.
     pre_integrated_embedding_obsm_key
         Obsm key containing a non-integrated embedding of the data. If `None`, the embedding will be computed
         in the prepare step. See the notes below for more information.
@@ -274,6 +284,7 @@ class Benchmarker:
         spatial_conservation_weight: float = 0.0,
         niche_preservation: NichePreservation | None = None,
         domain_boundary: DomainBoundary | None = None,
+        region_key: str | None = None,
     ):
         self._adata = adata
         self._embedding_obsm_keys = embedding_obsm_keys
@@ -300,6 +311,14 @@ class Benchmarker:
         self._progress_bar = progress_bar
         self._compute_neighbors = True
         self._solver = solver
+        self._region_key = region_key
+        if self._region_key is not None and self._region_key not in self._adata.obs.columns:
+            raise ValueError(
+                f"region_key '{self._region_key}' not found in adata.obs. "
+                f"Available columns: {list(self._adata.obs.columns)}"
+            )
+        self._region_avg: dict[str, dict[str, float]] = {}
+        self._region_emb_adatas: dict[str, dict[str, AnnData]] = {}
 
         _any_spatial = (
             self._spatial_conservation_metrics is not None
@@ -397,7 +416,117 @@ class Benchmarker:
                 UserWarning,
             )
 
+        if self._region_key is not None:
+            self._prepare_region_adatas(neighbor_computer)
+
         self._prepared = True
+
+    def _prepare_region_adatas(
+        self,
+        neighbor_computer: Callable[[np.ndarray, int], NeighborsResults] | None = None,
+    ) -> None:
+        """Build per-label-value AnnData subsets with ``region_key`` as the label.
+
+        For each unique value in ``label_key`` we subset the data, swap
+        ``_LABELS`` for the region column, and pre-compute neighbor graphs so
+        that the full bio/batch metric suite can run on each subset.
+
+        Subsets with fewer than ``max(neighbor_values) + 1`` cells are skipped.
+        """
+        min_cells = max(self._neighbor_values) + 1
+        self._region_emb_adatas = {ek: {} for ek in self._embedding_obsm_keys}
+
+        label_vals = sorted(self._adata.obs[self._label_key].unique())
+        progress = label_vals
+        if self._progress_bar:
+            progress = tqdm(label_vals, desc="Region subsets")
+
+        for label_val in progress:
+            mask = (self._adata.obs[self._label_key] == label_val).values
+            n_cells = int(mask.sum())
+            if n_cells < min_cells:
+                warnings.warn(
+                    f"Skipping region scoring for label '{label_val}': "
+                    f"only {n_cells} cells (need >= {min_cells}).",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                continue
+
+            sub = self._adata[mask]
+            k = min(max(self._neighbor_values), n_cells - 1)
+
+            for emb_key in self._embedding_obsm_keys:
+                ad = AnnData(np.asarray(sub.obsm[emb_key]), obs=sub.obs.copy())
+                ad.obs[_BATCH] = np.asarray(sub.obs[self._batch_key].values)
+                ad.obs[_LABELS] = np.asarray(sub.obs[self._region_key].values)
+                ad.obsm[_X_PRE] = np.asarray(sub.obsm[self._pre_integrated_embedding_obsm_key])
+                if self._spatial_key is not None:
+                    ad.obsm[_SPATIAL] = np.asarray(sub.obsm[self._spatial_key])
+                    ad.obsm[_X_EXPR] = np.asarray(sub.obsm[self._pre_integrated_embedding_obsm_key])
+
+                if neighbor_computer is not None:
+                    neigh_result = neighbor_computer(ad.X, k)
+                else:
+                    neigh_result = pynndescent(
+                        ad.X, n_neighbors=k, random_state=0, n_jobs=self._n_jobs
+                    )
+                for n in self._neighbor_values:
+                    ad.uns[f"{n}_neighbor_res"] = neigh_result.subset_neighbors(n=min(n, k))
+
+                self._region_emb_adatas[emb_key][label_val] = ad
+
+    def _benchmark_region(self) -> None:
+        """Run bio/batch metrics per label-value subset (region as label), then average."""
+        region_metric_dict = {
+            k: v
+            for k, v in self._metric_collection_dict.items()
+            if k in ("Bio conservation", "Batch correction")
+        }
+        if not region_metric_dict or not self._region_emb_adatas:
+            return
+
+        # metric_name → metric_type (handles nmi/ari split keys too)
+        metric_to_type: dict[str, str] = {}
+        for mt, mc in region_metric_dict.items():
+            for mn in asdict(mc):
+                metric_to_type[mn] = mt
+                metric_to_type[f"{mn}_nmi"] = mt
+                metric_to_type[f"{mn}_ari"] = mt
+
+        # scores[emb_key][metric_name] = [score_label1, score_label2, ...]
+        scores: dict[str, dict[str, list[float]]] = {ek: {} for ek in self._embedding_obsm_keys}
+
+        for emb_key, label_adatas in self._region_emb_adatas.items():
+            for label_val, ad in label_adatas.items():
+                for metric_type, metric_collection in region_metric_dict.items():
+                    for metric_name, use_metric_or_kwargs in asdict(metric_collection).items():
+                        if not use_metric_or_kwargs:
+                            continue
+                        try:
+                            metric_fn = getattr(scib_metrics, metric_name)
+                            if isinstance(use_metric_or_kwargs, dict):
+                                metric_fn = partial(metric_fn, **use_metric_or_kwargs)
+                            metric_value = getattr(MetricAnnDataAPI, metric_name)(ad, metric_fn)
+                        except Exception as exc:
+                            warnings.warn(
+                                f"Region metric '{metric_name}' failed for label '{label_val}' "
+                                f"(emb '{emb_key}'): {exc}",
+                                UserWarning,
+                                stacklevel=2,
+                            )
+                            continue
+
+                        if isinstance(metric_value, dict):
+                            for k, v in metric_value.items():
+                                scores[emb_key].setdefault(f"{metric_name}_{k}", []).append(float(v))
+                        else:
+                            scores[emb_key].setdefault(metric_name, []).append(float(metric_value))
+
+        self._region_avg = {
+            ek: {mn: float(np.nanmean(vals)) for mn, vals in m.items() if vals}
+            for ek, m in scores.items()
+        }
 
     def benchmark(self) -> None:
         """Run the pipeline."""
@@ -442,6 +571,9 @@ class Benchmarker:
                             self._results.loc[metric_name, _METRIC_TYPE] = metric_type
                         pbar.update(1) if pbar is not None else None
 
+        if self._region_key:
+            self._benchmark_region()
+
         self._benchmarked = True
 
     def get_results(self, min_max_scale: bool = False, clean_names: bool = True) -> pd.DataFrame:
@@ -476,6 +608,27 @@ class Benchmarker:
         # Compute per-category aggregate scores
         per_class_score = df.groupby(_METRIC_TYPE).mean().transpose()
 
+        # Add region-aware aggregate columns when region_key was used
+        if self._region_key and self._region_avg:
+            # Build metric_name → metric_type map (including nmi/ari split keys)
+            _metric_to_type: dict[str, str] = {}
+            for _mt, _mc in self._metric_collection_dict.items():
+                if _mt in ("Bio conservation", "Batch correction"):
+                    for _mn in asdict(_mc):
+                        _metric_to_type[_mn] = _mt
+                        _metric_to_type[f"{_mn}_nmi"] = _mt
+                        _metric_to_type[f"{_mn}_ari"] = _mt
+
+            for emb_key in self._embedding_obsm_keys:
+                ravg = self._region_avg.get(emb_key, {})
+                _type_vals: dict[str, list[float]] = {}
+                for mn, v in ravg.items():
+                    col = f"Region {_metric_to_type[mn]}" if mn in _metric_to_type else None
+                    if col:
+                        _type_vals.setdefault(col, []).append(v)
+                for col, vals in _type_vals.items():
+                    per_class_score.loc[emb_key, col] = float(np.mean(vals))
+
         # Build Total score.  Weights follow the original scIB manuscript
         # (0.4 batch + 0.6 bio).  Spatial axes are averaged across all enabled
         # spatial groups and added with spatial_conservation_weight (default 0.0
@@ -495,6 +648,10 @@ class Benchmarker:
 
         df = pd.concat([df.transpose(), per_class_score], axis=1)
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE
+        # Region aggregate columns get their own group header in the plot
+        _region_agg_cols = [c for c in per_class_score.columns if str(c).startswith("Region ")]
+        if _region_agg_cols:
+            df.loc[_METRIC_TYPE, _region_agg_cols] = _REGION_SCORE
         return df
 
     def plot_results_table(self, min_max_scale: bool = False, show: bool = True, save_dir: str | None = None) -> Table:
@@ -534,8 +691,10 @@ class Benchmarker:
         plot_df["Method"] = plot_df.index
 
         # Split columns by metric type, using df as it doesn't have the new method col
-        score_cols = df.columns[df.loc[_METRIC_TYPE] == _AGGREGATE_SCORE]
-        other_cols = df.columns[df.loc[_METRIC_TYPE] != _AGGREGATE_SCORE]
+        # Both aggregate and region-conservation columns are shown as bar charts
+        _bar_types = {_AGGREGATE_SCORE, _REGION_SCORE}
+        score_cols = df.columns[df.loc[_METRIC_TYPE].isin(_bar_types)]
+        other_cols = df.columns[~df.loc[_METRIC_TYPE].isin(_bar_types)]
         column_definitions = [
             ColumnDefinition("Method", width=1.5, textprops={"ha": "left", "weight": "bold"}),
         ]

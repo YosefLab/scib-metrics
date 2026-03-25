@@ -446,8 +446,7 @@ class Benchmarker:
             n_cells = int(mask.sum())
             if n_cells < min_cells:
                 warnings.warn(
-                    f"Skipping region scoring for label '{label_val}': "
-                    f"only {n_cells} cells (need >= {min_cells}).",
+                    f"Skipping region scoring for label '{label_val}': only {n_cells} cells (need >= {min_cells}).",
                     UserWarning,
                     stacklevel=2,
                 )
@@ -468,9 +467,7 @@ class Benchmarker:
                 if neighbor_computer is not None:
                     neigh_result = neighbor_computer(ad.X, k)
                 else:
-                    neigh_result = pynndescent(
-                        ad.X, n_neighbors=k, random_state=0, n_jobs=self._n_jobs
-                    )
+                    neigh_result = pynndescent(ad.X, n_neighbors=k, random_state=0, n_jobs=self._n_jobs)
                 for n in self._neighbor_values:
                     ad.uns[f"{n}_neighbor_res"] = neigh_result.subset_neighbors(n=min(n, k))
 
@@ -479,9 +476,7 @@ class Benchmarker:
     def _benchmark_region(self) -> None:
         """Run bio/batch metrics per label-value subset (region as label), then average."""
         region_metric_dict = {
-            k: v
-            for k, v in self._metric_collection_dict.items()
-            if k in ("Bio conservation", "Batch correction")
+            k: v for k, v in self._metric_collection_dict.items() if k in ("Bio conservation", "Batch correction")
         }
         if not region_metric_dict or not self._region_emb_adatas:
             return
@@ -524,8 +519,7 @@ class Benchmarker:
                             scores[emb_key].setdefault(metric_name, []).append(float(metric_value))
 
         self._region_avg = {
-            ek: {mn: float(np.nanmean(vals)) for mn, vals in m.items() if vals}
-            for ek, m in scores.items()
+            ek: {mn: float(np.nanmean(vals)) for mn, vals in m.items() if vals} for ek, m in scores.items()
         }
 
     def benchmark(self) -> None:

@@ -41,3 +41,26 @@ def dummy_benchmarker_adata():
         adata.obsm[key] = X
         embedding_keys.append(key)
     return adata, embedding_keys, labels_key, batch_key
+
+
+def dummy_spatial_benchmarker_adata(n_spots: int = 200, n_clusters: int = 4, seed: int = 0):
+    """AnnData with spatial coordinates for testing the spatial benchmarker path."""
+    rng = np.random.default_rng(seed)
+    centers = rng.uniform(0, 100, size=(n_clusters, 2))
+    labels = rng.integers(0, n_clusters, size=n_spots)
+    spatial_coords = centers[labels] + rng.normal(scale=5.0, size=(n_spots, 2))
+    X = rng.normal(size=(n_spots, 10))
+    batch = rng.integers(0, 2, size=n_spots)
+
+    adata = anndata.AnnData(X)
+    adata.obs["labels"] = labels
+    adata.obs["batch"] = batch
+    adata.obsm["spatial"] = spatial_coords
+
+    embedding_keys = []
+    for i in range(3):
+        key = f"X_emb_{i}"
+        adata.obsm[key] = rng.normal(size=(n_spots, 10))
+        embedding_keys.append(key)
+
+    return adata, embedding_keys, "batch", "labels"

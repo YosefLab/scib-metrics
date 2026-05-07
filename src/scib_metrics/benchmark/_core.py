@@ -379,7 +379,12 @@ class Benchmarker:
         if self._pre_integrated_embedding_obsm_key is None:
             # This is how scib does it
             # https://github.com/theislab/scib/blob/896f689e5fe8c57502cb012af06bed1a9b2b61d2/scib/metrics/pcr.py#L197
-            sc.tl.pca(self._adata, svd_solver=self._solver, use_highly_variable=False)
+            try:
+                import rapids_singlecell as rsc
+                print("RAPIDS SingleCell is installed and can be imported")
+                rsc.tl.pca(self._adata, svd_solver=self._solver, use_highly_variable=False)
+            except ImportError:
+                sc.tl.pca(self._adata, svd_solver=self._solver, use_highly_variable=False)
             self._pre_integrated_embedding_obsm_key = "X_pca"
 
         for emb_key in self._embedding_obsm_keys:

@@ -381,6 +381,7 @@ class Benchmarker:
             # https://github.com/theislab/scib/blob/896f689e5fe8c57502cb012af06bed1a9b2b61d2/scib/metrics/pcr.py#L197
             try:
                 import rapids_singlecell as rsc
+
                 print("RAPIDS SingleCell is installed and can be imported")
                 rsc.tl.pca(self._adata, svd_solver=self._solver, use_highly_variable=False)
             except ImportError:

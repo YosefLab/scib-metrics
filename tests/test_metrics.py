@@ -77,8 +77,9 @@ def test_compute_simpson_index():
 def test_lisi_knn(n_neighbors):
     perplexity = n_neighbors // 3
     X, labels = dummy_x_labels()
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm="kd_tree").fit(X)
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1, algorithm="kd_tree").fit(X)
     dists, inds = nbrs.kneighbors(X)
+    dists, inds = dists[:, 1:], inds[:, 1:]
     neigh_results = NeighborsResults(indices=inds, distances=dists)
     lisi_res = scib_metrics.lisi_knn(neigh_results, labels, perplexity=perplexity)
     harmonypy_lisi_res = harmonypy_lisi(

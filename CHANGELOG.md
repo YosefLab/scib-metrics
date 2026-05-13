@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
+- Added spatial metrics scores for benchmarker as well as RAPIDS singlecell support for PCA calculation, {pr}`259`.
+
 ### Change
 
 ### Fixed

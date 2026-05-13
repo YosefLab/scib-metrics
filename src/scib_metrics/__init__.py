@@ -16,6 +16,13 @@ from .metrics import (
     silhouette_batch,
     silhouette_label,
     bras,
+    spatial_mrre,
+    spatial_knn_overlap,
+    spatial_distance_correlation,
+    spatial_morans_i,
+    spatial_niche_knn_overlap,
+    spatial_pas,
+    spatial_chaos,
 )
 from ._settings import settings
 
@@ -35,6 +42,13 @@ __all__ = [
     "kbet",
     "kbet_per_label",
     "graph_connectivity",
+    "spatial_mrre",
+    "spatial_knn_overlap",
+    "spatial_distance_correlation",
+    "spatial_morans_i",
+    "spatial_niche_knn_overlap",
+    "spatial_pas",
+    "spatial_chaos",
     "settings",
 ]
 

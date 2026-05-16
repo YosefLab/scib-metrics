@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## 0.6.0 (unreleased)
+## 0.6.0 (2026-05-17)
+
+### Added
+
+- Add sBEE (single-cell Batch Effect Evaluator) metric {cite:p}`myradov2026systematic`.
 
 ## 0.5.10 (2025-XX-XX)
 

@@ -83,6 +83,19 @@ def test_sbee_input_validation_labels():
         scib_metrics.sbee(knn, X_emb, batches, labels[:50])
 
 
+def test_sbee_cell_type_in_single_batch():
+    """Cover the fallback where a cell type appears in only one batch (inter = intra)."""
+    rng = np.random.default_rng(7)
+    # "T2" cells exist only in batch "A" — no inter-batch neighbours possible
+    X_emb = rng.normal(size=(60, 10))
+    batches = np.array(["A"] * 40 + ["B"] * 20)
+    labels = np.array(["T1"] * 20 + ["T2"] * 20 + ["T1"] * 20)
+    knn = _make_neighbors(X_emb, n_neighbors=10)
+    score = scib_metrics.sbee(knn, X_emb, batches, labels)
+    assert isinstance(score, float)
+    assert 0.0 <= score <= 1.0
+
+
 def test_sbee_input_validation_x_emb():
     rng = np.random.default_rng(42)
     X_emb = rng.normal(size=(100, 10))

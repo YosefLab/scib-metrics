@@ -46,6 +46,7 @@ metric_name_cleaner = {
     "bras": "BRAS",
     "graph_connectivity": "Graph connectivity",
     "pcr_comparison": "PCR comparison",
+    "sbee": "sBEE",
 }
 
 
@@ -79,6 +80,7 @@ class BatchCorrection:
     kbet_per_label: MetricType = True
     graph_connectivity: MetricType = True
     pcr_comparison: MetricType = True
+    sbee: MetricType = True
 
 
 class MetricAnnDataAPI(Enum):
@@ -94,6 +96,7 @@ class MetricAnnDataAPI(Enum):
     pcr_comparison = lambda ad, fn: fn(ad.obsm[_X_PRE], ad.X, ad.obs[_BATCH], categorical=True)
     ilisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_BATCH])
     kbet_per_label = lambda ad, fn: fn(ad.uns["50_neighbor_res"], ad.obs[_BATCH], ad.obs[_LABELS])
+    sbee = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.X, ad.obs[_BATCH], ad.obs[_LABELS])
 
 
 class Benchmarker:

@@ -43,6 +43,7 @@ scib_metrics.ilisi_knn(...)
     silhouette_label
     silhouette_batch
     bras
+    sbee
     ilisi_knn
     clisi_knn
     kbet

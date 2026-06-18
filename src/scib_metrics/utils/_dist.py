@@ -39,8 +39,8 @@ def cdist(x: np.ndarray, y: np.ndarray, metric: Literal["euclidean", "cosine"] =
         c = x.mean(axis=0)
         xc = x - c
         yc = y - c
-        sq_x = jnp.sum(xc ** 2, axis=1, keepdims=True)
-        sq_y = jnp.sum(yc ** 2, axis=1)
+        sq_x = jnp.sum(xc**2, axis=1, keepdims=True)
+        sq_y = jnp.sum(yc**2, axis=1)
         return jnp.sqrt(jnp.maximum(sq_x + sq_y - 2.0 * (xc @ yc.T), 0.0))
 
 
@@ -62,5 +62,5 @@ def pdist_squareform(X: np.ndarray) -> jnp.ndarray:
     """
     c = X.mean(axis=0)
     Xc = X - c
-    sq = jnp.sum(Xc ** 2, axis=1)
+    sq = jnp.sum(Xc**2, axis=1)
     return jnp.sqrt(jnp.maximum(sq[:, None] + sq[None, :] - 2.0 * (Xc @ Xc.T), 0.0))

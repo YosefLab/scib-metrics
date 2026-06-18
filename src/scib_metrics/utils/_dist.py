@@ -34,10 +34,14 @@ def cdist(x: np.ndarray, y: np.ndarray, metric: Literal["euclidean", "cosine"] =
         y_norm = y / jnp.linalg.norm(y, axis=1, keepdims=True)
         return jnp.clip(1.0 - x_norm @ y_norm.T, 0.0, 2.0)
     else:
-        # ||a-b||^2 = ||a||^2 + ||b||^2 - 2 a·b — compiles to GEMM, no loop_reduce_fusion
-        sq_x = jnp.sum(x**2, axis=1, keepdims=True)
-        sq_y = jnp.sum(y**2, axis=1)
-        return jnp.sqrt(jnp.maximum(sq_x + sq_y - 2.0 * (x @ y.T), 0.0))
+        # Center around x's mean before GEMM expansion: removes any large common offset
+        # so ||xi - yj||^2 = ||(xi-c) - (yj-c)||^2 with small values, no cancellation.
+        c = x.mean(axis=0)
+        xc = x - c
+        yc = y - c
+        sq_x = jnp.sum(xc ** 2, axis=1, keepdims=True)
+        sq_y = jnp.sum(yc ** 2, axis=1)
+        return jnp.sqrt(jnp.maximum(sq_x + sq_y - 2.0 * (xc @ yc.T), 0.0))
 
 
 @jax.jit
@@ -56,7 +60,7 @@ def pdist_squareform(X: np.ndarray) -> jnp.ndarray:
     dist
         Array of shape (n_cells, n_cells)
     """
-    # Use the same GEMM trick as cdist — avoids lax.scan loop_reduce_fusion on GPU
-    sq = jnp.sum(X**2, axis=1)
-    dist_mat = jnp.sqrt(jnp.maximum(sq[:, None] + sq[None, :] - 2.0 * (X @ X.T), 0.0))
-    return dist_mat
+    c = X.mean(axis=0)
+    Xc = X - c
+    sq = jnp.sum(Xc ** 2, axis=1)
+    return jnp.sqrt(jnp.maximum(sq[:, None] + sq[None, :] - 2.0 * (Xc @ Xc.T), 0.0))

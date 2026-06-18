@@ -6,22 +6,6 @@ import jax.numpy as jnp
 import numpy as np
 
 
-@jax.jit
-def _euclidean_distance(x: np.array, y: np.array) -> float:
-    dist = jnp.sqrt(jnp.sum((x - y) ** 2))
-    return dist
-
-
-@jax.jit
-def _cosine_distance(x: np.array, y: np.array) -> float:
-    xy = jnp.dot(x, y)
-    xx = jnp.dot(x, x)
-    yy = jnp.dot(y, y)
-    dist = 1.0 - xy / jnp.sqrt(xx * yy)
-    # Clip the result to avoid rounding error
-    return jnp.clip(dist, 0.0, 2.0)
-
-
 @partial(jax.jit, static_argnames=["metric"])
 def cdist(x: np.ndarray, y: np.ndarray, metric: Literal["euclidean", "cosine"] = "euclidean") -> jnp.ndarray:
     """Jax implementation of :func:`scipy.spatial.distance.cdist`.
@@ -45,9 +29,15 @@ def cdist(x: np.ndarray, y: np.ndarray, metric: Literal["euclidean", "cosine"] =
     if metric not in ["euclidean", "cosine"]:
         raise ValueError("Invalid metric choice, must be one of ['euclidean' or 'cosine'].")
     if metric == "cosine":
-        return jax.vmap(lambda x1: jax.vmap(lambda y1: _cosine_distance(x1, y1))(y))(x)
+        # Normalize rows then use matmul — compiles to GEMM, no loop_reduce_fusion
+        x_norm = x / jnp.linalg.norm(x, axis=1, keepdims=True)
+        y_norm = y / jnp.linalg.norm(y, axis=1, keepdims=True)
+        return jnp.clip(1.0 - x_norm @ y_norm.T, 0.0, 2.0)
     else:
-        return jax.vmap(lambda x1: jax.vmap(lambda y1: _euclidean_distance(x1, y1))(y))(x)
+        # ||a-b||^2 = ||a||^2 + ||b||^2 - 2 a·b — compiles to GEMM, no loop_reduce_fusion
+        sq_x = jnp.sum(x ** 2, axis=1, keepdims=True)
+        sq_y = jnp.sum(y ** 2, axis=1)
+        return jnp.sqrt(jnp.maximum(sq_x + sq_y - 2.0 * (x @ y.T), 0.0))
 
 
 @jax.jit
@@ -66,14 +56,7 @@ def pdist_squareform(X: np.ndarray) -> jnp.ndarray:
     dist
         Array of shape (n_cells, n_cells)
     """
-    n_cells = X.shape[0]
-    inds = jnp.triu_indices(n_cells)
-
-    def _body_fn(X, i_j):
-        i, j = i_j
-        return X, _euclidean_distance(X[i], X[j])
-
-    dist_mat = jnp.zeros((n_cells, n_cells))
-    dist_mat = dist_mat.at[inds].set(jax.lax.scan(_body_fn, X, (inds[0], inds[1]))[1])
-    dist_mat = jnp.maximum(dist_mat, dist_mat.T)
+    # Use the same GEMM trick as cdist — avoids lax.scan loop_reduce_fusion on GPU
+    sq = jnp.sum(X ** 2, axis=1)
+    dist_mat = jnp.sqrt(jnp.maximum(sq[:, None] + sq[None, :] - 2.0 * (X @ X.T), 0.0))
     return dist_mat

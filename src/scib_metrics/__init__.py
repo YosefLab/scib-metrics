@@ -21,6 +21,7 @@ from .metrics import (
     spatial_distance_correlation,
     spatial_morans_i,
     spatial_niche_knn_overlap,
+    spatial_neighbor_knn_overlap,
     spatial_pas,
     spatial_chaos,
 )
@@ -47,6 +48,7 @@ __all__ = [
     "spatial_distance_correlation",
     "spatial_morans_i",
     "spatial_niche_knn_overlap",
+    "spatial_neighbor_knn_overlap",
     "spatial_pas",
     "spatial_chaos",
     "settings",

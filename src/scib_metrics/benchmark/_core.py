@@ -33,6 +33,8 @@ _LABELS = "labels"
 _BATCH = "batch"
 _X_PRE = "X_pre"
 _SPATIAL = "spatial"
+_SPATIAL_SAMPLE = "spatial_sample"
+_SPATIAL_NEIGHBORS = "spatial_neighbors"
 _X_EXPR = "X_expr_pre"  # pre-integrated PCA stored for niche metrics
 _METRIC_TYPE = "Metric Type"
 _AGGREGATE_SCORE = "Aggregate score"
@@ -60,6 +62,7 @@ metric_name_cleaner = {
     "spatial_morans_i": "Moran's I",
     # Niche preservation
     "spatial_niche_knn_overlap": "Niche kNN",
+    "spatial_neighbor_knn_overlap": "Graph kNN",
     # Domain boundary
     "spatial_pas": "PAS",
     "spatial_chaos": "CHAOS",
@@ -156,9 +159,12 @@ class NichePreservation:
 
     * ``spatial_niche_knn_overlap`` — chance-normalised overlap of niche-
       feature k-NN vs. latent k-NN per spot.
+    * ``spatial_neighbor_knn_overlap`` — chance-normalised overlap of a
+      supplied spatial graph/neighbour-index matrix vs. latent k-NN per spot.
     """
 
     spatial_niche_knn_overlap: MetricType = True
+    spatial_neighbor_knn_overlap: MetricType = False
 
 
 @dataclass(frozen=True)
@@ -197,15 +203,22 @@ class MetricAnnDataAPI(Enum):
     ilisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_BATCH])
     kbet_per_label = lambda ad, fn: fn(ad.uns["50_neighbor_res"], ad.obs[_BATCH], ad.obs[_LABELS])
     # Coordinate preservation — latent embedding vs physical XY coordinates
-    spatial_mrre = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
-    spatial_knn_overlap = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
-    spatial_distance_correlation = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
-    spatial_morans_i = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
+    spatial_mrre = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE))
+    spatial_knn_overlap = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE))
+    spatial_distance_correlation = lambda ad, fn: fn(
+        ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE)
+    )
+    spatial_morans_i = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE))
     # Niche preservation — latent kNN vs niche-feature kNN (pre-integrated PCA)
-    spatial_niche_knn_overlap = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], ad.obsm.get(_X_EXPR))
+    spatial_niche_knn_overlap = lambda ad, fn: fn(
+        ad.X, ad.obsm[_SPATIAL], ad.obsm.get(_X_EXPR), sample_labels=ad.obs.get(_SPATIAL_SAMPLE)
+    )
+    spatial_neighbor_knn_overlap = lambda ad, fn: fn(
+        ad.X, ad.obsm[_SPATIAL_NEIGHBORS], sample_labels=ad.obs.get(_SPATIAL_SAMPLE)
+    )
     # Domain boundary — derived from k-means clustering of latent embedding
-    spatial_pas = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
-    spatial_chaos = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL])
+    spatial_pas = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE))
+    spatial_chaos = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE))
 
 
 class Benchmarker:
@@ -237,6 +250,15 @@ class Benchmarker:
         using the default :class:`SpatialConservation` configuration unless
         ``spatial_conservation_metrics`` is explicitly passed as ``None``
         to opt out.  Spatial metrics are never computed when this is ``None``.
+    spatial_sample_key
+        Optional key in ``adata.obs`` identifying independent spatial samples
+        or tissue sections. When provided, spatial, niche, and domain-boundary
+        metrics are computed within each sample and averaged, preventing kNN
+        graphs from connecting spots across unrelated coordinate frames.
+    spatial_neighbor_key
+        Optional key in ``adata.obsm`` containing an explicit spatial graph
+        neighbour index matrix, such as scVIVA's ``"index_neighbor"``. Required
+        when ``NichePreservation(spatial_neighbor_knn_overlap=True)`` is used.
     region_key
         Optional key in ``adata.obs`` containing spatial region labels (e.g.
         brain region, tissue zone).  When provided, bio-conservation and
@@ -284,6 +306,8 @@ class Benchmarker:
         spatial_conservation_weight: float = 0.0,
         niche_preservation: NichePreservation | None = None,
         domain_boundary: DomainBoundary | None = None,
+        spatial_sample_key: str | None = None,
+        spatial_neighbor_key: str | None = None,
         region_key: str | None = None,
     ):
         self._adata = adata
@@ -312,10 +336,22 @@ class Benchmarker:
         self._compute_neighbors = True
         self._solver = solver
         self._region_key = region_key
+        self._spatial_sample_key = spatial_sample_key
+        self._spatial_neighbor_key = spatial_neighbor_key
         if self._region_key is not None and self._region_key not in self._adata.obs.columns:
             raise ValueError(
                 f"region_key '{self._region_key}' not found in adata.obs. "
                 f"Available columns: {list(self._adata.obs.columns)}"
+            )
+        if self._spatial_sample_key is not None and self._spatial_sample_key not in self._adata.obs.columns:
+            raise ValueError(
+                f"spatial_sample_key '{self._spatial_sample_key}' not found in adata.obs. "
+                f"Available columns: {list(self._adata.obs.columns)}"
+            )
+        if self._spatial_neighbor_key is not None and self._spatial_neighbor_key not in self._adata.obsm:
+            raise ValueError(
+                f"spatial_neighbor_key '{self._spatial_neighbor_key}' not found in adata.obsm. "
+                f"Available keys: {list(self._adata.obsm.keys())}"
             )
         self._region_avg: dict[str, dict[str, float]] = {}
         self._region_emb_adatas: dict[str, dict[str, AnnData]] = {}
@@ -337,6 +373,15 @@ class Benchmarker:
             raise ValueError(
                 "spatial_key must be provided when niche_preservation is set. "
                 "Typically this is 'spatial' (adata.obsm['spatial'])."
+            )
+        if (
+            self._niche_preservation is not None
+            and self._niche_preservation.spatial_neighbor_knn_overlap
+            and self._spatial_neighbor_key is None
+        ):
+            raise ValueError(
+                "spatial_neighbor_key must be provided when "
+                "NichePreservation(spatial_neighbor_knn_overlap=True) is set."
             )
         if self._domain_boundary is not None and self._spatial_key is None:
             raise ValueError(
@@ -382,9 +427,15 @@ class Benchmarker:
             try:
                 import rapids_singlecell as rsc
 
-                print("RAPIDS SingleCell is installed and can be imported")
-                rsc.tl.pca(self._adata, svd_solver=self._solver, use_highly_variable=False)
+                rsc.tl.pca(self._adata, svd_solver=self._solver)
             except ImportError:
+                sc.tl.pca(self._adata, svd_solver=self._solver, use_highly_variable=False)
+            except Exception as exc:
+                warnings.warn(
+                    f"RAPIDS PCA failed ({type(exc).__name__}: {exc}); falling back to scanpy PCA.",
+                    UserWarning,
+                    stacklevel=2,
+                )
                 sc.tl.pca(self._adata, svd_solver=self._solver, use_highly_variable=False)
             self._pre_integrated_embedding_obsm_key = "X_pca"
 
@@ -395,6 +446,14 @@ class Benchmarker:
             self._emb_adatas[emb_key].obsm[_X_PRE] = self._adata.obsm[self._pre_integrated_embedding_obsm_key]
             if self._spatial_key is not None:
                 self._emb_adatas[emb_key].obsm[_SPATIAL] = np.asarray(self._adata.obsm[self._spatial_key])
+                if self._spatial_sample_key is not None:
+                    self._emb_adatas[emb_key].obs[_SPATIAL_SAMPLE] = np.asarray(
+                        self._adata.obs[self._spatial_sample_key].values
+                    )
+                if self._spatial_neighbor_key is not None:
+                    self._emb_adatas[emb_key].obsm[_SPATIAL_NEIGHBORS] = np.asarray(
+                        self._adata.obsm[self._spatial_neighbor_key]
+                    )
                 # Store pre-integrated embedding as niche feature proxy for
                 # spatial_niche_knn_overlap; set after PCA so the key exists.
                 self._emb_adatas[emb_key].obsm[_X_EXPR] = np.asarray(

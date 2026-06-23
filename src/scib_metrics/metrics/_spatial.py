@@ -8,10 +8,11 @@ latent embedding reproduces the physical XY geometry of spots.  Appropriate
 for spatial graph autoencoders (STAGATE-style) where the latent is explicitly
 trained to be a surrogate for tissue coordinates.
 
-**Niche preservation** (``spatial_niche_knn_overlap``) — asks whether cells
-that share a similar local microenvironment (similar average expression of
-spatial neighbours) are also close in latent space.  This is the primary
-objective of models like scVIVA and other niche-aware methods.
+**Niche preservation** (``spatial_niche_knn_overlap``,
+``spatial_neighbor_knn_overlap``) — asks whether cells that share a similar
+local microenvironment or explicit spatial graph neighbourhood are also close
+in latent space.  This is the primary objective of models like scVIVA and
+other niche-aware methods.
 
 **Domain boundary faithfulness** (``spatial_pas``, ``spatial_chaos``) — asks
 whether clusters derived from the latent space are spatially coherent.
@@ -31,6 +32,7 @@ MuST (2023) Multi-modal spatial transcriptomics benchmark.
 """
 
 import warnings
+from collections.abc import Callable
 
 import numpy as np
 from scipy.spatial.distance import pdist
@@ -39,12 +41,44 @@ from sklearn.cluster import KMeans
 from sklearn.neighbors import NearestNeighbors
 
 
+def _sample_weighted_score(
+    fn: Callable[..., float],
+    X_embedding: np.ndarray,
+    spatial_coords: np.ndarray,
+    sample_labels: np.ndarray | None,
+    **kwargs,
+) -> float | None:
+    """Average a spatial metric within independent spatial samples."""
+    if sample_labels is None:
+        return None
+
+    sample_labels = np.asarray(sample_labels)
+    if len(sample_labels) != len(X_embedding):
+        raise ValueError("sample_labels must have the same length as X_embedding and spatial_coords.")
+
+    scores = []
+    weights = []
+    for sample in np.unique(sample_labels):
+        mask = sample_labels == sample
+        n = int(mask.sum())
+        if n == 0:
+            continue
+        scores.append(fn(X_embedding[mask], spatial_coords[mask], sample_labels=None, **kwargs))
+        weights.append(n)
+
+    if not scores:
+        return np.nan
+    return float(np.average(scores, weights=weights))
+
+
 def spatial_mrre(
     X_embedding: np.ndarray,
     spatial_coords: np.ndarray,
     k: int = 15,
     max_cells: int = 2000,
     seed: int = 42,
+    *,
+    sample_labels: np.ndarray | None = None,
 ) -> float:
     """Mean Relative Rank Error (MRRE), normalised to [0, 1].
 
@@ -67,6 +101,9 @@ def spatial_mrre(
         Default ``2000``.
     seed
         Random seed for subsampling. Default ``42``.
+    sample_labels
+        Optional labels for independent spatial samples/sections. When set,
+        the score is computed within each sample and averaged by sample size.
 
     Returns
     -------
@@ -79,6 +116,11 @@ def spatial_mrre(
     """
     X_embedding = np.asarray(X_embedding, dtype=float)
     spatial_coords = np.asarray(spatial_coords, dtype=float)
+    grouped = _sample_weighted_score(
+        spatial_mrre, X_embedding, spatial_coords, sample_labels, k=k, max_cells=max_cells, seed=seed
+    )
+    if grouped is not None:
+        return grouped
     n = len(X_embedding)
 
     if n > max_cells:
@@ -118,6 +160,8 @@ def spatial_knn_overlap(
     k: int = 15,
     max_cells: int = 2000,
     seed: int = 42,
+    *,
+    sample_labels: np.ndarray | None = None,
 ) -> float:
     """k-NN overlap score between spatial and latent neighbourhoods.
 
@@ -138,6 +182,9 @@ def spatial_knn_overlap(
         Subsample to this many cells before computation. Default ``2000``.
     seed
         Random seed for subsampling. Default ``42``.
+    sample_labels
+        Optional labels for independent spatial samples/sections. When set,
+        the score is computed within each sample and averaged by sample size.
 
     Returns
     -------
@@ -150,6 +197,11 @@ def spatial_knn_overlap(
     """
     X_embedding = np.asarray(X_embedding, dtype=float)
     spatial_coords = np.asarray(spatial_coords, dtype=float)
+    grouped = _sample_weighted_score(
+        spatial_knn_overlap, X_embedding, spatial_coords, sample_labels, k=k, max_cells=max_cells, seed=seed
+    )
+    if grouped is not None:
+        return grouped
     n = len(X_embedding)
 
     if n > max_cells:
@@ -189,6 +241,8 @@ def spatial_distance_correlation(
     spatial_coords: np.ndarray,
     max_cells: int = 1000,
     seed: int = 42,
+    *,
+    sample_labels: np.ndarray | None = None,
 ) -> float:
     """Spearman correlation of pairwise distances, rescaled to [0, 1].
 
@@ -211,6 +265,9 @@ def spatial_distance_correlation(
         Default ``1000``.
     seed
         Random seed for subsampling. Default ``42``.
+    sample_labels
+        Optional labels for independent spatial samples/sections. When set,
+        the score is computed within each sample and averaged by sample size.
 
     Returns
     -------
@@ -219,6 +276,11 @@ def spatial_distance_correlation(
     """
     X_embedding = np.asarray(X_embedding, dtype=float)
     spatial_coords = np.asarray(spatial_coords, dtype=float)
+    grouped = _sample_weighted_score(
+        spatial_distance_correlation, X_embedding, spatial_coords, sample_labels, max_cells=max_cells, seed=seed
+    )
+    if grouped is not None:
+        return grouped
     n = len(X_embedding)
 
     if n > max_cells:
@@ -244,6 +306,8 @@ def spatial_morans_i(
     X_embedding: np.ndarray,
     spatial_coords: np.ndarray,
     n_neighbors: int = 6,
+    *,
+    sample_labels: np.ndarray | None = None,
 ) -> float:
     """Mean Moran's I of latent dimensions, rescaled to [0, 1].
 
@@ -261,6 +325,9 @@ def spatial_morans_i(
         Array of shape ``(n_spots, 2)`` with spatial coordinates (x, y).
     n_neighbors
         Number of spatial neighbours for the weight matrix. Default ``6``.
+    sample_labels
+        Optional labels for independent spatial samples/sections. When set,
+        the score is computed within each sample and averaged by sample size.
 
     Returns
     -------
@@ -270,6 +337,11 @@ def spatial_morans_i(
     """
     X_embedding = np.asarray(X_embedding, dtype=float)
     spatial_coords = np.asarray(spatial_coords, dtype=float)
+    grouped = _sample_weighted_score(
+        spatial_morans_i, X_embedding, spatial_coords, sample_labels, n_neighbors=n_neighbors
+    )
+    if grouped is not None:
+        return grouped
     n = len(X_embedding)
 
     k = min(n_neighbors, n - 1)
@@ -302,6 +374,8 @@ def spatial_niche_knn_overlap(
     k_spatial: int = 6,
     max_cells: int = 2000,
     seed: int = 42,
+    *,
+    sample_labels: np.ndarray | None = None,
 ) -> float:
     """k-NN overlap between latent space and spatial niche feature space.
 
@@ -337,6 +411,10 @@ def spatial_niche_knn_overlap(
         Subsample to this many cells before computation. Default ``2000``.
     seed
         Random seed for subsampling. Default ``42``.
+    sample_labels
+        Optional labels for independent spatial samples/sections. When set,
+        niche descriptors and kNN overlaps are computed within each sample and
+        averaged by sample size.
 
     Returns
     -------
@@ -350,6 +428,32 @@ def spatial_niche_knn_overlap(
     """
     X_embedding = np.asarray(X_embedding, dtype=float)
     spatial_coords = np.asarray(spatial_coords, dtype=float)
+    if sample_labels is not None:
+        sample_labels = np.asarray(sample_labels)
+        if len(sample_labels) != len(X_embedding):
+            raise ValueError("sample_labels must have the same length as X_embedding and spatial_coords.")
+        scores = []
+        weights = []
+        X_expression_arr = None if X_expression is None else np.asarray(X_expression, dtype=float)
+        for sample in np.unique(sample_labels):
+            mask = sample_labels == sample
+            n_sample = int(mask.sum())
+            if n_sample == 0:
+                continue
+            scores.append(
+                spatial_niche_knn_overlap(
+                    X_embedding[mask],
+                    spatial_coords[mask],
+                    None if X_expression_arr is None else X_expression_arr[mask],
+                    sample_labels=None,
+                    k=k,
+                    k_spatial=k_spatial,
+                    max_cells=max_cells,
+                    seed=seed,
+                )
+            )
+            weights.append(n_sample)
+        return float(np.average(scores, weights=weights)) if scores else np.nan
     n = len(X_embedding)
 
     if n > max_cells:
@@ -396,6 +500,122 @@ def spatial_niche_knn_overlap(
     return float(np.clip((raw - chance) / (1.0 - chance), 0.0, 1.0))
 
 
+def spatial_neighbor_knn_overlap(
+    X_embedding: np.ndarray,
+    neighbor_indices: np.ndarray,
+    k: int = 15,
+    max_cells: int = 2000,
+    seed: int = 42,
+    *,
+    sample_labels: np.ndarray | None = None,
+) -> float:
+    """k-NN overlap between latent space and a supplied spatial graph.
+
+    This measures whether neighbours from an external graph, such as scVIVA's
+    ``index_neighbor``/niche graph, are also close in the learned latent space.
+    It is useful when the model is trained against a graph that may not be
+    identical to raw Euclidean coordinate kNN.
+
+    Parameters
+    ----------
+    X_embedding
+        Array of shape ``(n_spots, n_dims)`` — latent representation.
+    neighbor_indices
+        Integer array of shape ``(n_spots, n_neighbors)`` containing reference
+        graph neighbours for each spot. Self indices and negative padding are
+        ignored.
+    k
+        Number of reference and latent neighbours to compare. Default ``15``.
+    max_cells
+        Subsample to this many cells before computation. Default ``2000``.
+    seed
+        Random seed for subsampling. Default ``42``.
+    sample_labels
+        Optional labels for independent spatial samples/sections. When set,
+        latent kNN and graph-neighbour overlap are computed within each sample
+        and averaged by sample size.
+
+    Returns
+    -------
+    float
+        Score in ``[0, 1]``. **Higher is better** (latent neighbours preserve
+        explicit graph connectivity more often than chance).
+    """
+    X_embedding = np.asarray(X_embedding, dtype=float)
+    neighbor_indices = np.asarray(neighbor_indices)
+
+    if len(neighbor_indices) != len(X_embedding):
+        raise ValueError("neighbor_indices must have the same number of rows as X_embedding.")
+
+    if sample_labels is not None:
+        sample_labels = np.asarray(sample_labels)
+        if len(sample_labels) != len(X_embedding):
+            raise ValueError("sample_labels must have the same length as X_embedding.")
+        scores = []
+        weights = []
+        global_to_local = np.full(len(X_embedding), -1, dtype=int)
+        for sample in np.unique(sample_labels):
+            mask = sample_labels == sample
+            global_idx = np.flatnonzero(mask)
+            n_sample = len(global_idx)
+            if n_sample == 0:
+                continue
+            global_to_local[global_idx] = np.arange(n_sample)
+            sample_neighbors = neighbor_indices[mask]
+            local_neighbors = np.full(sample_neighbors.shape, -1, dtype=int)
+            valid = (sample_neighbors >= 0) & (sample_neighbors < len(X_embedding))
+            local_neighbors[valid] = global_to_local[sample_neighbors[valid]]
+            scores.append(
+                spatial_neighbor_knn_overlap(
+                    X_embedding[mask],
+                    local_neighbors,
+                    k=k,
+                    max_cells=max_cells,
+                    seed=seed,
+                    sample_labels=None,
+                )
+            )
+            weights.append(n_sample)
+            global_to_local[global_idx] = -1
+        return float(np.average(scores, weights=weights)) if scores else np.nan
+
+    n = len(X_embedding)
+    if n > max_cells:
+        rng = np.random.default_rng(seed)
+        idx = rng.choice(n, max_cells, replace=False)
+        old_to_new = np.full(n, -1, dtype=int)
+        old_to_new[idx] = np.arange(max_cells)
+        X_embedding = X_embedding[idx]
+        neighbor_indices = old_to_new[neighbor_indices[idx]]
+        n = max_cells
+
+    k = min(k, n - 1)
+    if k == 0:
+        return 1.0
+    kp1 = k + 1
+
+    nn_lat = NearestNeighbors(n_neighbors=kp1, algorithm="auto").fit(X_embedding)
+    _, lat_inds = nn_lat.kneighbors(X_embedding)
+    lat_inds = lat_inds[:, 1:]
+
+    overlaps = []
+    for i in range(n):
+        row = np.asarray(neighbor_indices[i], dtype=int)
+        row = row[(row >= 0) & (row < n) & (row != i)]
+        if row.size == 0:
+            continue
+        ref = row[:k]
+        overlaps.append(np.sum(np.isin(ref, lat_inds[i])) / len(ref))
+
+    if not overlaps:
+        return np.nan
+    raw = float(np.mean(overlaps))
+    chance = k / (n - 1)
+    if chance >= 1.0:
+        return raw
+    return float(np.clip((raw - chance) / (1.0 - chance), 0.0, 1.0))
+
+
 # ---------------------------------------------------------------------------
 # Domain boundary faithfulness
 # ---------------------------------------------------------------------------
@@ -414,6 +634,8 @@ def spatial_pas(
     k_spatial: int = 6,
     max_cells: int = 5000,
     seed: int = 42,
+    *,
+    sample_labels: np.ndarray | None = None,
 ) -> float:
     """Proportion of Abnormal Spots (PAS), inverted to [0, 1] higher=better.
 
@@ -442,6 +664,10 @@ def spatial_pas(
         Subsample to this many cells before computation. Default ``5000``.
     seed
         Random seed. Default ``42``.
+    sample_labels
+        Optional labels for independent spatial samples/sections. When set,
+        latent clusters and spatial-neighbour consistency are computed within
+        each sample and averaged by sample size.
 
     Returns
     -------
@@ -456,6 +682,18 @@ def spatial_pas(
     """
     X_embedding = np.asarray(X_embedding, dtype=float)
     spatial_coords = np.asarray(spatial_coords, dtype=float)
+    grouped = _sample_weighted_score(
+        spatial_pas,
+        X_embedding,
+        spatial_coords,
+        sample_labels,
+        n_clusters=n_clusters,
+        k_spatial=k_spatial,
+        max_cells=max_cells,
+        seed=seed,
+    )
+    if grouped is not None:
+        return grouped
     n = len(X_embedding)
 
     if n > max_cells:
@@ -487,6 +725,8 @@ def spatial_chaos(
     n_clusters: int = 10,
     max_cells: int = 2000,
     seed: int = 42,
+    *,
+    sample_labels: np.ndarray | None = None,
 ) -> float:
     """CHAOS score (spatial cluster compactness), inverted to [0, 1] higher=better.
 
@@ -513,6 +753,10 @@ def spatial_chaos(
         pairwise distances). Default ``2000``.
     seed
         Random seed. Default ``42``.
+    sample_labels
+        Optional labels for independent spatial samples/sections. When set,
+        latent clusters and spatial compactness are computed within each
+        sample and averaged by sample size.
 
     Returns
     -------
@@ -529,6 +773,17 @@ def spatial_chaos(
     """
     X_embedding = np.asarray(X_embedding, dtype=float)
     spatial_coords = np.asarray(spatial_coords, dtype=float)
+    grouped = _sample_weighted_score(
+        spatial_chaos,
+        X_embedding,
+        spatial_coords,
+        sample_labels,
+        n_clusters=n_clusters,
+        max_cells=max_cells,
+        seed=seed,
+    )
+    if grouped is not None:
+        return grouped
     n = len(X_embedding)
 
     if n > max_cells:

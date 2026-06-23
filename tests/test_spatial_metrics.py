@@ -4,6 +4,7 @@ import anndata
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.neighbors import NearestNeighbors
 
 import scib_metrics
 from scib_metrics.benchmark import (
@@ -635,6 +636,22 @@ def test_spatial_niche_knn_overlap_niche_aware_higher():
     assert good > rand, f"good={good:.3f} should exceed rand={rand:.3f}"
 
 
+def test_spatial_neighbor_knn_overlap_graph_aware_higher():
+    """Embedding that preserves a supplied graph should outscore random noise."""
+    coords, labels = _compact_data()
+    rng = np.random.default_rng(17)
+    graph_aware = coords + rng.normal(scale=0.01, size=coords.shape)
+    rand_emb = rng.normal(size=(len(labels), 10))
+    _, neighbor_indices = NearestNeighbors(n_neighbors=16).fit(coords).kneighbors(coords)
+    neighbor_indices = neighbor_indices[:, 1:]
+
+    good = scib_metrics.spatial_neighbor_knn_overlap(graph_aware, neighbor_indices)
+    rand = scib_metrics.spatial_neighbor_knn_overlap(rand_emb, neighbor_indices)
+
+    assert good > 0.70
+    assert good > rand + 0.50
+
+
 # ── New dataclasses / Benchmarker integration ─────────────────────────────────
 
 
@@ -657,6 +674,67 @@ def test_niche_preservation_benchmarker():
     assert "spatial_niche_knn_overlap" in results.columns
     vals = results.loc[results.index.isin(emb_keys), "spatial_niche_knn_overlap"].astype(float).values
     assert np.all(vals >= 0.0) and np.all(vals <= 1.0)
+
+
+def test_neighbor_preservation_benchmarker():
+    """NichePreservation can score supplied spatial neighbor indices."""
+    coords, labels = _compact_data()
+    rng = np.random.default_rng(18)
+    adata = anndata.AnnData(X=rng.normal(size=(len(labels), 8)))
+    adata.obs["batch"] = "b1"
+    adata.obs["labels"] = labels
+    adata.obsm["spatial"] = coords
+    adata.obsm["X_graph_aware"] = coords + rng.normal(scale=0.01, size=coords.shape)
+    adata.obsm["X_rand"] = rng.normal(size=(len(labels), 10))
+    _, neighbor_indices = NearestNeighbors(n_neighbors=16).fit(coords).kneighbors(coords)
+    neighbor_indices = neighbor_indices[:, 1:]
+    adata.obsm["index_neighbor"] = neighbor_indices
+
+    bm = Benchmarker(
+        adata,
+        batch_key="batch",
+        label_key="labels",
+        embedding_obsm_keys=["X_graph_aware", "X_rand"],
+        bio_conservation_metrics=None,
+        batch_correction_metrics=None,
+        spatial_conservation_metrics=None,
+        niche_preservation=NichePreservation(
+            spatial_niche_knn_overlap=False,
+            spatial_neighbor_knn_overlap=True,
+        ),
+        spatial_key="spatial",
+        spatial_neighbor_key="index_neighbor",
+        pre_integrated_embedding_obsm_key="X_graph_aware",
+        progress_bar=False,
+    )
+    bm.benchmark()
+    results = bm.get_results(clean_names=False)
+
+    assert "spatial_neighbor_knn_overlap" in results.columns
+    assert (
+        float(results.loc["X_graph_aware", "spatial_neighbor_knn_overlap"])
+        > float(results.loc["X_rand", "spatial_neighbor_knn_overlap"]) + 0.50
+    )
+
+
+def test_neighbor_preservation_requires_neighbor_key():
+    """Explicit graph-neighbor scoring should fail clearly without a graph key."""
+    adata, emb_keys, batch_key, labels_key = dummy_spatial_benchmarker_adata()
+    with pytest.raises(ValueError, match="spatial_neighbor_key must be provided"):
+        Benchmarker(
+            adata,
+            batch_key,
+            labels_key,
+            emb_keys,
+            bio_conservation_metrics=None,
+            batch_correction_metrics=None,
+            spatial_conservation_metrics=None,
+            niche_preservation=NichePreservation(
+                spatial_niche_knn_overlap=False,
+                spatial_neighbor_knn_overlap=True,
+            ),
+            spatial_key="spatial",
+        )
 
 
 def test_domain_boundary_benchmarker():
@@ -936,3 +1014,68 @@ def test_region_key_only_bio_metrics_enabled():
     results = bm.get_results()
     assert "Region Bio conservation" in results.columns
     assert "Region Batch correction" not in results.columns
+
+
+# ── spatial_sample_key: do not mix coordinates across independent sections ──
+
+
+def _overlapping_section_spatial_adata(seed: int = 0):
+    """Two sections share the same coordinate frame but have different cells."""
+    rng = np.random.default_rng(seed)
+    coords = np.array([[i, 0.0] for i in range(60)], dtype=float)
+    spatial = np.vstack([coords, coords])
+    section = np.array(["s1"] * len(coords) + ["s2"] * len(coords))
+
+    adata = anndata.AnnData(X=rng.normal(size=(len(spatial), 8)))
+    adata.obs["batch"] = section
+    adata.obs["labels"] = np.tile(["A", "B"], len(spatial) // 2)
+    adata.obsm["spatial"] = spatial
+    adata.obsm["X_section_aware"] = np.vstack(
+        [
+            coords + rng.normal(scale=0.01, size=coords.shape),
+            coords + np.array([0.0, 1000.0]) + rng.normal(scale=0.01, size=coords.shape),
+        ]
+    )
+    return adata
+
+
+def test_spatial_metrics_respect_sample_labels_for_overlapping_sections():
+    """Sample labels prevent cross-section coordinate neighbours from lowering scores."""
+    adata = _overlapping_section_spatial_adata()
+
+    ungrouped = scib_metrics.spatial_knn_overlap(adata.obsm["X_section_aware"], adata.obsm["spatial"])
+    grouped = scib_metrics.spatial_knn_overlap(
+        adata.obsm["X_section_aware"],
+        adata.obsm["spatial"],
+        sample_labels=adata.obs["batch"].to_numpy(),
+    )
+
+    assert grouped > 0.95
+    assert grouped > ungrouped + 0.50
+
+
+def test_benchmarker_spatial_sample_key_passes_section_labels():
+    """Benchmarker should pass spatial_sample_key through to spatial metrics."""
+    adata = _overlapping_section_spatial_adata()
+    bm = Benchmarker(
+        adata,
+        batch_key="batch",
+        label_key="labels",
+        embedding_obsm_keys=["X_section_aware"],
+        bio_conservation_metrics=None,
+        batch_correction_metrics=None,
+        spatial_conservation_metrics=CoordinatePreservation(
+            spatial_mrre=False,
+            spatial_distance_correlation=False,
+            spatial_morans_i=False,
+        ),
+        spatial_key="spatial",
+        spatial_sample_key="batch",
+        pre_integrated_embedding_obsm_key="X_section_aware",
+        progress_bar=False,
+    )
+    bm.benchmark()
+    results = bm.get_results(clean_names=False)
+
+    score = float(results.loc["X_section_aware", "spatial_knn_overlap"])
+    assert score > 0.95

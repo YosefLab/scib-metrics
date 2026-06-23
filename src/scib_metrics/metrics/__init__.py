@@ -12,6 +12,7 @@ from ._spatial import (
     spatial_morans_i,
     spatial_mrre,
     spatial_niche_knn_overlap,
+    spatial_neighbor_knn_overlap,
     spatial_pas,
 )
 
@@ -34,6 +35,7 @@ __all__ = [
     "spatial_distance_correlation",
     "spatial_morans_i",
     "spatial_niche_knn_overlap",
+    "spatial_neighbor_knn_overlap",
     "spatial_pas",
     "spatial_chaos",
 ]

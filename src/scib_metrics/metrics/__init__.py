@@ -11,8 +11,8 @@ from ._spatial import (
     spatial_knn_overlap,
     spatial_morans_i,
     spatial_mrre,
-    spatial_niche_knn_overlap,
     spatial_neighbor_knn_overlap,
+    spatial_niche_knn_overlap,
     spatial_pas,
 )
 

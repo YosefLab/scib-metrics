@@ -205,9 +205,7 @@ class MetricAnnDataAPI(Enum):
     # Coordinate preservation — latent embedding vs physical XY coordinates
     spatial_mrre = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE))
     spatial_knn_overlap = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE))
-    spatial_distance_correlation = lambda ad, fn: fn(
-        ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE)
-    )
+    spatial_distance_correlation = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE))
     spatial_morans_i = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE))
     # Niche preservation — latent kNN vs niche-feature kNN (pre-integrated PCA)
     spatial_niche_knn_overlap = lambda ad, fn: fn(

@@ -1,13 +1,8 @@
+import logging
 import os
+from importlib.metadata import version
 
 import jax
-
-jax.config.update("jax_enable_x64", True)
-jax.config.update("jax_enable_compilation_cache", True)
-jax.config.update("jax_compilation_cache_dir", os.path.expanduser("~/.cache/scib_metrics_jax"))
-
-import logging
-from importlib.metadata import version
 
 from . import nearest_neighbors, utils
 from .metrics import (
@@ -26,6 +21,10 @@ from .metrics import (
     bras,
 )
 from ._settings import settings
+
+jax.config.update("jax_enable_x64", True)
+jax.config.update("jax_enable_compilation_cache", True)
+jax.config.update("jax_compilation_cache_dir", os.path.expanduser("~/.cache/scib_metrics_jax"))
 
 __all__ = [
     "utils",

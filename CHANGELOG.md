@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixed
 
+- Fix slow JAX GPU compilation and float32 numerical precision in `cdist` and `pdist_squareform`: replace nested `vmap`/`lax.scan` patterns with centered GEMM (`||a-b||² = ||(a-c)-(b-c)||²`), eliminating `loop_reduce_fusion` compile times and catastrophic cancellation for large-offset inputs, {pr}`273`.
 - Fix LISI KNN neighbor count to match harmonypy C++ backend (≥0.0.10 and v2): strip self from pre-computed KNN so `perplexity×3` true neighbors are used, consistent with harmonypy's internal KDTree which excludes self, {pr}`266`.
 
 ## 0.5.9 (2025-02-26)

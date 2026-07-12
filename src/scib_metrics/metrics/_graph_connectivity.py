@@ -29,7 +29,7 @@ def graph_connectivity(X: NeighborsResults, labels: np.ndarray) -> float:
         graph_sub = graph[mask]
         graph_sub = graph_sub[:, mask]
         _, comps = connected_components(graph_sub, connection="strong")
-        tab = pd.value_counts(comps)
+        tab = pd.Series(comps).value_counts()
         clust_res.append(tab.max() / sum(tab))
 
     return np.mean(clust_res)

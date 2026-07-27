@@ -78,6 +78,8 @@ jobs:
         uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
         with:
           python-version: ${{ matrix.env.python }}
+      - name: Install BLAS (required to build harmonypy from source on Python versions without prebuilt wheels)
+        run: sudo apt-get update && sudo apt-get install -y libopenblas-dev
       - name: create hatch environment
         run: uvx hatch env create ${{ matrix.env.name }}
       - name: list all installed package versions

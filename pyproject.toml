@@ -24,6 +24,7 @@ dependencies = [
   "jax",
   "jaxlib",
   "matplotlib",
+  "numba>=0.59",
   "numpy",
   "pandas",
   "plottable",
@@ -59,7 +60,6 @@ test = [
   "coverage>=7.10",
   "harmonypy",
   "joblib",
-  "numba>=0.57.1",
   "pytest",
   "pytest-cov",     # For VS Code's coverage functionality
   "scib>=1.1.4",

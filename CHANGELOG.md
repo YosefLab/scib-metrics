@@ -10,15 +10,30 @@ and this project adheres to [Semantic Versioning][].
 
 ## 0.6.0 (unreleased)
 
-## 0.5.10 (2025-XX-XX)
+### Added
+
+### Changed
+
+- Update project scaffolding to the [scverse cookiecutter template][] v0.8.0: packaging moved to PEP 735
+  dependency-groups with hatch test/docs environments, CI rewritten around a hatch-driven test matrix,
+  pre-commit switched from prettier/mdformat to biome/pyproject-fmt/zizmor.
+- Drop support for Python 3.11; support Python 3.12, 3.13, and 3.14.
+
+### Fixed
+
+- Fix LISI KNN neighbor count to match harmonypy C++ backend (≥0.0.10 and v2): strip self from pre-computed KNN so `perplexity×3` true neighbors are used, consistent with harmonypy's internal KDTree which excludes self, {pr}`266`.
+
+[scverse cookiecutter template]: https://github.com/scverse/cookiecutter-scverse
+
+## 0.5.10 (2025-06-13)
 
 ### Added
 
 ### Change
 
-### Fixed
+- Change github workflows & update for pandas3 anndata 0.13, {pr}`276`.
 
-- Fix LISI KNN neighbor count to match harmonypy C++ backend (≥0.0.10 and v2): strip self from pre-computed KNN so `perplexity×3` true neighbors are used, consistent with harmonypy's internal KDTree which excludes self, {pr}`266`.
+### Fixed
 
 ## 0.5.9 (2025-02-26)
 

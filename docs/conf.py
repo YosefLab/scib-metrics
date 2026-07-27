@@ -182,12 +182,13 @@ def linkcode_resolve(domain, info):
 #
 html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
-html_css_files = ["css/custom.css"]
+html_css_files = ["css/custom.css", "css/override.css"]
 html_title = "scib-metrics"
 
 html_theme_options = {
     "repository_url": github_repo,
     "use_repository_button": True,
+    "navbar_persistent": [],
 }
 
 pygments_style = "default"

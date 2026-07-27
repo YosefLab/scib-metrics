@@ -54,11 +54,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade "pip>=25.1"
-          # Pin jax/jaxlib to the versions baked into the base image: it ships a matching
-          # jax_cuda12_plugin that isn't installed via pip, so letting the resolver upgrade
-          # jax/jaxlib here breaks CUDA initialization.
-          JAX_VERSION=$(python -c "import jax; print(jax.__version__)")
-          pip install -e . --group dev --group test "jax==${JAX_VERSION}" "jaxlib==${JAX_VERSION}"
+          pip install -e . --group dev --group test
 
       - name: Test
         env:

@@ -9,53 +9,45 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash -e {0} # -e to fail on error
-
     strategy:
       fail-fast: false
       matrix:
         os: [macos-latest]
-        python: ["3.11", "3.12", "3.13"]
+        python: ["3.12", "3.13", "3.14"]
 
     name: Integration
+    runs-on: ${{ matrix.os }}
 
     env:
-      OS: ${{ matrix.os }}
-      PYTHON: ${{ matrix.python }}
+      MPLBACKEND: agg
+      PLATFORM: ${{ matrix.os }}
+      DISPLAY: :42
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          filter: blob:none
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
         with:
           python-version: ${{ matrix.python }}
-          cache: "pip"
-          cache-dependency-path: "**/pyproject.toml"
-
-      - name: Install test dependencies
+      - name: create hatch environment
+        run: uvx hatch env create hatch-test.py${{ matrix.python }}-stable
+      - name: run tests using hatch
+        run: uvx hatch run hatch-test.py${{ matrix.python }}-stable:run-cov -v --color=yes -n auto
+      - name: generate coverage report
         run: |
-          python -m pip install --upgrade pip wheel
-
-      - name: Install dependencies
-        run: |
-          pip install ".[dev,test]"
-
-      - name: Test
-        env:
-          MPLBACKEND: agg
-          PLATFORM: ${{ matrix.os }}
-          DISPLAY: :42
-        run: |
-          coverage run -m pytest -v --color=yes
-      - name: Report coverage
-        run: |
-          coverage report
+          test -f .coverage || uvx hatch run hatch-test.py${{ matrix.python }}-stable:cov-combine
+          uvx hatch run hatch-test.py${{ matrix.python }}-stable:cov-report   # report visibly
+          uvx hatch run hatch-test.py${{ matrix.python }}-stable:coverage xml # create report for upload
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

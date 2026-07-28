@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/scverse/cookiecutter-scverse",
-  "commit": "87a407a65408d75a949c0b54b19fd287475a56f8",
-  "checkout": "v0.4.0",
+  "commit": "6518dfa1abde7379ea7255daf0ce09c23f2b4c94",
+  "checkout": "v0.8.0",
   "context": {
     "cookiecutter": {
       "project_name": "scib-metrics",
@@ -9,27 +9,39 @@
       "project_description": "Accelerated and Python-only scIB metrics",
       "author_full_name": "Adam Gayoso",
       "author_email": "adamgayoso@berkeley.edu",
-      "github_user": "adamgayoso",
-      "project_repo": "https://github.com/yoseflab/scib-metrics",
+      "github_user": "YosefLab",
+      "github_repo": "scib-metrics",
       "license": "BSD 3-Clause License",
+      "ide_integration": true,
+      "issue_categorization": "labels",
       "_copy_without_render": [
         ".github/workflows/build.yaml",
         ".github/workflows/test.yaml",
         "docs/_templates/autosummary/**.rst"
+      ],
+      "_exclude_on_template_update": [
+        "CHANGELOG.md",
+        "LICENSE",
+        "README.md",
+        "docs/api.md",
+        "docs/index.md",
+        "docs/notebooks/example.ipynb",
+        "docs/references.bib",
+        "docs/references.md",
+        "src/**",
+        "tests/**"
       ],
       "_render_devdocs": false,
       "_jinja2_env_vars": {
         "lstrip_blocks": true,
         "trim_blocks": true
       },
-      "_template": "https://github.com/scverse/cookiecutter-scverse"
+      "_template": "https://github.com/scverse/cookiecutter-scverse",
+      "_commit": "6518dfa1abde7379ea7255daf0ce09c23f2b4c94"
     }
   },
   "directory": null,
   "skip": [
-    ".github/workflows/**.yaml",
-    ".pre-commit-config.yaml",
-    "pyproject.toml",
     "tests",
     "src/**/__init__.py",
     "src/**/basic.py",
@@ -38,13 +50,7 @@
     "docs/references.bib",
     "docs/references.md",
     "docs/notebooks/example.ipynb",
-    "tests",
-    "src/**/__init__.py",
-    "src/**/basic.py",
-    "docs/api.md",
-    "docs/changelog.md",
-    "docs/references.bib",
-    "docs/references.md",
-    "docs/notebooks/example.ipynb"
+    "docs/conf.py",
+    "docs/extensions/typed_returns.py"
   ]
 }

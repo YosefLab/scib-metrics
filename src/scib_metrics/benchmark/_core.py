@@ -80,7 +80,7 @@ class BatchCorrection:
     kbet_per_label: MetricType = True
     graph_connectivity: MetricType = True
     pcr_comparison: MetricType = True
-    sbee: MetricType = True
+    sbee: MetricType = False
 
 
 class MetricAnnDataAPI(Enum):

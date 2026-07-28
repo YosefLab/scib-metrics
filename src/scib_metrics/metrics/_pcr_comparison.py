@@ -1,7 +1,7 @@
 import warnings
 
-from ._types import NdArray
-from .utils import principal_component_regression
+from scib_metrics._types import NdArray
+from scib_metrics.utils import principal_component_regression
 
 
 def pcr_comparison(

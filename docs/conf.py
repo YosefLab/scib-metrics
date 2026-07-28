@@ -1,5 +1,5 @@
 # Configuration file for the Sphinx documentation builder.
-#
+
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
@@ -28,6 +28,7 @@ package_name = "scib_metrics"
 author = info["Author"]
 copyright = f"{datetime.now():%Y}, {author}."
 version = info["Version"]
+repository_url = f"https://github.com/YosefLab/{project_name}"
 
 # The full version, including alpha/beta/rc tags
 release = info["Version"]
@@ -57,10 +58,12 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
+    "sphinx.ext.extlinks",
     "sphinxcontrib.bibtex",
     "sphinx_autodoc_typehints",
     "sphinx.ext.mathjax",
     "IPython.sphinxext.ipython_console_highlighting",
+    "sphinxext.opengraph",
     *[p.stem for p in (HERE / "extensions").glob("*.py")],
 ]
 
@@ -112,6 +115,13 @@ intersphinx_mapping = {
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
+
+# extlinks config
+extlinks = {
+    "issue": (f"{repository_url}/issues/%s", "#%s"),
+    "pr": (f"{repository_url}/pull/%s", "#%s"),
+    "ghuser": ("https://github.com/%s", "@%s"),
+}
 
 # -- Linkcode settings -------------------------------------------------
 
@@ -172,11 +182,13 @@ def linkcode_resolve(domain, info):
 #
 html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
+html_css_files = ["css/custom.css", "css/override.css"]
 html_title = "scib-metrics"
 
 html_theme_options = {
     "repository_url": github_repo,
     "use_repository_button": True,
+    "navbar_persistent": [],
 }
 
 pygments_style = "default"

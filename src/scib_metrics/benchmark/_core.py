@@ -1,11 +1,13 @@
+import gc
 import os
 import warnings
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -18,10 +20,10 @@ from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
 
 import scib_metrics
-from scib_metrics.nearest_neighbors import NeighborsOutput, pynndescent
+from scib_metrics.nearest_neighbors import NeighborsResults, pynndescent
 
-Kwargs = Dict[str, Any]
-MetricType = Union[bool, Kwargs]
+Kwargs = dict[str, Any]
+MetricType = bool | Kwargs
 
 _LABELS = "labels"
 _BATCH = "batch"
@@ -41,6 +43,7 @@ metric_name_cleaner = {
     "clisi_knn": "cLISI",
     "ilisi_knn": "iLISI",
     "kbet_per_label": "KBET",
+    "bras": "BRAS",
     "graph_connectivity": "Graph connectivity",
     "pcr_comparison": "PCR comparison",
 }
@@ -71,7 +74,7 @@ class BatchCorrection:
     parameters, such as `X` or `labels`.
     """
 
-    silhouette_batch: MetricType = True
+    bras: MetricType = True
     ilisi_knn: MetricType = True
     kbet_per_label: MetricType = True
     graph_connectivity: MetricType = True
@@ -82,15 +85,15 @@ class MetricAnnDataAPI(Enum):
     """Specification of the AnnData API for a metric."""
 
     isolated_labels = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
-    nmi_ari_cluster_labels_leiden = lambda ad, fn: fn(ad.obsp["15_connectivities"], ad.obs[_LABELS])
+    nmi_ari_cluster_labels_leiden = lambda ad, fn: fn(ad.uns["15_neighbor_res"], ad.obs[_LABELS])
     nmi_ari_cluster_labels_kmeans = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
     silhouette_label = lambda ad, fn: fn(ad.X, ad.obs[_LABELS])
-    clisi_knn = lambda ad, fn: fn(ad.obsp["90_distances"], ad.obs[_LABELS])
-    graph_connectivity = lambda ad, fn: fn(ad.obsp["15_distances"], ad.obs[_LABELS])
-    silhouette_batch = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
+    clisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_LABELS])
+    graph_connectivity = lambda ad, fn: fn(ad.uns["15_neighbor_res"], ad.obs[_LABELS])
+    bras = lambda ad, fn: fn(ad.X, ad.obs[_LABELS], ad.obs[_BATCH])
     pcr_comparison = lambda ad, fn: fn(ad.obsm[_X_PRE], ad.X, ad.obs[_BATCH], categorical=True)
-    ilisi_knn = lambda ad, fn: fn(ad.obsp["90_distances"], ad.obs[_BATCH])
-    kbet_per_label = lambda ad, fn: fn(ad.obsp["50_connectivities"], ad.obs[_BATCH], ad.obs[_LABELS])
+    ilisi_knn = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.obs[_BATCH])
+    kbet_per_label = lambda ad, fn: fn(ad.uns["50_neighbor_res"], ad.obs[_BATCH], ad.obs[_LABELS])
 
 
 class Benchmarker:
@@ -115,6 +118,11 @@ class Benchmarker:
         in the prepare step. See the notes below for more information.
     n_jobs
         Number of jobs to use for parallelization of neighbor search.
+    progress_bar
+        Whether to show a progress bar for :meth:`~scib_metrics.benchmark.Benchmarker.prepare` and
+        :meth:`~scib_metrics.benchmark.Benchmarker.benchmark`.
+    solver
+        SVD solver to use during PCA. can help stability issues. Choose from: "arpack", "randomized" or "auto"
 
     Notes
     -----
@@ -131,17 +139,19 @@ class Benchmarker:
         adata: AnnData,
         batch_key: str,
         label_key: str,
-        embedding_obsm_keys: List[str],
-        bio_conservation_metrics: Optional[BioConservation] = None,
-        batch_correction_metrics: Optional[BatchCorrection] = None,
-        pre_integrated_embedding_obsm_key: Optional[str] = None,
+        embedding_obsm_keys: list[str],
+        bio_conservation_metrics: BioConservation | None = BioConservation(),
+        batch_correction_metrics: BatchCorrection | None = BatchCorrection(),
+        pre_integrated_embedding_obsm_key: str | None = None,
         n_jobs: int = 1,
+        progress_bar: bool = True,
+        solver: str = "arpack",
     ):
         self._adata = adata
         self._embedding_obsm_keys = embedding_obsm_keys
         self._pre_integrated_embedding_obsm_key = pre_integrated_embedding_obsm_key
-        self._bio_conservation_metrics = bio_conservation_metrics if bio_conservation_metrics else BioConservation()
-        self._batch_correction_metrics = batch_correction_metrics if batch_correction_metrics else BatchCorrection()
+        self._bio_conservation_metrics = bio_conservation_metrics
+        self._batch_correction_metrics = batch_correction_metrics
         self._results = pd.DataFrame(columns=list(self._embedding_obsm_keys) + [_METRIC_TYPE])
         self._emb_adatas = {}
         self._neighbor_values = (15, 50, 90)
@@ -150,13 +160,20 @@ class Benchmarker:
         self._batch_key = batch_key
         self._label_key = label_key
         self._n_jobs = n_jobs
+        self._progress_bar = progress_bar
+        self._compute_neighbors = True
+        self._solver = solver
 
-        self._metric_collection_dict = {
-            "Bio conservation": self._bio_conservation_metrics,
-            "Batch correction": self._batch_correction_metrics,
-        }
+        if self._bio_conservation_metrics is None and self._batch_correction_metrics is None:
+            raise ValueError("Either batch or bio metrics must be defined.")
 
-    def prepare(self, neighbor_computer: Optional[Callable[[np.ndarray, int], NeighborsOutput]] = None) -> None:
+        self._metric_collection_dict = {}
+        if self._bio_conservation_metrics is not None:
+            self._metric_collection_dict.update({"Bio conservation": self._bio_conservation_metrics})
+        if self._batch_correction_metrics is not None:
+            self._metric_collection_dict.update({"Batch correction": self._batch_correction_metrics})
+
+    def prepare(self, neighbor_computer: Callable[[np.ndarray, int], NeighborsResults] | None = None) -> None:
         """Prepare the data for benchmarking.
 
         Parameters
@@ -164,14 +181,16 @@ class Benchmarker:
         neighbor_computer
             Function that computes the neighbors of the data. If `None`, the neighbors will be computed
             with :func:`~scib_metrics.utils.nearest_neighbors.pynndescent`. The function should take as input
-            the data and the number of neighbors to compute and return a :class:`~scib_metrics.utils.nearest_neighbors.NeighborsOutput`
+            the data and the number of neighbors to compute and return a :class:`~scib_metrics.utils.nearest_neighbors.NeighborsResults`
             object.
         """
+        gc.collect()
+
         # Compute PCA
         if self._pre_integrated_embedding_obsm_key is None:
             # This is how scib does it
             # https://github.com/theislab/scib/blob/896f689e5fe8c57502cb012af06bed1a9b2b61d2/scib/metrics/pcr.py#L197
-            sc.tl.pca(self._adata, use_highly_variable=False)
+            sc.tl.pca(self._adata, svd_solver=self._solver, mask_var=None)
             self._pre_integrated_embedding_obsm_key = "X_pca"
 
         for emb_key in self._embedding_obsm_keys:
@@ -181,20 +200,25 @@ class Benchmarker:
             self._emb_adatas[emb_key].obsm[_X_PRE] = self._adata.obsm[self._pre_integrated_embedding_obsm_key]
 
         # Compute neighbors
-        for ad in tqdm(self._emb_adatas.values(), desc="Computing neighbors"):
-            if neighbor_computer is not None:
-                neigh_output = neighbor_computer(ad.X, max(self._neighbor_values))
-            else:
-                neigh_output = pynndescent(
-                    ad.X, n_neighbors=max(self._neighbor_values), random_state=0, n_jobs=self._n_jobs
-                )
-            indices, distances = neigh_output.indices, neigh_output.distances
-            for n in self._neighbor_values:
-                sp_distances, sp_conns = sc.neighbors._compute_connectivities_umap(
-                    indices[:, :n], distances[:, :n], ad.n_obs, n_neighbors=n
-                )
-                ad.obsp[f"{n}_connectivities"] = sp_conns
-                ad.obsp[f"{n}_distances"] = sp_distances
+        if self._compute_neighbors:
+            progress = self._emb_adatas.values()
+            if self._progress_bar:
+                progress = tqdm(progress, desc="Computing neighbors")
+
+            for ad in progress:
+                if neighbor_computer is not None:
+                    neigh_result = neighbor_computer(ad.X, max(self._neighbor_values))
+                else:
+                    neigh_result = pynndescent(
+                        ad.X, n_neighbors=max(self._neighbor_values), random_state=0, n_jobs=self._n_jobs
+                    )
+                for n in self._neighbor_values:
+                    ad.uns[f"{n}_neighbor_res"] = neigh_result.subset_neighbors(n=n)
+        else:
+            warnings.warn(
+                "Computing Neighbors Skipped",
+                UserWarning,
+            )
 
         self._prepared = True
 
@@ -213,12 +237,19 @@ class Benchmarker:
             [sum([v is not False for v in asdict(met_col)]) for met_col in self._metric_collection_dict.values()]
         )
 
-        for emb_key, ad in tqdm(self._emb_adatas.items(), desc="Embeddings", position=0, colour="green"):
-            pbar = tqdm(total=num_metrics, desc="Metrics", position=1, leave=False, colour="blue")
+        progress_embs = self._emb_adatas.items()
+        if self._progress_bar:
+            progress_embs = tqdm(self._emb_adatas.items(), desc="Embeddings", position=0, colour="green")
+
+        for emb_key, ad in progress_embs:
+            pbar = None
+            if self._progress_bar:
+                pbar = tqdm(total=num_metrics, desc="Metrics", position=1, leave=False, colour="blue")
             for metric_type, metric_collection in self._metric_collection_dict.items():
                 for metric_name, use_metric_or_kwargs in asdict(metric_collection).items():
+                    gc.collect()
                     if use_metric_or_kwargs:
-                        pbar.set_postfix_str(f"{metric_type}: {metric_name}")
+                        pbar.set_postfix_str(f"{metric_type}: {metric_name}") if pbar is not None else None
                         metric_fn = getattr(scib_metrics, metric_name)
                         if isinstance(use_metric_or_kwargs, dict):
                             # Kwargs in this case
@@ -232,11 +263,11 @@ class Benchmarker:
                         else:
                             self._results.loc[metric_name, emb_key] = metric_value
                             self._results.loc[metric_name, _METRIC_TYPE] = metric_type
-                        pbar.update(1)
+                        pbar.update(1) if pbar is not None else None
 
         self._benchmarked = True
 
-    def get_results(self, min_max_scale: bool = True, clean_names: bool = True) -> pd.DataFrame:
+    def get_results(self, min_max_scale: bool = False, clean_names: bool = True) -> pd.DataFrame:
         """Return the benchmarking results.
 
         Parameters
@@ -268,14 +299,15 @@ class Benchmarker:
         # Compute scores
         per_class_score = df.groupby(_METRIC_TYPE).mean().transpose()
         # This is the default scIB weighting from the manuscript
-        per_class_score["Total"] = 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
+        if self._batch_correction_metrics is not None and self._bio_conservation_metrics is not None:
+            per_class_score["Total"] = (
+                0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
+            )
         df = pd.concat([df.transpose(), per_class_score], axis=1)
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE
         return df
 
-    def plot_results_table(
-        self, min_max_scale: bool = True, show: bool = True, save_dir: Optional[str] = None
-    ) -> Table:
+    def plot_results_table(self, min_max_scale: bool = False, show: bool = True, save_dir: str | None = None) -> Table:
         """Plot the benchmarking results.
 
         Parameters
@@ -288,12 +320,18 @@ class Benchmarker:
             The directory to save the plot to. If `None`, the plot is not saved.
         """
         num_embeds = len(self._embedding_obsm_keys)
-        cmap_fn = lambda col_data: normed_cmap(col_data, cmap=matplotlib.cm.PRGn, num_stds=2.5)
+        cmap_fn = lambda col_data: normed_cmap(col_data, cmap=mpl.cm.PRGn, num_stds=2.5)
         df = self.get_results(min_max_scale=min_max_scale)
         # Do not want to plot what kind of metric it is
         plot_df = df.drop(_METRIC_TYPE, axis=0)
         # Sort by total score
-        plot_df = plot_df.sort_values(by="Total", ascending=False).astype(np.float64)
+        if self._batch_correction_metrics is not None and self._bio_conservation_metrics is not None:
+            sort_col = "Total"
+        elif self._batch_correction_metrics is not None:
+            sort_col = "Batch correction"
+        else:
+            sort_col = "Bio conservation"
+        plot_df = plot_df.sort_values(by=sort_col, ascending=False).astype(np.float64)
         plot_df["Method"] = plot_df.index
 
         # Split columns by metric type, using df as it doesn't have the new method col
@@ -326,7 +364,7 @@ class Benchmarker:
                 title=col.replace(" ", "\n", 1),
                 plot_fn=bar,
                 plot_kw={
-                    "cmap": matplotlib.cm.YlGnBu,
+                    "cmap": mpl.cm.YlGnBu,
                     "plot_bg_bar": False,
                     "annotate": True,
                     "height": 0.9,
@@ -338,7 +376,7 @@ class Benchmarker:
             for i, col in enumerate(score_cols)
         ]
         # Allow to manipulate text post-hoc (in illustrator)
-        with matplotlib.rc_context({"svg.fonttype": "none"}):
+        with mpl.rc_context({"svg.fonttype": "none"}):
             fig, ax = plt.subplots(figsize=(len(df.columns) * 1.25, 3 + 0.3 * num_embeds))
             tab = Table(
                 plot_df,

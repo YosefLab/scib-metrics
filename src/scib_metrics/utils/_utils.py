@@ -1,11 +1,10 @@
 import warnings
-from typing import Optional, Tuple
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 from chex import ArrayDevice
-from jax import nn
+from jax import Array, nn
 from scipy.sparse import csr_matrix
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_array
@@ -18,7 +17,7 @@ def get_ndarray(x: ArrayDevice) -> np.ndarray:
     return np.array(jax.device_get(x))
 
 
-def one_hot(y: NdArray, n_classes: Optional[int] = None) -> jnp.ndarray:
+def one_hot(y: NdArray, n_classes: int | None = None) -> jnp.ndarray:
     """One-hot encode an array. Wrapper around :func:`~jax.nn.one_hot`.
 
     Parameters
@@ -33,11 +32,11 @@ def one_hot(y: NdArray, n_classes: Optional[int] = None) -> jnp.ndarray:
     one_hot: jnp.ndarray
         Array of shape (n_cells, n_classes).
     """
-    n_classes = n_classes or jnp.max(y) + 1
+    n_classes = n_classes or int(jax.device_get(jnp.max(y))) + 1
     return nn.one_hot(jnp.ravel(y), n_classes)
 
 
-def validate_seed(seed: IntOrKey) -> jax.random.KeyArray:
+def validate_seed(seed: IntOrKey) -> Array:
     """Validate a seed and return a Jax random key."""
     return jax.random.PRNGKey(seed) if isinstance(seed, int) else seed
 
@@ -48,7 +47,7 @@ def check_square(X: ArrayLike):
         raise ValueError("X must be a square matrix")
 
 
-def convert_knn_graph_to_idx(X: csr_matrix) -> Tuple[np.ndarray, np.ndarray]:
+def convert_knn_graph_to_idx(X: csr_matrix) -> tuple[np.ndarray, np.ndarray]:
     """Convert a kNN graph to indices and distances."""
     check_array(X, accept_sparse="csr")
     check_square(X)

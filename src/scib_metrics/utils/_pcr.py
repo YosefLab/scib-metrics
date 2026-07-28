@@ -1,6 +1,3 @@
-from typing import Optional
-
-import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
@@ -16,7 +13,7 @@ def principal_component_regression(
     X: NdArray,
     covariate: NdArray,
     categorical: bool = False,
-    n_components: Optional[int] = None,
+    n_components: int | None = None,
 ) -> float:
     """Principal component regression (PCR) :cite:p:`buttner2018`.
 
@@ -74,12 +71,8 @@ def _pcr(
     var
         Array of shape (n_components,) containing the explained variance of each PC.
     """
+    residual_sum = jnp.linalg.lstsq(covariate, X_pca)[1]
+    total_sum = jnp.sum((X_pca - jnp.mean(X_pca, axis=0, keepdims=True)) ** 2, axis=0)
+    r2 = jnp.maximum(0, 1 - residual_sum / total_sum)
 
-    def r2(pc, batch):
-        residual_sum = jnp.linalg.lstsq(batch, pc)[1]
-        total_sum = jnp.sum((pc - jnp.mean(pc)) ** 2)
-        return jnp.maximum(0, 1 - residual_sum / total_sum)
-
-    # Index PCs on axis = 1, don't index batch
-    r2_ = jax.vmap(r2, in_axes=(1, None))(X_pca, covariate)
-    return jnp.dot(jnp.ravel(r2_), var) / jnp.sum(var)
+    return jnp.dot(jnp.ravel(r2), var) / jnp.sum(var)

@@ -3,14 +3,22 @@ from importlib.metadata import version
 
 from . import nearest_neighbors, utils
 from ._cms import cell_mixing_score
-from ._graph_connectivity import graph_connectivity
-from ._isolated_labels import isolated_labels
-from ._kbet import kbet, kbet_per_label
-from ._lisi import clisi_knn, ilisi_knn, lisi_knn
-from ._nmi_ari import nmi_ari_cluster_labels_kmeans, nmi_ari_cluster_labels_leiden
-from ._pcr_comparison import pcr_comparison
+from .metrics import (
+    graph_connectivity,
+    isolated_labels,
+    kbet,
+    kbet_per_label,
+    clisi_knn,
+    ilisi_knn,
+    lisi_knn,
+    nmi_ari_cluster_labels_kmeans,
+    nmi_ari_cluster_labels_leiden,
+    pcr_comparison,
+    silhouette_batch,
+    silhouette_label,
+    bras,
+)
 from ._settings import settings
-from ._silhouette import silhouette_batch, silhouette_label
 
 __all__ = [
     "utils",
@@ -19,6 +27,7 @@ __all__ = [
     "pcr_comparison",
     "silhouette_label",
     "silhouette_batch",
+    "bras",
     "ilisi_knn",
     "clisi_knn",
     "lisi_knn",
@@ -28,6 +37,7 @@ __all__ = [
     "kbet_per_label",
     "graph_connectivity",
     "cell_mixing_score",
+    "settings",
 ]
 
 __version__ = version("scib-metrics")

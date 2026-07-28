@@ -1,0 +1,56 @@
+name: Test (Windows)
+
+on:
+  schedule:
+    - cron: "0 10 * * *" # runs at 10:00 UTC (03:00 PST) every day
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        python: ["3.12", "3.13", "3.14"]
+
+    name: Integration
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -e {0} # -e to fail on error
+
+    env:
+      MPLBACKEND: agg
+      PLATFORM: ${{ matrix.os }}
+      DISPLAY: :42
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          filter: blob:none
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: create hatch environment
+        run: uvx hatch env create hatch-test.py${{ matrix.python }}-stable
+      - name: run tests using hatch
+        run: uvx hatch run hatch-test.py${{ matrix.python }}-stable:run-cov -v --color=yes -n auto
+      - name: generate coverage report
+        run: |
+          test -f .coverage || uvx hatch run hatch-test.py${{ matrix.python }}-stable:cov-combine
+          uvx hatch run hatch-test.py${{ matrix.python }}-stable:cov-report   # report visibly
+          uvx hatch run hatch-test.py${{ matrix.python }}-stable:coverage xml # create report for upload
+      - name: Upload coverage
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

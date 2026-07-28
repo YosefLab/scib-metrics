@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import jax.numpy as jnp
 from chex import dataclass
 from jax import jit
@@ -50,7 +48,7 @@ class _PCAResult:
     components: NdArray
     variance: NdArray
     variance_ratio: NdArray
-    svd: Optional[_SVDResult] = None
+    svd: _SVDResult | None = None
 
 
 def _svd_flip(
@@ -84,7 +82,7 @@ def _svd_flip(
 
 def pca(
     X: NdArray,
-    n_components: Optional[int] = None,
+    n_components: int | None = None,
     return_svd: bool = False,
 ) -> _PCAResult:
     """Principal component analysis (PCA).
@@ -128,7 +126,7 @@ def pca(
 @jit
 def _pca(
     X: NdArray,
-) -> Tuple[NdArray, NdArray, NdArray, NdArray, NdArray]:
+) -> tuple[NdArray, NdArray, NdArray, NdArray, NdArray]:
     """Principal component analysis.
 
     Parameters

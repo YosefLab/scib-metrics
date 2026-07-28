@@ -1,165 +1,184 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling"]
-
+requires = [ "hatchling" ]
 
 [project]
 name = "scib-metrics"
-version = "0.5.10"
+version = "0.6.0"
 description = "Accelerated and Python-only scIB metrics"
 readme = "README.md"
-requires-python = ">=3.11"
 license = { file = "LICENSE" }
-authors = [{ name = "Adam Gayoso" }]
-maintainers = [{ name = "Adam Gayoso", email = "adamgayoso@berkeley.edu" }]
-urls.Documentation = "https://scib-metrics.readthedocs.io/"
-urls.Source = "https://github.com/yoseflab/scib-metrics"
-urls.Home-page = "https://github.com/yoseflab/scib-metrics"
+maintainers = [ { name = "Adam Gayoso", email = "adamgayoso@berkeley.edu" } ]
+authors = [ { name = "Adam Gayoso" } ]
+requires-python = ">=3.12"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
 dependencies = [
-    "anndata",
-    "chex",
-    "jax",
-    "jaxlib",
-    "numpy",
-    "pandas",
-    "scipy",
-    "scikit-learn",
-    "scanpy>=1.9",
-    "rich",
-    "pynndescent",
-    "igraph>0.9.0",
-    "matplotlib",
-    "plottable",
-    "tqdm",
-    "umap-learn>=0.5.0",
+  "anndata",
+  "chex",
+  "igraph>0.9",
+  "jax",
+  "jaxlib",
+  "matplotlib",
+  "numba>=0.59",
+  "numpy",
+  "pandas",
+  "plottable",
+  "pynndescent",
+  "rich",
+  "scanpy>=1.9",
+  "scikit-learn",
+  "scipy",
+  "tqdm",
+  "umap-learn>=0.5",
 ]
+optional-dependencies.parallel = [ "joblib" ]
+optional-dependencies.tutorial = [
+  "adjusttext",      # missing liger dependency
+  "goatools",        # missing liger dependency
+  "harmony-pytorch",
+  "mygene",          # missing liger dependency
+  "numexpr",         # missing liger dependency
+  "plotnine",        # missing liger dependency
+  "pyliger",
+  "rich",
+  "scanorama",
+  "scvi-tools",
+]
+# https://docs.pypi.org/project_metadata/#project-urls
+urls.Documentation = "https://scib-metrics.readthedocs.io/"
+urls.Homepage = "https://github.com/YosefLab/scib-metrics"
+urls.Source = "https://github.com/YosefLab/scib-metrics"
 
-[project.optional-dependencies]
-dev = ["pre-commit", "twine>=4.0.2"]
-doc = [
-    "sphinx>=4",
-    "sphinx-book-theme>=1.0",
-    "myst-nb",
-    "sphinxcontrib-bibtex>=2.6",
-    "pybtex-docutils>=1.0.0",
-    "scanpydoc[typehints]>=0.7.4",
-    "sphinxext-opengraph",
-    # For notebooks
-    "ipython",
-    "ipykernel",
-    "sphinx-copybutton",
-    "numba>=0.57.1",
-]
+[dependency-groups]
+dev = [ "prek", "twine>=4.0.2" ]
 test = [
-    "pytest",
-    "coverage",
-    "scib>=1.1.4",
-    "harmonypy",
-    "joblib",
-    # For vscode Python extension testing
-    "flake8",
-    "black",
-    "numba>=0.57.1",
+  "coverage>=7.10",
+  "harmonypy",
+  "joblib",
+  "pytest",
+  "pytest-cov",     # For VS Code's coverage functionality
+  "scib>=1.1.4",
 ]
-parallel = ["joblib"]
-tutorial = [
-    "rich",
-    "scanorama",
-    "harmony-pytorch",
-    "scvi-tools",
-    "pyliger",
-    "numexpr",         # missing liger dependency
-    "plotnine",        # missing liger dependency
-    "mygene",          # missing liger dependency
-    "goatools",        # missing liger dependency
-    "adjustText",      # missing liger dependency
+doc = [
+  "ipykernel",
+  # For notebooks
+  "ipython",
+  "myst-nb",
+  "numba>=0.57.1",
+  "pybtex-docutils>=1",
+  "scanpydoc[typehints]>=0.7.4",
+  "sphinx>=4",
+  "sphinx-book-theme>=1",
+  "sphinx-copybutton",
+  "sphinxcontrib-bibtex>=2.6",
+  "sphinxext-opengraph",
 ]
 
-[tool.hatch.build.targets.wheel]
-packages = ['src/scib_metrics']
-
-[tool.coverage.run]
-source = ["scib_metrics"]
-omit = ["**/test_*.py"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-xfail_strict = true
-
+[tool.hatch]
+build.targets.wheel.packages = [ "src/scib_metrics" ]
+envs.default.installer = "uv"
+envs.default.dependency-groups = [ "dev" ]
+envs.docs.scripts.build = "sphinx-build -M html docs docs/_build"
+envs.docs.scripts.clean = "git clean -fdX -- {args:docs}"
+envs.docs.scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
+envs.docs.dependency-groups = [ "doc" ]
+envs.hatch-test.installer = "uv"
+envs.hatch-test.matrix = [
+  # Test every supported Python version with normal deps
+  { deps = [ "stable" ], python = [ "3.12", "3.13", "3.14" ] },
+  # Test the newest supported Python version also with pre-release deps
+  { deps = [ "pre" ], python = [ "3.14" ] },
+]
+# If the matrix variable `deps` is set to "pre",
+# set the environment variable `UV_PRERELEASE` to "allow".
+envs.hatch-test.overrides.matrix.deps.env-vars = [
+  { value = "allow", key = "UV_PRERELEASE", if = [ "pre" ] },
+]
+envs.hatch-test.dependency-groups = [ "dev", "test" ]
 
 [tool.ruff]
-src = ["src"]
 line-length = 120
+src = [ "src" ]
+extend-include = [ "*.ipynb" ]
+format.docstring-code-format = true
 lint.select = [
-    "F",      # Errors detected by Pyflakes
-    "E",      # Error detected by Pycodestyle
-    "W",      # Warning detected by Pycodestyle
-    "I",      # isort
-    "D",      # pydocstyle
-    "B",      # flake8-bugbear
-    "TID",    # flake8-tidy-imports
-    "C4",     # flake8-comprehensions
-    "BLE",    # flake8-blind-except
-    "UP",     # pyupgrade
-    "RUF100", # Report unused noqa directives
-    "ICN",    # flake8-import-conventions
-    "TCH",    # flake8-type-checking
-    "FA",     # flake8-future-annotations
+  "B",      # flake8-bugbear
+  "BLE",    # flake8-blind-except
+  "C4",     # flake8-comprehensions
+  "D",      # pydocstyle
+  "E",      # Error detected by Pycodestyle
+  "F",      # Errors detected by Pyflakes
+  "FA",     # flake8-future-annotations
+  "I",      # isort
+  "ICN",    # flake8-import-conventions
+  "RUF100", # Report unused noqa directives
+  "TCH",    # flake8-type-checking
+  "TID",    # flake8-tidy-imports
+  "UP",     # pyupgrade
+  "W",      # Warning detected by Pycodestyle
 ]
 lint.ignore = [
-    # line too long -> we accept long comment lines; formatter gets rid of long code lines
-    "E501",
-    # Do not assign a lambda expression, use a def -> lambda expression assignments are convenient
-    "E731",
-    # allow I, O, l as variable names -> I is the identity matrix
-    "E741",
-    # Missing docstring in public package
-    "D104",
-    # Missing docstring in public module
-    "D100",
-    # Missing docstring in __init__
-    "D107",
-    # Errors from function calls in argument defaults. These are fine when the result is immutable.
-    "B008",
-    # __magic__ methods are are often self-explanatory, allow missing docstrings
-    "D105",
-    # First line should be in imperative mood; try rephrasing
-    "D401",
-    ## Disable one in each pair of mutually incompatible rules
-    # We don’t want a blank line before a class docstring
-    "D203",
-    # We want docstrings to start immediately after the opening triple quote
-    "D213",
-    # Missing argument description in the docstring TODO: enable
-    "D417",
-    # No explicit stacklevel argument
-    "B028",
+  # Errors from function calls in argument defaults. These are fine when the result is immutable.
+  "B008",
+  # No explicit stacklevel argument
+  "B028",
+  # Missing docstring in public module
+  "D100",
+  # Missing docstring in public package
+  "D104",
+  # __magic__ methods are are often self-explanatory, allow missing docstrings
+  "D105",
+  # Missing docstring in __init__
+  "D107",
+  ## Disable one in each pair of mutually incompatible rules
+  # We don't want a blank line before a class docstring
+  "D203",
+  # We want docstrings to start immediately after the opening triple quote
+  "D213",
+  # First line should be in imperative mood; try rephrasing
+  "D401",
+  # Missing argument description in the docstring TODO: enable
+  "D417",
+  # line too long -> we accept long comment lines; formatter gets rid of long code lines
+  "E501",
+  # Do not assign a lambda expression, use a def -> lambda expression assignments are convenient
+  "E731",
+  # allow I, O, l as variable names -> I is the identity matrix
+  "E741",
 ]
-extend-include = ["*.ipynb"]
+lint.per-file-ignores."*/__init__.py" = [ "F401" ]
+lint.per-file-ignores."docs/*" = [ "B018", "BLE001", "E402", "I" ]
+lint.per-file-ignores."src/scib_metrics/__init__.py" = [ "I" ]
+lint.per-file-ignores."tests/*" = [ "B018", "D" ]
+lint.pydocstyle.convention = "numpy"
 
-[tool.ruff.lint.per-file-ignores]
-"docs/*" = ["I", "BLE001", "E402", "B018"]
-"tests/*" = ["D", "B018"]
-"*/__init__.py" = ["F401"]
-"src/scib_metrics/__init__.py" = ["I"]
+[tool.pytest]
+ini_options.testpaths = [ "tests" ]
+ini_options.xfail_strict = true
 
-[tool.ruff.format]
-docstring-code-format = true
-
-[tool.ruff.lint.pydocstyle]
-convention = "numpy"
+[tool.coverage]
+run.omit = [ "**/test_*.py" ]
+run.patch = [ "subprocess" ]
+run.source = [ "scib_metrics" ]
 
 [tool.jupytext]
 formats = "ipynb,md"
 
 [tool.cruft]
 skip = [
-    "tests",
-    "src/**/__init__.py",
-    "src/**/basic.py",
-    "docs/api.md",
-    "docs/changelog.md",
-    "docs/references.bib",
-    "docs/references.md",
-    "docs/notebooks/example.ipynb",
+  "tests",
+  "src/**/__init__.py",
+  "src/**/basic.py",
+  "docs/api.md",
+  "docs/changelog.md",
+  "docs/references.bib",
+  "docs/references.md",
+  "docs/notebooks/example.ipynb",
+  "docs/conf.py",
+  "docs/extensions/typed_returns.py",
 ]

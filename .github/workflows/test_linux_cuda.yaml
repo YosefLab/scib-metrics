@@ -12,6 +12,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   test:
     # if PR has label "cuda tests" or "all tests" or if scheduled or manually triggered
@@ -34,7 +37,7 @@ jobs:
         cuda: ["12"]
 
     container:
-      image: scverse/scvi-tools:py${{ matrix.python }}-cu${{ matrix.cuda }}-base
+      image: ghcr.io/scverse/scvi-tools:py${{ matrix.python }}-cu${{ matrix.cuda }}-base
       options: --user root --gpus all
 
     name: Integration (CUDA)
@@ -44,11 +47,18 @@ jobs:
       PYTHON: ${{ matrix.python }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Install dependencies
         run: |
-          pip install ".[dev,test]"
+          pip install --upgrade "pip>=25.1"
+          pip install -e . --group dev --group test
+          # Base image's jax_cuda12_plugin is pinned to its baked-in jax/jaxlib version.
+          # Our unpinned jax dep lets the resolver upgrade jax/jaxlib above that, leaving
+          # the plugin mismatched. Resync the plugin instead of pinning jax/jaxlib down.
+          pip install --upgrade "jax[cuda12]"
 
       - name: Test
         env:
@@ -61,6 +71,6 @@ jobs:
         run: |
           coverage report
       - name: Upload coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

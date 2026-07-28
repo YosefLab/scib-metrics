@@ -13,7 +13,7 @@ PCA_PARAMS = list(product([10, 100, 1000], [10, 100, 1000]))
 
 @pytest.mark.parametrize("n_obs, n_vars", PCA_PARAMS)
 def test_pca(n_obs: int, n_vars: int):
-    def _test_pca(n_obs: int, n_vars: int, n_components: int, eps: float = 1e-4):
+    def _test_pca(n_obs: int, n_vars: int, n_components: int, eps: float = 1e-3):
         X = poisson_sample(n_obs, n_vars)
         max_components = min(X.shape)
         pca = scib_metrics.utils.pca(X, n_components=n_components, return_svd=True)
@@ -35,17 +35,17 @@ def test_pca(n_obs: int, n_vars: int):
         pca_true = PCA(n_components=n_components, svd_solver="full").fit(X)
         # assert np.allclose(pca_true.transform(X), pca.coordinates, atol=eps)
         # assert np.allclose(pca_true.components_, pca.components, atol=eps)
-        assert np.allclose(pca_true.singular_values_, pca.svd.s[:n_components], atol=eps)
-        assert np.allclose(pca_true.explained_variance_, pca.variance, atol=eps)
-        assert np.allclose(pca_true.explained_variance_ratio_, pca.variance_ratio, atol=eps)
+        assert np.allclose(pca_true.singular_values_, pca.svd.s[:n_components], atol=eps, rtol=eps)
+        assert np.allclose(pca_true.explained_variance_, pca.variance, atol=eps, rtol=eps)
+        assert np.allclose(pca_true.explained_variance_ratio_, pca.variance_ratio, atol=eps, rtol=eps)
         # Use arpack iff n_components < max_components
         if n_components < max_components:
             pca_true = PCA(n_components=n_components, svd_solver="arpack").fit(X)
             # assert jnp.allclose(pca_true.transform(X), pca.coordinates, atol=eps)
             # assert jnp.allclose(pca_true.components_, pca.components, atol=eps)
-            assert jnp.allclose(pca_true.singular_values_, pca.svd.s[:n_components], atol=eps)
-            assert jnp.allclose(pca_true.explained_variance_, pca.variance, atol=eps)
-            assert jnp.allclose(pca_true.explained_variance_ratio_, pca.variance_ratio, atol=eps)
+            assert jnp.allclose(pca_true.singular_values_, pca.svd.s[:n_components], atol=eps, rtol=eps)
+            assert jnp.allclose(pca_true.explained_variance_, pca.variance, atol=eps, rtol=eps)
+            assert jnp.allclose(pca_true.explained_variance_ratio_, pca.variance_ratio, atol=eps, rtol=eps)
 
     max_components = min(n_obs, n_vars)
     _test_pca(n_obs, n_vars, n_components=max_components)

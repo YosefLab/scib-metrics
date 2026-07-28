@@ -2,6 +2,7 @@ import logging
 from importlib.metadata import version
 
 from . import nearest_neighbors, utils
+from ._cms import cell_mixing_score
 from .metrics import (
     graph_connectivity,
     isolated_labels,
@@ -35,6 +36,7 @@ __all__ = [
     "kbet",
     "kbet_per_label",
     "graph_connectivity",
+    "cell_mixing_score",
     "settings",
 ]
 

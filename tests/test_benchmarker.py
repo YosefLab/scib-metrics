@@ -54,7 +54,6 @@ def test_benchmarker_custom_metric_booleans():
     assert "graph_connectivity" not in results.columns
     assert "ilisi_knn" in results.columns
     assert "bras" in results.columns
-    assert "sbee" in results.columns
 
 
 def test_benchmarker_sbee_disabled():

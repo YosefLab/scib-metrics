@@ -122,6 +122,8 @@ def silhouette_samples_custom(X, cluster_labels, metric="euclidean", between_clu
     (Modified) silhouette scores with selected inter-cluster distance calcuation.
     """
 
+    cluster_labels = np.asarray(cluster_labels)
+
     # Number of clusters
     unique_cluster_labels = np.unique(cluster_labels)
     n_clusters = len(unique_cluster_labels)

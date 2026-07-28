@@ -1,8 +1,10 @@
+import inspect
 from itertools import product
 
 import numpy as np
 import pandas as pd
 import pytest
+import scanpy as sc
 from scib.metrics import pc_regression
 
 import scib_metrics
@@ -13,7 +15,16 @@ PCR_PARAMS = list(product([10, 100, 1000], [10, 100, 1000], [False]))
 # TODO(martinkim0): Currently not testing categorical covariates because of
 # TODO(martinkim0): reproducibility issues with original scib. See comment in PR #16.
 
+# scib.metrics.pc_regression still calls sc.tl.pca(..., use_highly_variable=False), which
+# scanpy has removed in pre-release versions (replaced by mask_var=None). Skip until scib
+# updates upstream: https://github.com/theislab/scib/blob/main/scib/metrics/pcr.py
+_SCANPY_PCA_SUPPORTS_USE_HIGHLY_VARIABLE = "use_highly_variable" in inspect.signature(sc.tl.pca).parameters
 
+
+@pytest.mark.skipif(
+    not _SCANPY_PCA_SUPPORTS_USE_HIGHLY_VARIABLE,
+    reason="scib.metrics.pc_regression uses the removed scanpy `use_highly_variable` kwarg",
+)
 @pytest.mark.parametrize("n_obs, n_vars, categorical", PCR_PARAMS)
 def test_pcr(n_obs, n_vars, categorical):
     def _test_pcr(n_obs: int, n_vars: int, n_components: int, categorical: bool, eps=1e-3, seed=123):

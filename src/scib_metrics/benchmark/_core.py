@@ -427,14 +427,14 @@ class Benchmarker:
 
                 rsc.tl.pca(self._adata, svd_solver=self._solver)
             except ImportError:
-                sc.tl.pca(self._adata, svd_solver=self._solver, use_highly_variable=False)
+                sc.tl.pca(self._adata, svd_solver=self._solver, mask_var=None)
             except Exception as exc:
                 warnings.warn(
                     f"RAPIDS PCA failed ({type(exc).__name__}: {exc}); falling back to scanpy PCA.",
                     UserWarning,
                     stacklevel=2,
                 )
-                sc.tl.pca(self._adata, svd_solver=self._solver, use_highly_variable=False)
+                sc.tl.pca(self._adata, svd_solver=self._solver, mask_var=None)
             self._pre_integrated_embedding_obsm_key = "X_pca"
 
         for emb_key in self._embedding_obsm_keys:

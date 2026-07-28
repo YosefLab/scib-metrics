@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## 0.6.0 (2026-05-17)
+## 0.6.0 (2026-07-28)
 
 ### Added
 
@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning][].
 
 [scverse cookiecutter template]: https://github.com/scverse/cookiecutter-scverse
 
-## 0.5.10 (2025-06-13)
+## 0.5.10 (2025-07-13)
 
 ### Added
 

@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
+- Added spatial metrics scores for benchmarker as well as RAPIDS singlecell support for PCA calculation, {pr}`259`.
+
 ### Change
 
 - Change github workflows & update for pandas3 anndata 0.13, {pr}`276`.

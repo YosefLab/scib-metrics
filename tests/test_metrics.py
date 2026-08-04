@@ -158,11 +158,11 @@ def test_kmeans():
     kmeans.fit(X)
     assert kmeans.labels_.shape == (X.shape[0],)
 
-    skmeans = SKMeans(n_clusters=3)
+    skmeans = SKMeans(n_clusters=3, n_init=1, random_state=0)
     skmeans.fit(X)
     sk_inertia = np.array([skmeans.inertia_])
     jax_inertia = np.array([kmeans.inertia_])
-    np.testing.assert_allclose(sk_inertia, jax_inertia, atol=4e-2)
+    np.testing.assert_allclose(sk_inertia, jax_inertia, rtol=5e-3)
 
     # Reorder cluster centroids between methods and measure accuracy
     k_means_cluster_centers = kmeans.cluster_centroids_

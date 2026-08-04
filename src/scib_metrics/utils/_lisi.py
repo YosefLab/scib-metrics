@@ -36,11 +36,12 @@ def _Hbeta(knn_dists_row: jnp.ndarray, row_self_mask: jnp.ndarray, beta: float) 
 def _get_neighbor_probability(
     knn_dists_row: jnp.ndarray, row_self_mask: jnp.ndarray, perplexity: float, tol: float
 ) -> tuple[jnp.ndarray, jnp.ndarray]:
-    beta = 1
-    betamin = -jnp.inf
-    betamax = jnp.inf
+    beta = jnp.float32(1)
+    betamin = jnp.array(-jnp.inf, dtype=jnp.float32)
+    betamax = jnp.array(jnp.inf, dtype=jnp.float32)
+    log_perplexity = jnp.float32(jnp.log(perplexity))
     H, P = _Hbeta(knn_dists_row, row_self_mask, beta)
-    Hdiff = H - jnp.log(perplexity)
+    Hdiff = H - log_perplexity
 
     def _get_neighbor_probability_step(state):
         Hdiff = state.Hdiff
@@ -57,7 +58,7 @@ def _get_neighbor_probability(
             jnp.where(betamin == -jnp.inf, beta / 2, (beta + betamin) / 2),
         )
         new_H, new_P = _Hbeta(knn_dists_row, row_self_mask, new_beta)
-        new_Hdiff = new_H - jnp.log(perplexity)
+        new_Hdiff = new_H - log_perplexity
         return _NeighborProbabilityState(
             H=new_H, P=new_P, Hdiff=new_Hdiff, beta=new_beta, betamin=new_betamin, betamax=new_betamax, tries=tries + 1
         )

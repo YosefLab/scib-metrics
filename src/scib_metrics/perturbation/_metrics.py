@@ -55,3 +55,35 @@ def delta_correlation(
             pred_i, true_i = pred_i[idx], true_i[idx]
         scores[i] = 1 - distance(pred_i[None, :], true_i[None, :])
     return {"per_perturbation": scores, "mean": float(scores.mean())}
+
+
+def de_rank_recovery(
+    predicted_deltas: np.ndarray,
+    true_de_gene_indices: Sequence[np.ndarray],
+    k: int,
+) -> dict[str, np.ndarray | float]:
+    """Recall@k of top predicted-delta-magnitude genes against a true DE gene set.
+
+    Parameters
+    ----------
+    predicted_deltas
+        Array of shape `(n_perturbations, n_genes)`.
+    true_de_gene_indices
+        Per-perturbation array of the true top-DE gene indices, length `n_perturbations`.
+    k
+        Number of top genes (by predicted delta magnitude) considered "predicted as DE".
+
+    Returns
+    -------
+    Dict with `"per_perturbation"` (recall@k per perturbation) and `"mean"` (float).
+    """
+    predicted_deltas = np.asarray(predicted_deltas)
+    if predicted_deltas.shape[0] != len(true_de_gene_indices):
+        raise ValueError("`predicted_deltas` and `true_de_gene_indices` must have the same length.")
+    scores = np.empty(predicted_deltas.shape[0])
+    for i, true_idx in enumerate(true_de_gene_indices):
+        true_idx = np.asarray(true_idx)
+        predicted_top_k = np.argsort(-np.abs(predicted_deltas[i]))[:k]
+        n_recovered = np.intersect1d(predicted_top_k, true_idx).shape[0]
+        scores[i] = n_recovered / true_idx.shape[0]
+    return {"per_perturbation": scores, "mean": float(scores.mean())}

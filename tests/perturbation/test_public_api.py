@@ -1,6 +1,7 @@
 def test_public_api_is_importable():
     from scib_metrics.perturbation import (
         AdditiveBaseline,
+        BasePerturbationPredictor,
         LinearBaseline,
         MeanBaseline,
         PerturbationBaselines,
@@ -16,6 +17,7 @@ def test_public_api_is_importable():
         callable(obj)
         for obj in (
             AdditiveBaseline,
+            BasePerturbationPredictor,
             LinearBaseline,
             MeanBaseline,
             PerturbationBaselines,

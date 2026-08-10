@@ -20,6 +20,33 @@ from scib_metrics.benchmark import Benchmarker
     benchmark.BatchCorrection
 ```
 
+## Perturbation-prediction evaluation
+
+Import as:
+
+```
+from scib_metrics.perturbation import PerturbationBenchmarker
+```
+
+```{eval-rst}
+.. module:: scib_metrics.perturbation
+.. currentmodule:: scib_metrics
+
+.. autosummary::
+    :toctree: generated
+
+    perturbation.MeanBaseline
+    perturbation.AdditiveBaseline
+    perturbation.LinearBaseline
+    perturbation.PerturbationBaselines
+    perturbation.PerturbationMetrics
+    perturbation.PerturbationBenchmarker
+    perturbation.delta_correlation
+    perturbation.de_rank_recovery
+    perturbation.systema_decomposition
+    perturbation.combination_additivity
+```
+
 ## Metrics
 
 Import as:

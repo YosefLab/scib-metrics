@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## Unreleased
+
+### Added
+
+- Add `scib_metrics.perturbation`: mandatory mean/additive/linear baseline predictors and an
+  evaluation surface (delta correlation, DE-gene rank recovery, Systema-style shared/specific
+  decomposition, combination-additivity) for perturbation-response prediction, built on
+  `pertpy` (optional `scib-metrics[perturbation]` extra).
+
 ## 0.6.0 (2026-07-28)
 
 ### Added

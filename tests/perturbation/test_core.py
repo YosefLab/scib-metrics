@@ -88,3 +88,50 @@ def test_benchmarker_raises_on_prediction_baseline_collision():
     )
     with pytest.raises(ValueError, match="collide with enabled baseline names"):
         benchmarker.benchmark()
+
+
+def test_get_ground_truth_significance_requires_flag_enabled():
+    train, test = _make_train_test_split()
+    benchmarker = PerturbationBenchmarker(train, test, baselines=PerturbationBaselines(linear=False))
+    benchmarker.benchmark()
+    with pytest.raises(RuntimeError):
+        benchmarker.get_ground_truth_significance()
+
+
+def test_get_ground_truth_significance_warns_without_control_cells_in_test():
+    train, test = _make_train_test_split()  # test split has no control cells
+    benchmarker = PerturbationBenchmarker(
+        train,
+        test,
+        baselines=PerturbationBaselines(linear=False),
+        metrics=PerturbationMetrics(ground_truth_significance=True),
+    )
+    with pytest.warns(UserWarning, match="skipping"):
+        benchmarker.benchmark()
+    result = benchmarker.get_ground_truth_significance()
+    assert result.empty
+
+
+def test_get_ground_truth_significance_runs_with_control_cells_in_test():
+    adata = make_synthetic_perturbation_adata()
+    train = adata[adata.obs["perturbation"].isin(["control", "A", "B"])].copy()
+    test = adata[adata.obs["perturbation"].isin(["control", "A+B"])].copy()
+    benchmarker = PerturbationBenchmarker(
+        train,
+        test,
+        baselines=PerturbationBaselines(linear=False),
+        metrics=PerturbationMetrics(ground_truth_significance=True),
+    )
+    benchmarker.benchmark()
+    result = benchmarker.get_ground_truth_significance()
+    assert "pvalue" in result.columns
+
+
+def test_plot_results_table_returns_a_table():
+    from plottable import Table
+
+    train, test = _make_train_test_split()
+    benchmarker = PerturbationBenchmarker(train, test, baselines=PerturbationBaselines(linear=False))
+    benchmarker.benchmark()
+    table = benchmarker.plot_results_table(show=False)
+    assert isinstance(table, Table)

@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+import os
 import warnings
 from dataclasses import dataclass, fields
 from typing import TYPE_CHECKING, Any
 
 import anndata
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from plottable import ColumnDefinition, Table
+from plottable.cmap import normed_cmap
 from sklearn.preprocessing import MinMaxScaler
 
 from scib_metrics.perturbation._baselines import AdditiveBaseline, LinearBaseline, MeanBaseline
@@ -252,3 +257,80 @@ class PerturbationBenchmarker:
             score_cols = [c for c in results.columns if c != "is_baseline"]
             results[score_cols] = MinMaxScaler().fit_transform(results[score_cols])
         return results
+
+    def get_ground_truth_significance(self) -> pd.DataFrame:
+        """Return the ground-truth significance diagnostic.
+
+        Tests whether each held-out perturbation's *true* cells are significantly different
+        from control, via `pertpy.tools.DistanceTest`. This scores the test data itself, not
+        any predictor — use it to filter out held-out perturbations with no real signal before
+        trusting scores against them.
+
+        Returns
+        -------
+        DataFrame with `"distance"`, `"pvalue"`, `"pvalue_adj"` and `"significant"` columns,
+        indexed by perturbation name.
+        """
+        if self._ground_truth_significance is None:
+            raise RuntimeError(
+                "Ground-truth significance was not computed. Set "
+                "`metrics=PerturbationMetrics(ground_truth_significance=True)` and call `.benchmark()`."
+            )
+        return self._ground_truth_significance
+
+    def plot_results_table(self, min_max_scale: bool = True, show: bool = True, save_dir: str | None = None) -> Table:
+        """Plot the benchmarking results as a table, with baseline rows visually distinguished.
+
+        Parameters
+        ----------
+        min_max_scale
+            Whether to min-max scale the score columns.
+        show
+            Whether to show the plot.
+        save_dir
+            Directory to save the plot to. If `None`, the plot is not saved.
+
+        Returns
+        -------
+        The `plottable.Table` instance.
+        """
+        df = self.get_results(min_max_scale=min_max_scale)
+        is_baseline = df["is_baseline"]
+        plot_df = df.drop(columns="is_baseline").astype(np.float64)
+        plot_df["Predictor"] = [f"{name} (baseline)" if is_baseline[name] else str(name) for name in plot_df.index]
+
+        cmap_fn = lambda col_data: normed_cmap(col_data, cmap=mpl.cm.PRGn, num_stds=2.5)
+        score_cols = [c for c in plot_df.columns if c != "Predictor"]
+        column_definitions = [
+            ColumnDefinition("Predictor", width=2.0, textprops={"ha": "left", "weight": "bold"}),
+        ]
+        column_definitions += [
+            ColumnDefinition(
+                col,
+                width=1,
+                textprops={"ha": "center", "bbox": {"boxstyle": "circle", "pad": 0.25}},
+                cmap=cmap_fn(plot_df[col]),
+                formatter="{:.2f}",
+            )
+            for col in score_cols
+        ]
+        with mpl.rc_context({"svg.fonttype": "none"}):
+            fig, ax = plt.subplots(figsize=(len(score_cols) * 1.25, 3 + 0.3 * len(plot_df)))
+            table = Table(
+                plot_df,
+                cell_kw={"linewidth": 0, "edgecolor": "k"},
+                column_definitions=column_definitions,
+                ax=ax,
+                row_dividers=True,
+                footer_divider=True,
+                textprops={"fontsize": 10, "ha": "center"},
+                row_divider_kw={"linewidth": 1, "linestyle": (0, (1, 5))},
+                col_label_divider_kw={"linewidth": 1, "linestyle": "-"},
+                column_border_kw={"linewidth": 1, "linestyle": "-"},
+                index_col="Predictor",
+            ).autoset_fontcolors(colnames=score_cols)
+            if show:
+                plt.show()
+            if save_dir is not None:
+                fig.savefig(os.path.join(save_dir, "perturbation_results.svg"), facecolor=ax.get_facecolor(), dpi=300)
+        return table

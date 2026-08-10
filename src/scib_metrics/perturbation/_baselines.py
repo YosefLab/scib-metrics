@@ -13,6 +13,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Self
 
 import numpy as np
+from sklearn.linear_model import Ridge
 
 from scib_metrics.perturbation._utils import import_pertpy
 
@@ -174,3 +175,46 @@ class AdditiveBaseline(BasePerturbationPredictor):
             else:
                 rows.append(self.mean_delta_)
         return np.stack(rows, axis=0)
+
+
+class LinearBaseline(BasePerturbationPredictor):
+    """Ridge regression from a perturbation encoding to its expression delta.
+
+    Unlike `MeanBaseline` and `AdditiveBaseline`, this baseline can generalize to a held-out
+    perturbation with no training-set relationship to any trained perturbation, as long as a
+    feature encoding is supplied for it.
+    """
+
+    def __init__(self, **ridge_kwargs) -> None:
+        self.ridge_kwargs = ridge_kwargs
+
+    def fit(
+        self,
+        adata_train: AnnData,
+        target_col: str = "perturbation",
+        reference_key: str = "control",
+        perturbation_encodings: Mapping[str, NdArray] | None = None,
+    ) -> Self:
+        if not perturbation_encodings:
+            raise ValueError("`LinearBaseline` requires `perturbation_encodings`.")
+        pt = import_pertpy()
+        pseudobulk, _ = _pseudobulk_control_diff(pt, adata_train, target_col, reference_key)
+        names = pseudobulk.obs_names.astype(str).tolist()
+        encodings, deltas = [], []
+        for name, delta in zip(names, np.asarray(pseudobulk.X), strict=True):
+            if name == reference_key or name not in perturbation_encodings:
+                continue
+            encodings.append(np.asarray(perturbation_encodings[name]))
+            deltas.append(delta)
+        if not encodings:
+            raise ValueError("None of the training perturbations have a matching entry in `perturbation_encodings`.")
+        self.model_ = Ridge(**self.ridge_kwargs).fit(np.stack(encodings), np.stack(deltas))
+        self.perturbation_encodings_ = perturbation_encodings
+        return self
+
+    def predict(self, perturbations: Sequence[str]) -> NdArray:
+        missing = [p for p in perturbations if p not in self.perturbation_encodings_]
+        if missing:
+            raise ValueError(f"No encoding supplied for perturbations: {missing}.")
+        encodings = np.stack([np.asarray(self.perturbation_encodings_[p]) for p in perturbations])
+        return self.model_.predict(encodings)

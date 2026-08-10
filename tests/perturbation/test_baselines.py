@@ -3,7 +3,7 @@ import pytest
 
 pytest.importorskip("pertpy")
 
-from scib_metrics.perturbation._baselines import AdditiveBaseline, MeanBaseline
+from scib_metrics.perturbation._baselines import AdditiveBaseline, LinearBaseline, MeanBaseline
 from tests.perturbation._synthetic import make_synthetic_perturbation_adata
 
 
@@ -43,3 +43,31 @@ def test_additive_baseline_falls_back_to_mean_for_non_decomposable_names():
     baseline = AdditiveBaseline().fit(train, target_col="perturbation", reference_key="control")
     predicted = baseline.predict(["totally_unseen"])[0]
     np.testing.assert_allclose(predicted, baseline.mean_delta_)
+
+
+def test_linear_baseline_requires_perturbation_encodings():
+    adata = make_synthetic_perturbation_adata()
+    with pytest.raises(ValueError, match="perturbation_encodings"):
+        LinearBaseline().fit(adata, target_col="perturbation", reference_key="control")
+
+
+def test_linear_baseline_generalizes_to_unseen_encoding():
+    adata = make_synthetic_perturbation_adata()
+    train = adata[adata.obs["perturbation"].isin(["control", "A", "B"])].copy()
+    encodings = {"A": np.array([1.0, 0.0]), "B": np.array([0.0, 1.0]), "A+B": np.array([1.0, 1.0])}
+    baseline = LinearBaseline().fit(
+        train, target_col="perturbation", reference_key="control", perturbation_encodings=encodings
+    )
+    predicted = baseline.predict(["A+B"])[0]
+    assert predicted.shape == (20,)
+
+
+def test_linear_baseline_raises_for_missing_encoding_at_predict_time():
+    adata = make_synthetic_perturbation_adata()
+    train = adata[adata.obs["perturbation"].isin(["control", "A", "B"])].copy()
+    encodings = {"A": np.array([1.0, 0.0]), "B": np.array([0.0, 1.0])}
+    baseline = LinearBaseline().fit(
+        train, target_col="perturbation", reference_key="control", perturbation_encodings=encodings
+    )
+    with pytest.raises(ValueError, match="No encoding supplied"):
+        baseline.predict(["C"])

@@ -8,6 +8,7 @@ functions in `scib_metrics.perturbation._metrics`, which all consume deltas.
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Self
 
@@ -115,3 +116,61 @@ class MeanBaseline(BasePerturbationPredictor):
 
     def predict(self, perturbations: Sequence[str]) -> NdArray:
         return np.tile(self.mean_delta_, (len(perturbations), 1))
+
+
+class AdditiveBaseline(BasePerturbationPredictor):
+    """Predicts combination perturbations additively from their trained single components.
+
+    For a requested perturbation whose name decomposes via `sep` into components that were
+    each present as a training perturbation (e.g. `"A+B"` when `A` and `B` were trained on),
+    predicts `delta(A) + delta(B)` via `pertpy.tools.PerturbationSpace.add`. For a requested
+    perturbation with no such decomposition, falls back to the same global mean-delta
+    behavior as `MeanBaseline` — this is the expected, literature-standard degenerate case:
+    predicting a single unseen perturbation from a global average shift is mathematically
+    identical to `MeanBaseline` when there is no combination structure to exploit.
+    """
+
+    def __init__(self, sep: str = "+") -> None:
+        self.sep = sep
+
+    def fit(
+        self,
+        adata_train: AnnData,
+        target_col: str = "perturbation",
+        reference_key: str = "control",
+        perturbation_encodings: Mapping[str, NdArray] | None = None,
+    ) -> Self:
+        pt = import_pertpy()
+        self._diffed_adata, self._ps = _pseudobulk_control_diff(pt, adata_train, target_col, reference_key)
+        self._target_col = target_col
+        self._reference_key = reference_key
+        is_control = self._diffed_adata.obs[target_col].astype(str).to_numpy() == reference_key
+        deltas = np.asarray(self._diffed_adata.X)[~is_control]
+        if deltas.shape[0] == 0:
+            raise ValueError(f"No non-control perturbations found in `adata_train.obs[{target_col!r}]`.")
+        self.mean_delta_ = deltas.mean(axis=0)
+        return self
+
+    def predict(self, perturbations: Sequence[str]) -> NdArray:
+        trained_names = set(self._diffed_adata.obs_names.astype(str))
+        rows = []
+        for perturbation in perturbations:
+            components = perturbation.split(self.sep)
+            if len(components) > 1 and all(c in trained_names for c in components):
+                # `ensure_consistency=False` is correct here: `self._diffed_adata` was already
+                # differenced against control in `fit()`. pertpy's `.add()` still warns about this
+                # (it can't see that we pre-diffed) — the warning is a known false positive for
+                # our exact usage, so it's suppressed rather than left to spam every `.predict()` call.
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", UserWarning)
+                    combined = self._ps.add(
+                        self._diffed_adata,
+                        perturbations=components,
+                        reference_key=self._reference_key,
+                        ensure_consistency=False,
+                        target_col=self._target_col,
+                    )
+                rows.append(np.asarray(combined.X)[-1])
+            else:
+                rows.append(self.mean_delta_)
+        return np.stack(rows, axis=0)

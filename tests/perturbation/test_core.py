@@ -75,3 +75,16 @@ def test_benchmarker_de_rank_recovery_requires_true_de_gene_indices():
     )
     with pytest.raises(ValueError, match="true_de_gene_indices"):
         benchmarker.benchmark()
+
+
+def test_benchmarker_raises_on_prediction_baseline_collision():
+    train, test = _make_train_test_split()
+    user_predictions = {"mean": np.zeros((1, 20))}
+    benchmarker = PerturbationBenchmarker(
+        train,
+        test,
+        predictions=user_predictions,
+        perturbation_encodings=_perturbation_encodings(),
+    )
+    with pytest.raises(ValueError, match="collide with enabled baseline names"):
+        benchmarker.benchmark()

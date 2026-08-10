@@ -139,6 +139,14 @@ class PerturbationBenchmarker:
             predicted_deltas[field.name] = predictor.predict(held_out)
             baseline_names.append(field.name)
 
+        # Check for collisions between user predictions and enabled baselines
+        collisions = set(self.predictions) & set(baseline_names)
+        if collisions:
+            raise ValueError(
+                f"`predictions` keys collide with enabled baseline names: {sorted(collisions)}. "
+                "Rename your prediction(s) or disable the corresponding baseline(s)."
+            )
+
         for name, preds in self.predictions.items():
             predicted_deltas[name] = np.asarray(preds)
 

@@ -3,7 +3,15 @@ import pytest
 
 pytest.importorskip("pertpy")
 
-from scib_metrics.perturbation._metrics import de_rank_recovery, delta_correlation
+import pandas as pd
+
+from scib_metrics.perturbation._metrics import (
+    combination_additivity,
+    de_rank_recovery,
+    delta_correlation,
+    systema_decomposition,
+)
+from tests.perturbation._synthetic import make_synthetic_perturbation_adata
 
 
 def test_delta_correlation_perfect_prediction_scores_one():
@@ -51,3 +59,44 @@ def test_de_rank_recovery_zero_when_top_k_disjoint():
 def test_de_rank_recovery_raises_on_length_mismatch():
     with pytest.raises(ValueError):
         de_rank_recovery(np.zeros((2, 5)), [np.array([0])], k=1)
+
+
+def test_systema_decomposition_perfect_prediction_scores_one_on_both():
+    rng = np.random.default_rng(0)
+    true_deltas = rng.normal(size=(4, 20))
+    result = systema_decomposition(true_deltas, true_deltas)
+    assert result["shared"] == pytest.approx(1.0, abs=1e-6)
+    assert result["specific"] == pytest.approx(1.0, abs=1e-6)
+
+
+def test_systema_decomposition_shared_only_prediction_scores_low_on_specific():
+    rng = np.random.default_rng(0)
+    true_deltas = rng.normal(size=(4, 20))
+    shared_only_prediction = np.tile(true_deltas.mean(axis=0), (4, 1))
+    result = systema_decomposition(shared_only_prediction, true_deltas)
+    assert result["shared"] == pytest.approx(1.0, abs=1e-6)
+    assert result["specific"] < 0.5
+
+
+def test_systema_decomposition_raises_with_fewer_than_two_perturbations():
+    with pytest.raises(ValueError):
+        systema_decomposition(np.zeros((1, 5)), np.zeros((1, 5)))
+
+
+def test_combination_additivity_scores_perfect_additivity():
+    adata = make_synthetic_perturbation_adata()
+    pt = pytest.importorskip("pertpy")
+    pseudobulk = pt.tl.PseudobulkSpace().compute(adata, target_col="perturbation", mode="mean")
+    result = combination_additivity(pseudobulk, target_col="perturbation", reference_key="control")
+    assert isinstance(result, pd.DataFrame)
+    assert result.loc["A+B", "distance"] == pytest.approx(0.0, abs=0.1)
+
+
+def test_combination_additivity_returns_empty_when_no_combinations_present():
+    pt = pytest.importorskip("pertpy")
+    adata = make_synthetic_perturbation_adata()
+    singles_only = adata[adata.obs["perturbation"].isin(["control", "A", "B"])].copy()
+    pseudobulk = pt.tl.PseudobulkSpace().compute(singles_only, target_col="perturbation", mode="mean")
+    result = combination_additivity(pseudobulk, target_col="perturbation", reference_key="control")
+    assert result.empty
+    assert list(result.columns) == ["distance", "predicted_magnitude", "measured_magnitude"]

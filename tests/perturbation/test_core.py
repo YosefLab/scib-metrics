@@ -127,6 +127,65 @@ def test_get_ground_truth_significance_runs_with_control_cells_in_test():
     assert "pvalue" in result.columns
 
 
+def test_get_combination_additivity_raises_before_benchmark():
+    train, test = _make_train_test_split()
+    benchmarker = PerturbationBenchmarker(train, test, perturbation_encodings=_perturbation_encodings())
+    with pytest.raises(RuntimeError):
+        benchmarker.get_combination_additivity()
+
+
+def test_get_combination_additivity_finds_combination_present_only_in_test():
+    # train only has the trained singles ("A", "B"); the combination "A+B" is held out in
+    # `test`. `combination_additivity` must pseudobulk the *union* of train and test to ever
+    # see a combination-named perturbation at all.
+    train, test = _make_train_test_split()
+    benchmarker = PerturbationBenchmarker(train, test, perturbation_encodings=_perturbation_encodings())
+    benchmarker.benchmark()
+    result = benchmarker.get_combination_additivity()
+    assert not result.empty
+    assert "A+B" in result.index
+
+
+def test_delta_correlation_unaffected_by_true_de_gene_indices_when_de_rank_recovery_disabled():
+    train, test = _make_train_test_split()
+    gene_indices = {"A+B": np.arange(5)}
+
+    benchmarker_without = PerturbationBenchmarker(
+        train,
+        test,
+        perturbation_encodings=_perturbation_encodings(),
+        metrics=PerturbationMetrics(de_rank_recovery=False),
+    )
+    benchmarker_without.benchmark()
+    results_without = benchmarker_without.get_results(min_max_scale=False)
+
+    benchmarker_with = PerturbationBenchmarker(
+        train,
+        test,
+        perturbation_encodings=_perturbation_encodings(),
+        true_de_gene_indices=gene_indices,
+        metrics=PerturbationMetrics(de_rank_recovery=False),
+    )
+    benchmarker_with.benchmark()
+    results_with = benchmarker_with.get_results(min_max_scale=False)
+
+    pd.testing.assert_series_equal(
+        results_without["delta_correlation"], results_with["delta_correlation"], check_names=True
+    )
+
+
+def test_systema_decomposition_warns_when_fewer_than_two_held_out_perturbations():
+    # The default fixture's test split holds out only "A+B" -- a single perturbation --
+    # while `metrics.systema_decomposition` defaults to `True`.
+    train, test = _make_train_test_split()
+    benchmarker = PerturbationBenchmarker(train, test, perturbation_encodings=_perturbation_encodings())
+    with pytest.warns(UserWarning, match="systema_decomposition"):
+        benchmarker.benchmark()
+    results = benchmarker.get_results(min_max_scale=False)
+    assert "systema_shared" not in results.columns
+    assert "systema_specific" not in results.columns
+
+
 def test_plot_results_table_returns_a_table():
     from plottable import Table
 

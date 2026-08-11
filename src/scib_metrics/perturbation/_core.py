@@ -157,22 +157,34 @@ class PerturbationBenchmarker:
 
         true_deltas = self._compute_true_deltas(held_out)
         gene_indices = [self.true_de_gene_indices[p] for p in held_out] if self.true_de_gene_indices else None
+        # Only restrict `delta_correlation` to `true_de_gene_indices` when the caller actually
+        # opted into `de_rank_recovery`; merely supplying `true_de_gene_indices` (e.g. because
+        # `de_rank_recovery` is wanted) should not silently change what `delta_correlation` means.
+        delta_corr_gene_indices = gene_indices if self.metrics.de_rank_recovery else None
+
+        run_systema_decomposition = self.metrics.systema_decomposition and len(held_out) >= 2
+        if self.metrics.systema_decomposition and not run_systema_decomposition:
+            warnings.warn(
+                "`metrics.systema_decomposition` is enabled but fewer than 2 held-out perturbations "
+                f"are present ({len(held_out)} found); skipping `systema_decomposition`.",
+                stacklevel=2,
+            )
 
         rows: dict[str, dict[str, float | bool]] = {}
         for name, preds in predicted_deltas.items():
             row: dict[str, float | bool] = {"is_baseline": name in baseline_names}
             if self.metrics.delta_correlation:
                 kwargs = self.metrics.delta_correlation if isinstance(self.metrics.delta_correlation, dict) else {}
-                row["delta_correlation"] = delta_correlation(preds, true_deltas, gene_indices=gene_indices, **kwargs)[
-                    "mean"
-                ]
+                row["delta_correlation"] = delta_correlation(
+                    preds, true_deltas, gene_indices=delta_corr_gene_indices, **kwargs
+                )["mean"]
             if self.metrics.de_rank_recovery:
                 if not self.true_de_gene_indices:
                     raise ValueError("`metrics.de_rank_recovery` requires `true_de_gene_indices`.")
                 kwargs = self.metrics.de_rank_recovery if isinstance(self.metrics.de_rank_recovery, dict) else {}
                 k = kwargs.get("k", 50)
                 row["de_rank_recovery"] = de_rank_recovery(preds, gene_indices, k=k)["mean"]
-            if self.metrics.systema_decomposition and len(held_out) >= 2:
+            if run_systema_decomposition:
                 decomposition = systema_decomposition(preds, true_deltas)
                 row["systema_shared"] = decomposition["shared"]
                 row["systema_specific"] = decomposition["specific"]
@@ -180,10 +192,14 @@ class PerturbationBenchmarker:
         self._results = pd.DataFrame.from_dict(rows, orient="index")
 
         if self.metrics.combination_additivity:
+            kwargs = (
+                self.metrics.combination_additivity if isinstance(self.metrics.combination_additivity, dict) else {}
+            )
             pt = import_pertpy()
-            pseudobulk = pt.tl.PseudobulkSpace().compute(self.adata_train, target_col=self.target_col, mode="mean")
+            combined = anndata.concat([self.adata_train, self.adata_test])
+            pseudobulk = pt.tl.PseudobulkSpace().compute(combined, target_col=self.target_col, mode="mean")
             self._combination_additivity = combination_additivity(
-                pseudobulk, target_col=self.target_col, reference_key=self.reference_key
+                pseudobulk, target_col=self.target_col, reference_key=self.reference_key, **kwargs
             )
 
         if self.metrics.ground_truth_significance:
@@ -226,7 +242,7 @@ class PerturbationBenchmarker:
                 "significance diagnostic.",
                 stacklevel=2,
             )
-            return pd.DataFrame(columns=["distance", "pvalue", "pvalue_adj", "significant"])
+            return pd.DataFrame(columns=["distance", "pvalue", "significant", "pvalue_adj", "significant_adj"])
         pt = import_pertpy()
         # `Distance`/`DistanceTest`'s AnnData-based methods read from `.obsm["X_pca"]` by default
         # when neither `layer_key` nor `obsm_key` is given (confirmed against the installed pertpy:
@@ -237,7 +253,27 @@ class PerturbationBenchmarker:
         distance_test = pt.tl.DistanceTest(metric="edistance", layer_key="_ground_truth_significance_expression")
         return distance_test(adata_for_test, groupby=self.target_col, contrast=self.reference_key)
 
-    def get_results(self, min_max_scale: bool = True) -> pd.DataFrame:
+    def get_combination_additivity(self) -> pd.DataFrame:
+        """Return the combination-additivity diagnostic.
+
+        Scores how well an additive model predicts combination perturbations (e.g. `"A+B"`)
+        from their singles (`"A"`, `"B"`), via `pertpy.tools.PerturbationSpace.evaluate_combinations`
+        over the pseudobulked union of `adata_train` and `adata_test`.
+
+        Returns
+        -------
+        DataFrame indexed by combination name with `"distance"`, `"predicted_magnitude"` and
+        `"measured_magnitude"` columns.
+        """
+        if self._combination_additivity is None:
+            raise RuntimeError(
+                "Combination additivity was not computed. Set "
+                "`metrics=PerturbationMetrics(combination_additivity=True)` (the default) and call "
+                "`.benchmark()`."
+            )
+        return self._combination_additivity
+
+    def get_results(self, min_max_scale: bool = False) -> pd.DataFrame:
         """Return the benchmarking results.
 
         Parameters
@@ -268,8 +304,8 @@ class PerturbationBenchmarker:
 
         Returns
         -------
-        DataFrame with `"distance"`, `"pvalue"`, `"pvalue_adj"` and `"significant"` columns,
-        indexed by perturbation name.
+        DataFrame with `"distance"`, `"pvalue"`, `"significant"`, `"pvalue_adj"` and
+        `"significant_adj"` columns, indexed by perturbation name.
         """
         if self._ground_truth_significance is None:
             raise RuntimeError(
@@ -278,7 +314,7 @@ class PerturbationBenchmarker:
             )
         return self._ground_truth_significance
 
-    def plot_results_table(self, min_max_scale: bool = True, show: bool = True, save_dir: str | None = None) -> Table:
+    def plot_results_table(self, min_max_scale: bool = False, show: bool = True, save_dir: str | None = None) -> Table:
         """Plot the benchmarking results as a table, with baseline rows visually distinguished.
 
         Parameters

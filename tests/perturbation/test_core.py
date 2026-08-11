@@ -194,3 +194,34 @@ def test_plot_results_table_returns_a_table():
     benchmarker.benchmark()
     table = benchmarker.plot_results_table(show=False)
     assert isinstance(table, Table)
+
+
+def test_perturbation_benchmarker():
+    # Mirrors `tests/test_benchmarker.py::test_benchmarker`: run the full default pipeline
+    # (all baselines, all default-on metrics) end-to-end on synthetic data and plot it, the
+    # same way that test exercises `Benchmarker` with `BatchCorrection()`/`BioConservation()`.
+    #
+    # Unlike `_make_train_test_split()` (which holds out only "A+B" and is used by the other,
+    # narrower tests in this file), this split holds out *two* perturbations -- "B" and "A+B"
+    # -- so `systema_decomposition` (needs >=2 held-out perturbations) actually runs instead
+    # of warning and skipping, and "A+B" is a real combination in the train+test union so
+    # `combination_additivity` finds a non-empty result instead of warning and returning empty.
+    adata = make_synthetic_perturbation_adata()
+    train = adata[adata.obs["perturbation"].isin(["control", "A"])].copy()
+    test = adata[adata.obs["perturbation"].isin(["B", "A+B"])].copy()
+    encodings = {"A": np.array([1.0, 0.0]), "B": np.array([0.0, 1.0]), "A+B": np.array([1.0, 1.0])}
+
+    benchmarker = PerturbationBenchmarker(train, test, perturbation_encodings=encodings)
+    benchmarker.benchmark()
+
+    results = benchmarker.get_results()
+    assert isinstance(results, pd.DataFrame)
+    assert set(results.index) == {"mean", "additive", "linear"}
+    assert "delta_correlation" in results.columns
+    assert "systema_shared" in results.columns
+    assert "systema_specific" in results.columns
+
+    combinations = benchmarker.get_combination_additivity()
+    assert "A+B" in combinations.index
+
+    benchmarker.plot_results_table(show=False)

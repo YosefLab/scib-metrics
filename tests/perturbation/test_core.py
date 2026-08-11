@@ -224,4 +224,9 @@ def test_perturbation_benchmarker():
     combinations = benchmarker.get_combination_additivity()
     assert "A+B" in combinations.index
 
-    benchmarker.plot_results_table(show=False)
+    # `show=True` opens a real, blocking GUI window (confirmed identical to
+    # `Benchmarker.plot_results_table`'s behavior) -- unreliable to depend on inside a test
+    # runner. `save_dir` sidesteps that: it writes a real, inspectable SVG regardless of
+    # backend/runner quirks. Open /tmp/perturbation_results.svg after running this test to
+    # visually verify the plot (colors, baseline-row labeling, etc.).
+    benchmarker.plot_results_table(show=False, save_dir="/tmp")

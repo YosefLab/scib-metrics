@@ -19,7 +19,7 @@ def test_benchmarker():
     bm.benchmark()
     results = bm.get_results()
     assert isinstance(results, pd.DataFrame)
-    bm.plot_results_table()
+    bm.plot_results_table(show=False)
 
 
 def test_benchmarker_default():
@@ -33,7 +33,7 @@ def test_benchmarker_default():
     bm.benchmark()
     results = bm.get_results()
     assert isinstance(results, pd.DataFrame)
-    bm.plot_results_table()
+    bm.plot_results_table(show=False)
 
 
 def test_benchmarker_custom_metric_booleans():
@@ -91,7 +91,7 @@ def test_benchmarker_custom_near_neighs():
     bm.benchmark()
     results = bm.get_results()
     assert isinstance(results, pd.DataFrame)
-    bm.plot_results_table()
+    bm.plot_results_table(show=False)
 
 
 @pytest.mark.parametrize("solver", ["arpack", "randomized"])
@@ -101,4 +101,4 @@ def test_benchmarker_different_solvers(solver):
     bm.benchmark()
     results = bm.get_results()
     assert isinstance(results, pd.DataFrame)
-    bm.plot_results_table()
+    bm.plot_results_table(show=False)

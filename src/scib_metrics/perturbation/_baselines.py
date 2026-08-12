@@ -1,0 +1,220 @@
+"""Naive baseline predictors for perturbation-response evaluation.
+
+All predictors operate in delta-space: `.predict()` returns the predicted expression
+*delta relative to control*, not an absolute expression profile. This matches
+`pertpy.tools.PerturbationSpace.compute_control_diff`'s convention and the metric
+functions in `scib_metrics.perturbation._metrics`, which all consume deltas.
+"""
+
+from __future__ import annotations
+
+import warnings
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any, Self
+
+import numpy as np
+from sklearn.linear_model import Ridge
+
+from scib_metrics.perturbation._utils import import_pertpy
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from anndata import AnnData
+
+    from scib_metrics._types import NdArray
+
+
+class BasePerturbationPredictor(ABC):
+    """Base class for perturbation-response baseline predictors."""
+
+    @abstractmethod
+    def fit(
+        self,
+        adata_train: AnnData,
+        target_col: str = "perturbation",
+        reference_key: str = "control",
+        perturbation_encodings: Mapping[str, NdArray] | None = None,
+    ) -> Self:
+        """Fit the baseline on training data.
+
+        Parameters
+        ----------
+        adata_train
+            Cell-level AnnData. `adata_train.obs[target_col]` holds the perturbation label
+            of each cell; `reference_key` marks control cells.
+        target_col
+            `.obs` column name holding the perturbation label.
+        reference_key
+            Perturbation label marking control cells.
+        perturbation_encodings
+            Optional feature vector per perturbation name. Required by `LinearBaseline`,
+            ignored by `MeanBaseline` and `AdditiveBaseline`.
+
+        Returns
+        -------
+        `self`.
+        """
+
+    @abstractmethod
+    def predict(self, perturbations: Sequence[str]) -> NdArray:
+        """Predict expression deltas (relative to control) for the requested perturbations.
+
+        Parameters
+        ----------
+        perturbations
+            Names of the perturbations to predict for.
+
+        Returns
+        -------
+        Array of shape `(len(perturbations), n_genes)`.
+        """
+
+
+def _pseudobulk_control_diff(pt, adata: AnnData, target_col: str, reference_key: str) -> tuple[AnnData, Any]:
+    """Pseudobulk `adata` by `target_col` (mean mode) and subtract the control mean in place.
+
+    Note: `pertpy.tools.PerturbationSpace` is not exported at the `pt.tl` top level (it exists
+    only as the internal base class of `PseudobulkSpace`/`CentroidSpace`/etc.) — always call
+    `compute_control_diff`/`add`/`subtract` on a `PseudobulkSpace` (or other concrete space)
+    instance, never `pt.tl.PerturbationSpace()` directly (that raises `AttributeError`).
+
+    Returns
+    -------
+    Tuple of `(diffed pseudobulk AnnData, the PseudobulkSpace instance used)` — callers that
+    also need `.add()` (e.g. `AdditiveBaseline`) reuse the same instance rather than creating
+    a second one.
+    """
+    ps = pt.tl.PseudobulkSpace()
+    pseudobulk = ps.compute(adata, target_col=target_col, mode="mean")
+    ps.compute_control_diff(pseudobulk, target_col=target_col, reference_key=reference_key, copy=False)
+    return pseudobulk, ps
+
+
+class MeanBaseline(BasePerturbationPredictor):
+    """Predicts the mean training-perturbation delta for every requested perturbation.
+
+    Deliberately naive: this is the "did your model beat just guessing the average
+    perturbed profile" floor from the perturbation-evaluation literature. It is blind to
+    which perturbation is being requested.
+    """
+
+    def fit(
+        self,
+        adata_train: AnnData,
+        target_col: str = "perturbation",
+        reference_key: str = "control",
+        perturbation_encodings: Mapping[str, NdArray] | None = None,
+    ) -> Self:
+        pt = import_pertpy()
+        pseudobulk, _ = _pseudobulk_control_diff(pt, adata_train, target_col, reference_key)
+        is_control = pseudobulk.obs[target_col].astype(str).to_numpy() == reference_key
+        deltas = np.asarray(pseudobulk.X)[~is_control]
+        if deltas.shape[0] == 0:
+            raise ValueError(f"No non-control perturbations found in `adata_train.obs[{target_col!r}]`.")
+        self.mean_delta_ = deltas.mean(axis=0)
+        return self
+
+    def predict(self, perturbations: Sequence[str]) -> NdArray:
+        return np.tile(self.mean_delta_, (len(perturbations), 1))
+
+
+class AdditiveBaseline(BasePerturbationPredictor):
+    """Predicts combination perturbations additively from their trained single components.
+
+    For a requested perturbation whose name decomposes via `sep` into components that were
+    each present as a training perturbation (e.g. `"A+B"` when `A` and `B` were trained on),
+    predicts `delta(A) + delta(B)` via `pertpy.tools.PerturbationSpace.add`. For a requested
+    perturbation with no such decomposition, falls back to the same global mean-delta
+    behavior as `MeanBaseline` — this is the expected, literature-standard degenerate case:
+    predicting a single unseen perturbation from a global average shift is mathematically
+    identical to `MeanBaseline` when there is no combination structure to exploit.
+    """
+
+    def __init__(self, sep: str = "+") -> None:
+        self.sep = sep
+
+    def fit(
+        self,
+        adata_train: AnnData,
+        target_col: str = "perturbation",
+        reference_key: str = "control",
+        perturbation_encodings: Mapping[str, NdArray] | None = None,
+    ) -> Self:
+        pt = import_pertpy()
+        self._diffed_adata, self._ps = _pseudobulk_control_diff(pt, adata_train, target_col, reference_key)
+        self._target_col = target_col
+        self._reference_key = reference_key
+        is_control = self._diffed_adata.obs[target_col].astype(str).to_numpy() == reference_key
+        deltas = np.asarray(self._diffed_adata.X)[~is_control]
+        if deltas.shape[0] == 0:
+            raise ValueError(f"No non-control perturbations found in `adata_train.obs[{target_col!r}]`.")
+        self.mean_delta_ = deltas.mean(axis=0)
+        return self
+
+    def predict(self, perturbations: Sequence[str]) -> NdArray:
+        trained_names = set(self._diffed_adata.obs_names.astype(str))
+        rows = []
+        for perturbation in perturbations:
+            components = perturbation.split(self.sep)
+            if len(components) > 1 and all(c in trained_names for c in components):
+                # `ensure_consistency=False` is correct here: `self._diffed_adata` was already
+                # differenced against control in `fit()`. pertpy's `.add()` still warns about this
+                # (it can't see that we pre-diffed) — the warning is a known false positive for
+                # our exact usage, so it's suppressed rather than left to spam every `.predict()` call.
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", UserWarning)
+                    combined = self._ps.add(
+                        self._diffed_adata,
+                        perturbations=components,
+                        reference_key=self._reference_key,
+                        ensure_consistency=False,
+                        target_col=self._target_col,
+                    )
+                rows.append(np.asarray(combined.X)[-1])
+            else:
+                rows.append(self.mean_delta_)
+        return np.stack(rows, axis=0)
+
+
+class LinearBaseline(BasePerturbationPredictor):
+    """Ridge regression from a perturbation encoding to its expression delta.
+
+    Unlike `MeanBaseline` and `AdditiveBaseline`, this baseline can generalize to a held-out
+    perturbation with no training-set relationship to any trained perturbation, as long as a
+    feature encoding is supplied for it.
+    """
+
+    def __init__(self, **ridge_kwargs) -> None:
+        self.ridge_kwargs = ridge_kwargs
+
+    def fit(
+        self,
+        adata_train: AnnData,
+        target_col: str = "perturbation",
+        reference_key: str = "control",
+        perturbation_encodings: Mapping[str, NdArray] | None = None,
+    ) -> Self:
+        if not perturbation_encodings:
+            raise ValueError("`LinearBaseline` requires `perturbation_encodings`.")
+        pt = import_pertpy()
+        pseudobulk, _ = _pseudobulk_control_diff(pt, adata_train, target_col, reference_key)
+        names = pseudobulk.obs_names.astype(str).tolist()
+        encodings, deltas = [], []
+        for name, delta in zip(names, np.asarray(pseudobulk.X), strict=True):
+            if name == reference_key or name not in perturbation_encodings:
+                continue
+            encodings.append(np.asarray(perturbation_encodings[name]))
+            deltas.append(delta)
+        if not encodings:
+            raise ValueError("None of the training perturbations have a matching entry in `perturbation_encodings`.")
+        self.model_ = Ridge(**self.ridge_kwargs).fit(np.stack(encodings), np.stack(deltas))
+        self.perturbation_encodings_ = perturbation_encodings
+        return self
+
+    def predict(self, perturbations: Sequence[str]) -> NdArray:
+        missing = [p for p in perturbations if p not in self.perturbation_encodings_]
+        if missing:
+            raise ValueError(f"No encoding supplied for perturbations: {missing}.")
+        encodings = np.stack([np.asarray(self.perturbation_encodings_[p]) for p in perturbations])
+        return self.model_.predict(encodings)

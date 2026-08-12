@@ -337,12 +337,21 @@ class PerturbationBenchmarker:
 
         cmap_fn = lambda col_data: normed_cmap(col_data, cmap=mpl.cm.PRGn, num_stds=2.5)
         score_cols = [c for c in plot_df.columns if c != "Predictor"]
+        # "Predictor" values can be as long as "<name> (baseline)"; size the column to the
+        # longest actual value rather than a fixed width, so labels like "additive (baseline)"
+        # aren't truncated.
+        predictor_width = max(2.0, 0.14 * plot_df["Predictor"].str.len().max())
         column_definitions = [
-            ColumnDefinition("Predictor", width=2.0, textprops={"ha": "left", "weight": "bold"}),
+            ColumnDefinition("Predictor", width=predictor_width, textprops={"ha": "left", "weight": "bold"}),
         ]
         column_definitions += [
             ColumnDefinition(
                 col,
+                # Score column names (e.g. "delta_correlation", "systema_specific") are wider
+                # than the circular value markers below them; wrapping onto a second line at
+                # the first underscore, as `Benchmarker.plot_results_table` does at its first
+                # space, keeps adjacent headers from overlapping.
+                title=col.replace("_", "\n", 1),
                 width=1,
                 textprops={"ha": "center", "bbox": {"boxstyle": "circle", "pad": 0.25}},
                 cmap=cmap_fn(plot_df[col]),
@@ -351,7 +360,7 @@ class PerturbationBenchmarker:
             for col in score_cols
         ]
         with mpl.rc_context({"svg.fonttype": "none"}):
-            fig, ax = plt.subplots(figsize=(len(score_cols) * 1.25, 3 + 0.3 * len(plot_df)))
+            fig, ax = plt.subplots(figsize=(len(score_cols) * 1.25 + predictor_width, 3 + 0.3 * len(plot_df)))
             table = Table(
                 plot_df,
                 cell_kw={"linewidth": 0, "edgecolor": "k"},

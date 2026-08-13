@@ -78,6 +78,8 @@ def kbet(X: NeighborsResults, batches: np.ndarray, alpha: float = 0.05) -> float
     neigh_batch_ids = batches[knn_idx]
     chex.assert_equal_shape([neigh_batch_ids, knn_idx])
     n_batches = jnp.unique(batches).shape[0]
+    if n_batches < 2:
+        raise ValueError("kBET requires at least two batches; only one batch was found in `batches`.")
     test_statistics, p_values = _kbet(neigh_batch_ids, batches, n_batches)
     test_statistics = get_ndarray(test_statistics)
     p_values = get_ndarray(p_values)

@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.6.1 (2026-XX-XX)
+
+### Fixed
+
+- Fix {func}`scib_metrics.silhouette_batch` (and {func}`scib_metrics.bras`, which relies on it) raising an
+  uninformative `pandas` concatenation error when every label group contains only a single batch; it now
+  raises a clear `ValueError`, {pr}`287`.
+- Fix {func}`scib_metrics.kbet` silently returning a misleading zero acceptance rate for single-batch input;
+  it now raises a `ValueError` instead, {pr}`287`.
+- Fix {func}`scib_metrics.utils.principal_component_regression` (and {func}`scib_metrics.pcr_comparison`)
+  producing an unstable, effectively meaningless score for a constant (e.g. single-batch) covariate, due to
+  dividing by near-zero floating-point noise from a rank-deficient regression; it now raises a `ValueError`
+  on the constant covariate directly, {pr}`287`.
+- Fix aggregate score labels in {func}`scib_metrics.benchmark.Benchmarker.plot_results_table` staying black
+  on dark bar backgrounds: `plottable`'s `autoset_fontcolors` cannot see the color of bar-plot cells, so the
+  font color for those columns is now computed explicitly from the same colormap used to draw the bars, {pr}`287`.
+
 ## 0.6.0 (2026-07-28)
 
 ### Added

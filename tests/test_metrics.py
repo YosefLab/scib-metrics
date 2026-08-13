@@ -62,6 +62,13 @@ def test_silhouette_batch():
     scib_metrics.silhouette_batch(X, labels, batch)
 
 
+def test_silhouette_batch_single_batch_raises():
+    X, labels = dummy_x_labels()
+    batch = np.zeros(labels.shape[0], dtype=int)
+    with pytest.raises(ValueError, match="single batch"):
+        scib_metrics.silhouette_batch(X, labels, batch)
+
+
 def test_compute_simpson_index():
     X, labels = dummy_x_labels()
     D = scib_metrics.utils.cdist(X, X)
@@ -182,6 +189,13 @@ def test_kbet():
     assert isinstance(acc_rate, float)
     assert len(stats) == X.indices.shape[0]
     assert len(pvalues) == X.indices.shape[0]
+
+
+def test_kbet_single_batch_raises():
+    X, _ = dummy_x_labels(x_is_neighbors_results=True)
+    batch = np.zeros(X.indices.shape[0], dtype=int)
+    with pytest.raises(ValueError, match="at least two batches"):
+        scib_metrics.kbet(X, batch)
 
 
 def test_kbet_per_label():

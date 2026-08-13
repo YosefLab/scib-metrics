@@ -114,6 +114,13 @@ def silhouette_batch(
             )
         )
 
+    if len(sil_dfs) == 0:
+        raise ValueError(
+            "Silhouette batch score is undefined: every label group contains only a single batch "
+            "(or as many batches as cells). This metric requires at least two batches within at "
+            "least one label group."
+        )
+
     sil_df = pd.concat(sil_dfs).reset_index(drop=True)
     sil_means = sil_df.groupby("group").mean()
     asw = sil_means["silhouette_score"].mean()

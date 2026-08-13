@@ -15,6 +15,7 @@ import scanpy as sc
 from anndata import AnnData
 from plottable import ColumnDefinition, Table
 from plottable.cmap import normed_cmap
+from plottable.font import contrasting_font_color
 from plottable.plots import bar
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
@@ -397,6 +398,16 @@ class Benchmarker:
                 column_border_kw={"linewidth": 1, "linestyle": "-"},
                 index_col="Method",
             ).autoset_fontcolors(colnames=plot_df.columns)
+            # `autoset_fontcolors` only recolors cells that expose a `.text` attribute. The
+            # aggregate score columns are drawn with `plot_fn=bar`, whose value label is a raw
+            # `ax.text` call inside an inset axes, so those cells are silently skipped and the
+            # label stays black even on the near-black end of the colormap. Recolor them here
+            # using the same colormap and value the bar itself was drawn with.
+            for col in score_cols:
+                for cell in tab.get_column(col).cells:
+                    text_color = contrasting_font_color(mpl.cm.YlGnBu(float(cell.content)))
+                    for text in cell.axes_inset.texts:
+                        text.set_color(text_color)
         if show:
             plt.show()
         if save_dir is not None:

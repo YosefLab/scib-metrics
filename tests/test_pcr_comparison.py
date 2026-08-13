@@ -1,5 +1,6 @@
 from itertools import product
 
+import numpy as np
 import pytest
 
 import scib_metrics
@@ -16,3 +17,13 @@ def test_pcr_comparison(n_obs, n_vars, categorical):
 
     score = scib_metrics.pcr_comparison(X_pre, X_post, covariate, scale=True)
     assert score >= 0 and score <= 1
+
+
+def test_pcr_comparison_single_batch_raises():
+    n_obs, n_vars = 100, 100
+    X_pre = poisson_sample(n_obs, n_vars, seed=0)
+    X_post = poisson_sample(n_obs, n_vars, seed=1)
+    covariate = np.zeros(n_obs)
+
+    with pytest.raises(ValueError, match="constant"):
+        scib_metrics.pcr_comparison(X_pre, X_post, covariate, scale=True, categorical=True)

@@ -162,9 +162,9 @@ ini_options.testpaths = [ "tests" ]
 ini_options.xfail_strict = true
 
 [tool.coverage]
+run.source = [ "scib_metrics" ]
 run.omit = [ "**/test_*.py" ]
 run.patch = [ "subprocess" ]
-run.source = [ "scib_metrics" ]
 
 [tool.jupytext]
 formats = "ipynb,md"

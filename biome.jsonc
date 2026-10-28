@@ -1,7 +1,9 @@
 {
-    "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+    "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
     "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
     "formatter": { "useEditorconfig": true },
+    // Markdown formatting (new in biome 2.6) mangles nested blockquotes in docs/*.md
+    "markdown": { "formatter": { "enabled": false } },
     "overrides": [
         {
             "includes": ["./.vscode/*.json", "**/*.jsonc"],

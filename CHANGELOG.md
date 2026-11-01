@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## 0.6.2 (2026-11-01)
+
+### Fixed
+
+- Fix {meth}`scib_metrics.benchmark.Benchmarker.get_results` raising
+  `TypeError'` with `min_max_scale=True` on `pandas` 3, {pr}`305`.
+
 ## 0.6.1 (2026-09-10)
 
 ### Fixed

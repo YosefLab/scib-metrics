@@ -308,6 +308,7 @@ class Benchmarker:
                 0.4 * per_class_score["Batch correction"] + 0.6 * per_class_score["Bio conservation"]
             )
         df = pd.concat([df.transpose(), per_class_score], axis=1)
+        df = df.astype(dict.fromkeys(per_class_score.columns, object))
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE
         return df
 

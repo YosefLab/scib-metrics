@@ -69,15 +69,12 @@ doc = [
   "ipykernel",
   # For notebooks
   "ipython",
-  "myst-nb",
   "numba>=0.57.1",
   "pybtex-docutils>=1",
-  "scanpydoc[typehints]>=0.7.4",
-  "sphinx>=4",
-  "sphinx-book-theme>=1",
-  "sphinx-copybutton",
+  "scverse-doc[full]>=0.4",
+  "sphinx>=9.1",
+  "sphinx-autodoc-typehints",
   "sphinxcontrib-bibtex>=2.6",
-  "sphinxext-opengraph",
 ]
 
 [tool.hatch]

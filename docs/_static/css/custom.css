@@ -2,3 +2,28 @@
 div.cell_output table.dataframe {
     font-size: 0.8em;
 }
+
+/* Article header buttons (see docs/_templates/header-buttons.html) */
+.scib-download-dropdown .dropdown-toggle::after {
+    display: none;
+}
+
+@media print {
+    .scib-download-dropdown,
+    .scib-fullscreen-button {
+        display: none !important;
+    }
+}
+
+/* Larger, centred project title at the top of the sidebar */
+.bd-sidebar-primary .navbar-brand {
+    justify-content: center;
+    width: 100%;
+}
+
+.bd-sidebar-primary .navbar-brand .logo__title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 auto;
+}

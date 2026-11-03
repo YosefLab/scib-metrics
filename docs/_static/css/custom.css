@@ -14,3 +14,16 @@ div.cell_output table.dataframe {
         display: none !important;
     }
 }
+
+/* Larger, centred project title at the top of the sidebar */
+.bd-sidebar-primary .navbar-brand {
+    justify-content: center;
+    width: 100%;
+}
+
+.bd-sidebar-primary .navbar-brand .logo__title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 auto;
+}

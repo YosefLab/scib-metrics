@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## Unreleased
+
+### Changed
+
+- The documentation is built with `scverse-doc` on Sphinx 9 and uses its sidebar layout:
+  Getting started, Guides (tutorials, contributing), Reference (API) and Project,
+  with a new citation page. The download and full screen buttons of `sphinx-book-theme`
+  are kept, {pr}`TBD`.
+
 ## 0.6.2 (2026-11-01)
 
 ### Fixed

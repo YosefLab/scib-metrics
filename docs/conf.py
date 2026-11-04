@@ -75,7 +75,15 @@ html_static_path = ["_static"]
 html_css_files = ["css/custom.css", "css/override.css"]
 html_js_files = ["js/custom.js"]
 
+# Shown at the top of the left sidebar instead of the project name.
+html_logo = "_static/logo.png"
+
 html_theme_options = {
+    "logo": {
+        "image_light": "_static/logo.png",
+        "image_dark": "_static/logo-dark.png",
+        "alt_text": "scib-metrics",
+    },
     # The scverse theme's header, plus the download/fullscreen buttons that
     # sphinx-book-theme used to provide (see _templates/header-buttons.html).
     "article_header_end": [

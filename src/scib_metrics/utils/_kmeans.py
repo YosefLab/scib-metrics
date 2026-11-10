@@ -180,7 +180,8 @@ class KMeans:
 
         centroids = self._initialize(X, self.n_clusters, key)
         # centroids, new_inertia, old_inertia, n_iter
-        state = (centroids, jnp.inf, jnp.inf, jnp.array([0.0]))
+        inf = jnp.array(jnp.inf, dtype=centroids.dtype)
+        state = (centroids, inf, inf, jnp.array([0.0]))
         state = jax.lax.while_loop(_kmeans_convergence, _kmeans_step, state)
         # Compute final inertia
         centroids = state[0]

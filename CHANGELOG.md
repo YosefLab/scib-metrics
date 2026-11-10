@@ -10,12 +10,22 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+## 0.6.3 (2026-11-10)
+
+### Fixed
+
+- Fix {class}`scib_metrics.nearest_neighbors.NeighborsResults` connectivities computation
+  (used by the Leiden-based NMI/ARI, kBET and the {class}`scib_metrics.benchmark.Benchmarker`)
+  raising a `numba` `TypingError` with `umap-learn` 0.6, whose stricter compiled signatures
+  require C-contiguous `float32` neighbor arrays; inputs are now made contiguous before being
+  passed to `umap`, {pr}`310`.
+
 ### Changed
 
 - The documentation is built with `scverse-doc` on Sphinx 9 and uses its sidebar layout:
   Getting started, Guides (tutorials, contributing), Reference (API) and Project,
   with a new citation page. The download and full screen buttons of `sphinx-book-theme`
-  are kept, {pr}`TBD`.
+  are kept, {pr}`309`.
 
 ## 0.6.2 (2026-11-01)
 

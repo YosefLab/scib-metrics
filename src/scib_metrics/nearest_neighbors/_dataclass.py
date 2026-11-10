@@ -59,8 +59,10 @@ class NeighborsResults:
             n_neighbors=self.n_neighbors,
             random_state=None,
             metric=None,
-            knn_indices=self.indices,
-            knn_dists=self.distances,
+            # umap-learn >= 0.6 compiles with strict numba signatures that require
+            # C-contiguous arrays (and float32 distances); slices/views would fail typing.
+            knn_indices=np.ascontiguousarray(self.indices),
+            knn_dists=np.ascontiguousarray(self.distances, dtype=np.float32),
             set_op_mix_ratio=1.0,
             local_connectivity=1.0,
         )

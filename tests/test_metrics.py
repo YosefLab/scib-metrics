@@ -208,3 +208,15 @@ def test_graph_connectivity():
     X, labels = dummy_x_labels(symmetric_positive=True, x_is_neighbors_results=True)
     metric = scib_metrics.graph_connectivity(X, labels)
     assert isinstance(metric, float)
+
+
+def test_graph_connectivity_uses_symmetric_graph():
+    # Cell 3 is far away: its neighbors are 0-2, but it is in no one's kNN.
+    # On the directed kNN graph it would be its own strongly connected component
+    # (score 3/4); on the symmetric connectivities graph (as in scib) it is connected.
+    pts = np.array([0.0, 1.0, 2.0, 10.0])
+    indices = np.array([[0, 1, 2], [1, 0, 2], [2, 1, 0], [3, 2, 1]])
+    distances = np.abs(pts[:, None] - pts[indices])
+    X = NeighborsResults(indices=indices, distances=distances)
+    labels = np.zeros(4, dtype=int)
+    assert scib_metrics.graph_connectivity(X, labels) == pytest.approx(1.0)

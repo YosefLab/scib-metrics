@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
-## 0.6.3 (2026-11-10)
+## 0.6.3 (2026-XX-XX)
 
 ### Fixed
 
@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning][].
   raising a `numba` `TypingError` with `umap-learn` 0.6, whose stricter compiled signatures
   require C-contiguous `float32` neighbor arrays; inputs are now made contiguous before being
   passed to `umap`, {pr}`310`.
+- {func}`scib_metrics.graph_connectivity` now computes connected components on the symmetric
+  UMAP connectivities graph instead of the directed kNN distance graph, matching the original
+  scib implementation. Scores may increase relative to previous versions {issue}`312`.
 
 ### Changed
 

@@ -21,6 +21,10 @@ domains align with tissue boundaries, which is relevant for models aimed at
 spatial domain identification.
 
 All functions return a float in **[0, 1]** where **higher is always better**.
+Scores are chance-corrected or clipped so that a random embedding scores
+close to 0.  Metrics that look at spatial neighbours evaluate a subsample of
+``max_cells`` cells, but search neighbours among all cells, so a "spatial
+neighbour" is always an adjacent cell.
 
 References
 ----------
@@ -39,6 +43,40 @@ from scipy.spatial.distance import pdist
 from scipy.stats import ConstantInputWarning, spearmanr
 from sklearn.cluster import KMeans
 from sklearn.neighbors import NearestNeighbors
+
+
+def _query_indices(n: int, max_cells: int, seed: int) -> np.ndarray:
+    """Indices of the cells at which a metric is evaluated.
+
+    Only the *query* cells are subsampled; neighbour searches always run over
+    all ``n`` cells, so "spatial neighbour" keeps its meaning (adjacent cells)
+    regardless of ``max_cells``.
+    """
+    if n <= max_cells:
+        return np.arange(n)
+    rng = np.random.default_rng(seed)
+    return np.sort(rng.choice(n, max_cells, replace=False))
+
+
+def _knn_of_queries(data: np.ndarray, query_idx: np.ndarray, k: int) -> np.ndarray:
+    """``k`` nearest neighbours (among all rows of ``data``) of each query row, excluding itself."""
+    nn = NearestNeighbors(n_neighbors=k + 1).fit(data)
+    inds = nn.kneighbors(data[query_idx], return_distance=False)
+    keep = inds != query_idx[:, None]
+    # With duplicate points the query itself may fall outside the k+1 hits;
+    # then drop the farthest hit instead.
+    no_self = keep.all(axis=1)
+    keep[no_self, -1] = False
+    return inds[keep].reshape(len(query_idx), k)
+
+
+def _chance_normalised_overlap(ref_inds: np.ndarray, lat_inds: np.ndarray, k: int, n: int) -> float:
+    """Mean fraction of reference neighbours found in the latent kNN, rescaled so random -> 0."""
+    raw = float(np.mean((ref_inds[:, :, None] == lat_inds[:, None, :]).any(-1).mean(axis=1)))
+    chance = k / (n - 1)
+    if chance >= 1.0:
+        return raw
+    return float(np.clip((raw - chance) / (1.0 - chance), 0.0, 1.0))
 
 
 def _sample_weighted_score(
@@ -84,9 +122,11 @@ def spatial_mrre(
 
     For each spot, finds its ``k`` nearest spatial neighbours and compares
     their rank ordering in spatial space to their rank ordering in the latent
-    embedding.  The mean absolute rank difference, normalised by ``k``,
-    measures how much the local geometry is distorted.  The score is
-    ``1 - MRRE/k`` so that perfect rank preservation yields 1.
+    embedding (rank ``k`` if it is not a latent k-NN).  The mean absolute
+    rank difference, normalised by ``k``, measures how much the local
+    geometry is distorted.  ``1 - MRRE/k`` is then rescaled against its
+    expected value for a random embedding, so random -> 0 and perfect rank
+    preservation -> 1.
 
     Parameters
     ----------
@@ -97,8 +137,8 @@ def spatial_mrre(
     k
         Neighbourhood size. Default ``15``.
     max_cells
-        Subsample to this many cells before computation (O(n·k) cost).
-        Default ``2000``.
+        Number of cells at which the score is evaluated. Neighbours are
+        always searched among all cells. Default ``2000``.
     seed
         Random seed for subsampling. Default ``42``.
     sample_labels
@@ -122,36 +162,29 @@ def spatial_mrre(
     if grouped is not None:
         return grouped
     n = len(X_embedding)
-
-    if n > max_cells:
-        rng = np.random.default_rng(seed)
-        idx = rng.choice(n, max_cells, replace=False)
-        X_embedding = X_embedding[idx]
-        spatial_coords = spatial_coords[idx]
-        n = max_cells
-
     k = min(k, n - 1)
     if k == 0:
         return 1.0
-    kp1 = k + 1
+    q = _query_indices(n, max_cells, seed)
+    s_inds = _knn_of_queries(spatial_coords, q, k)
+    l_inds = _knn_of_queries(X_embedding, q, k)
 
-    nn_s = NearestNeighbors(n_neighbors=kp1, algorithm="kd_tree").fit(spatial_coords)
-    _, s_inds = nn_s.kneighbors(spatial_coords)
-    s_inds = s_inds[:, 1:]  # (n, k)
+    # Latent rank of every spatial neighbour; neighbours outside the latent
+    # top-k get rank k.
+    eq = s_inds[:, :, None] == l_inds[:, None, :]
+    lat_ranks = np.where(eq.any(-1), eq.argmax(-1), k)
+    mrre = float(np.mean(np.abs(np.arange(k)[None, :] - lat_ranks))) / k
+    score = 1.0 - mrre
 
-    nn_l = NearestNeighbors(n_neighbors=kp1, algorithm="kd_tree").fit(X_embedding)
-    _, l_inds = nn_l.kneighbors(X_embedding)
-    l_inds = l_inds[:, 1:]  # (n, k)
-
-    total_error = 0.0
-    for i in range(n):
-        rank_lookup = np.full(n, k, dtype=np.int32)
-        rank_lookup[l_inds[i]] = np.arange(k, dtype=np.int32)
-        lat_ranks = rank_lookup[s_inds[i]]
-        total_error += float(np.sum(np.abs(np.arange(k) - lat_ranks)))
-
-    mrre = total_error / (n * k)
-    return float(max(0.0, 1.0 - mrre / k))
+    # Expected score of a random embedding: a spatial neighbour lands in the
+    # latent top-k with probability p = k / (n - 1), at a uniform rank.
+    p = k / (n - 1)
+    err_out = (k + 1) / 2  # mean |j - k| for j uniform on 0..k-1
+    err_in = (k**2 - 1) / (3 * k)  # mean |j - u| for j, u uniform on 0..k-1
+    baseline = 1.0 - ((1 - p) * err_out + p * err_in) / k
+    if baseline >= 1.0:
+        return float(np.clip(score, 0.0, 1.0))
+    return float(np.clip((score - baseline) / (1.0 - baseline), 0.0, 1.0))
 
 
 def spatial_knn_overlap(
@@ -179,7 +212,8 @@ def spatial_knn_overlap(
     k
         Neighbourhood size. Default ``15``.
     max_cells
-        Subsample to this many cells before computation. Default ``2000``.
+        Number of cells at which the score is evaluated. Neighbours are
+        always searched among all cells. Default ``2000``.
     seed
         Random seed for subsampling. Default ``42``.
     sample_labels
@@ -203,37 +237,13 @@ def spatial_knn_overlap(
     if grouped is not None:
         return grouped
     n = len(X_embedding)
-
-    if n > max_cells:
-        rng = np.random.default_rng(seed)
-        idx = rng.choice(n, max_cells, replace=False)
-        X_embedding = X_embedding[idx]
-        spatial_coords = spatial_coords[idx]
-        n = max_cells
-
     k = min(k, n - 1)
     if k == 0:
         return 1.0
-    kp1 = k + 1
-
-    nn_s = NearestNeighbors(n_neighbors=kp1, algorithm="kd_tree").fit(spatial_coords)
-    _, s_inds = nn_s.kneighbors(spatial_coords)
-    s_inds = s_inds[:, 1:]
-
-    nn_l = NearestNeighbors(n_neighbors=kp1, algorithm="kd_tree").fit(X_embedding)
-    _, l_inds = nn_l.kneighbors(X_embedding)
-    l_inds = l_inds[:, 1:]
-
-    overlaps = np.array([np.sum(np.isin(s_inds[i], l_inds[i])) / k for i in range(n)])
-    raw = float(np.mean(overlaps))
-
-    # Normalise against the random-chance baseline: for n spots and k neighbours
-    # a random embedding shares k/(n-1) neighbours on average.  Rescale so that
-    # random → 0 and perfect overlap → 1, then clip to [0, 1].
-    chance = k / (n - 1)
-    if chance >= 1.0:
-        return raw
-    return float(np.clip((raw - chance) / (1.0 - chance), 0.0, 1.0))
+    q = _query_indices(n, max_cells, seed)
+    s_inds = _knn_of_queries(spatial_coords, q, k)
+    l_inds = _knn_of_queries(X_embedding, q, k)
+    return _chance_normalised_overlap(s_inds, l_inds, k, n)
 
 
 def spatial_distance_correlation(
@@ -244,15 +254,15 @@ def spatial_distance_correlation(
     *,
     sample_labels: np.ndarray | None = None,
 ) -> float:
-    """Spearman correlation of pairwise distances, rescaled to [0, 1].
+    """Spearman correlation of pairwise distances, clipped to [0, 1].
 
     Computes pairwise Euclidean distances in spatial coordinate space and in
     the latent embedding, then measures their Spearman rank correlation.
     A high correlation indicates that the embedding preserves the global
     spatial distance structure.
 
-    The Spearman correlation (in ``[-1, 1]``) is rescaled to ``[0, 1]`` via
-    ``(r + 1) / 2``.
+    The Spearman correlation is clipped to ``[0, 1]`` (negative values -> 0),
+    so a random embedding scores ~0.
 
     Parameters
     ----------
@@ -299,7 +309,9 @@ def spatial_distance_correlation(
         warnings.simplefilter("ignore", ConstantInputWarning)
         corr, _ = spearmanr(sp_dists, lat_dists)
     corr = 0.0 if np.isnan(corr) else float(corr)
-    return float((corr + 1.0) / 2.0)
+    # Negative correlations are clipped to 0 so that a random embedding (r ~ 0)
+    # scores ~0 rather than 0.5.
+    return float(np.clip(corr, 0.0, 1.0))
 
 
 def spatial_morans_i(
@@ -309,13 +321,14 @@ def spatial_morans_i(
     *,
     sample_labels: np.ndarray | None = None,
 ) -> float:
-    """Mean Moran's I of latent dimensions, rescaled to [0, 1].
+    """Mean Moran's I of latent dimensions, clipped to [0, 1].
 
     Computes Moran's I spatial autocorrelation statistic for each latent
     dimension using a row-standardised k-NN spatial weight matrix.  Positive
     Moran's I indicates that spatially adjacent spots have similar values in
     that latent dimension (smooth spatial variation).  The mean across all
-    latent dimensions is rescaled from ``[-1, 1]`` to ``[0, 1]``.
+    latent dimensions is clipped to ``[0, 1]`` (negative autocorrelation -> 0),
+    so a random embedding scores ~0.
 
     Parameters
     ----------
@@ -358,7 +371,9 @@ def spatial_morans_i(
     I_per_dim = np.where(denominator > 0, numerator / denominator, 0.0)
 
     mean_I = float(np.mean(I_per_dim))
-    return float((mean_I + 1.0) / 2.0)
+    # Clip instead of rescaling with (I + 1) / 2 so a random embedding
+    # (I ~ -1 / (n - 1)) scores ~0 rather than 0.5.
+    return float(np.clip(mean_I, 0.0, 1.0))
 
 
 # ---------------------------------------------------------------------------
@@ -408,7 +423,8 @@ def spatial_niche_knn_overlap(
         Number of spatial neighbours used to aggregate the niche descriptor.
         Default ``6``.
     max_cells
-        Subsample to this many cells before computation. Default ``2000``.
+        Number of cells at which the score is evaluated. Neighbours are
+        always searched among all cells. Default ``2000``.
     seed
         Random seed for subsampling. Default ``42``.
     sample_labels
@@ -455,49 +471,24 @@ def spatial_niche_knn_overlap(
             weights.append(n_sample)
         return float(np.average(scores, weights=weights)) if scores else np.nan
     n = len(X_embedding)
-
-    if n > max_cells:
-        rng = np.random.default_rng(seed)
-        idx = rng.choice(n, max_cells, replace=False)
-        X_embedding = X_embedding[idx]
-        spatial_coords = spatial_coords[idx]
-        if X_expression is not None:
-            X_expression = np.asarray(X_expression, dtype=float)[idx]
-        n = max_cells
-
-    # ── build niche descriptors ──────────────────────────────────────────────
-    k_sp = min(k_spatial, n - 1)
-    nn_sp = NearestNeighbors(n_neighbors=k_sp + 1, algorithm="kd_tree").fit(spatial_coords)
-    _, sp_inds = nn_sp.kneighbors(spatial_coords)
-    sp_inds = sp_inds[:, 1:]  # exclude self
-
-    if X_expression is not None:
-        X_expr = np.asarray(X_expression, dtype=float)
-        niche_features = X_expr[sp_inds].mean(axis=1)  # (n, n_features)
-    else:
-        niche_features = spatial_coords[sp_inds].mean(axis=1)  # (n, 2)
-
-    # ── kNN in latent and niche spaces ───────────────────────────────────────
     k = min(k, n - 1)
-    if k == 0:
+    k_sp = min(k_spatial, n - 1)
+    if k == 0 or k_sp == 0:
         return 1.0
-    kp1 = k + 1
 
-    nn_lat = NearestNeighbors(n_neighbors=kp1, algorithm="auto").fit(X_embedding)
-    _, lat_inds = nn_lat.kneighbors(X_embedding)
-    lat_inds = lat_inds[:, 1:]
+    # ── niche descriptors from the true spatial neighbours (all cells) ──────
+    all_idx = np.arange(n)
+    sp_inds = _knn_of_queries(spatial_coords, all_idx, k_sp)
+    if X_expression is not None:
+        niche_features = np.asarray(X_expression, dtype=float)[sp_inds].mean(axis=1)
+    else:
+        niche_features = spatial_coords[sp_inds].mean(axis=1)
 
-    nn_niche = NearestNeighbors(n_neighbors=kp1, algorithm="auto").fit(niche_features)
-    _, niche_inds = nn_niche.kneighbors(niche_features)
-    niche_inds = niche_inds[:, 1:]
-
-    # ── chance-normalised overlap ────────────────────────────────────────────
-    overlaps = np.array([np.sum(np.isin(niche_inds[i], lat_inds[i])) / k for i in range(n)])
-    raw = float(np.mean(overlaps))
-    chance = k / (n - 1)
-    if chance >= 1.0:
-        return raw
-    return float(np.clip((raw - chance) / (1.0 - chance), 0.0, 1.0))
+    # ── kNN in latent and niche spaces, evaluated at a subsample of cells ───
+    q = _query_indices(n, max_cells, seed)
+    lat_inds = _knn_of_queries(X_embedding, q, k)
+    niche_inds = _knn_of_queries(niche_features, q, k)
+    return _chance_normalised_overlap(niche_inds, lat_inds, k, n)
 
 
 def spatial_neighbor_knn_overlap(
@@ -527,7 +518,8 @@ def spatial_neighbor_knn_overlap(
     k
         Number of reference and latent neighbours to compare. Default ``15``.
     max_cells
-        Subsample to this many cells before computation. Default ``2000``.
+        Number of cells at which the score is evaluated. Neighbours are
+        always searched among all cells. Default ``2000``.
     seed
         Random seed for subsampling. Default ``42``.
     sample_labels
@@ -580,32 +572,20 @@ def spatial_neighbor_knn_overlap(
         return float(np.average(scores, weights=weights)) if scores else np.nan
 
     n = len(X_embedding)
-    if n > max_cells:
-        rng = np.random.default_rng(seed)
-        idx = rng.choice(n, max_cells, replace=False)
-        old_to_new = np.full(n, -1, dtype=int)
-        old_to_new[idx] = np.arange(max_cells)
-        X_embedding = X_embedding[idx]
-        neighbor_indices = old_to_new[neighbor_indices[idx]]
-        n = max_cells
-
     k = min(k, n - 1)
     if k == 0:
         return 1.0
-    kp1 = k + 1
-
-    nn_lat = NearestNeighbors(n_neighbors=kp1, algorithm="auto").fit(X_embedding)
-    _, lat_inds = nn_lat.kneighbors(X_embedding)
-    lat_inds = lat_inds[:, 1:]
+    q = _query_indices(n, max_cells, seed)
+    lat_inds = _knn_of_queries(X_embedding, q, k)
 
     overlaps = []
-    for i in range(n):
+    for row_pos, i in enumerate(q):
         row = np.asarray(neighbor_indices[i], dtype=int)
         row = row[(row >= 0) & (row < n) & (row != i)]
         if row.size == 0:
             continue
         ref = row[:k]
-        overlaps.append(np.sum(np.isin(ref, lat_inds[i])) / len(ref))
+        overlaps.append(np.sum(np.isin(ref, lat_inds[row_pos])) / len(ref))
 
     if not overlaps:
         return np.nan
@@ -643,7 +623,8 @@ def spatial_pas(
     spatial neighbours belong to the same cluster.  For each spot the
     *abnormality* is the fraction of its ``k_spatial`` spatial neighbours
     assigned to a different cluster; PAS is the mean over all spots.  The
-    score is ``1 - PAS`` so that perfect spatial coherence of clusters → 1.
+    score is ``1 - PAS``, rescaled against the agreement expected by chance
+    (``sum_c p_c^2``) so that perfect spatial coherence of clusters → 1.  Random clusters → 0.
 
     A high score indicates that latent-derived domains are spatially
     contiguous and align with tissue boundaries.
@@ -661,7 +642,9 @@ def spatial_pas(
         Number of spatial neighbours used to assess cluster consistency.
         Default ``6``.
     max_cells
-        Subsample to this many cells before computation. Default ``5000``.
+        Number of cells at which the score is evaluated (and on which k-means
+        is fitted). Spatial neighbours are searched among all cells.
+        Default ``5000``.
     seed
         Random seed. Default ``42``.
     sample_labels
@@ -695,28 +678,25 @@ def spatial_pas(
     if grouped is not None:
         return grouped
     n = len(X_embedding)
-
-    if n > max_cells:
-        rng = np.random.default_rng(seed)
-        idx = rng.choice(n, max_cells, replace=False)
-        X_embedding = X_embedding[idx]
-        spatial_coords = spatial_coords[idx]
-        n = max_cells
-
-    n_clusters = min(n_clusters, n - 1)
-    cluster_labels = _cluster_embedding(X_embedding, n_clusters, seed)
-
     k = min(k_spatial, n - 1)
     if k == 0:
         return 1.0
+    q = _query_indices(n, max_cells, seed)
 
-    nn = NearestNeighbors(n_neighbors=k + 1, algorithm="kd_tree").fit(spatial_coords)
-    _, inds = nn.kneighbors(spatial_coords)
-    inds = inds[:, 1:]  # exclude self
+    # k-means is fitted on the subsample and applied to all cells, so that
+    # every true spatial neighbour has a cluster label.
+    n_clusters = min(n_clusters, len(q) - 1)
+    km = KMeans(n_clusters=n_clusters, random_state=seed, n_init=10).fit(X_embedding[q])
+    cluster_labels = km.predict(X_embedding).astype(np.int32)
 
-    pas_per_spot = np.array([np.mean(cluster_labels[inds[i]] != cluster_labels[i]) for i in range(n)])
-    pas = float(np.mean(pas_per_spot))
-    return float(1.0 - pas)
+    inds = _knn_of_queries(spatial_coords, q, k)
+    agree = float(np.mean(cluster_labels[inds] == cluster_labels[q][:, None]))
+    # Chance agreement: probability that two random cells share a cluster.
+    frac = np.bincount(cluster_labels) / n
+    chance = float(np.sum(frac**2))
+    if chance >= 1.0:
+        return agree
+    return float(np.clip((agree - chance) / (1.0 - chance), 0.0, 1.0))
 
 
 def spatial_chaos(

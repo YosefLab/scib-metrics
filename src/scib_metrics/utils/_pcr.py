@@ -43,6 +43,12 @@ def principal_component_regression(
     else:
         covariate = np.asarray(covariate)
 
+    if np.all(covariate == covariate.flat[0]):
+        raise ValueError(
+            "Principal component regression is undefined for a constant `covariate` (e.g. a "
+            "single batch/category): there is no variance to regress against."
+        )
+
     covariate = one_hot(covariate) if categorical else covariate.reshape((covariate.shape[0], 1))
 
     pca_results = pca(X, n_components=n_components)

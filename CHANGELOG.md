@@ -8,7 +8,71 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## 0.6.0 (unreleased)
+## Unreleased
+
+### Added
+
+- Added spatial metrics (coordinate preservation, niche preservation and domain boundary) to the
+  {class}`scib_metrics.benchmark.Benchmarker`, as well as RAPIDS singlecell support for the PCA
+  calculation, {pr}`259`. Compared with the first version of this PR:
+  - Metrics that look at spatial neighbours ({func}`scib_metrics.spatial_mrre`,
+    {func}`scib_metrics.spatial_knn_overlap`, {func}`scib_metrics.spatial_niche_knn_overlap`,
+    {func}`scib_metrics.spatial_neighbor_knn_overlap`, {func}`scib_metrics.spatial_pas`) now
+    search neighbours among all cells and only evaluate the score at `max_cells` cells.
+    Before, cells were subsampled before the spatial graph was built, so "neighbours" were cells
+    100-200 µm apart, and the true niche descriptor scored 0.06 on the niche metric (now 1).
+  - A random embedding now scores close to 0 on every spatial metric:
+    {func}`scib_metrics.spatial_mrre` and {func}`scib_metrics.spatial_pas` are rescaled against
+    their chance values, and {func}`scib_metrics.spatial_distance_correlation` and
+    {func}`scib_metrics.spatial_morans_i` are clipped to `[0, 1]` instead of rescaled with
+    `(r + 1) / 2`.
+
+## 0.6.3 (2026-11-10)
+
+### Fixed
+
+- Fix {class}`scib_metrics.nearest_neighbors.NeighborsResults` connectivities computation
+  (used by the Leiden-based NMI/ARI, kBET and the {class}`scib_metrics.benchmark.Benchmarker`)
+  raising a `numba` `TypingError` with `umap-learn` 0.6, whose stricter compiled signatures
+  require C-contiguous `float32` neighbor arrays; inputs are now made contiguous before being
+  passed to `umap`, {pr}`310`.
+
+### Changed
+
+- The documentation is built with `scverse-doc` on Sphinx 9 and uses its sidebar layout:
+  Getting started, Guides (tutorials, contributing), Reference (API) and Project,
+  with a new citation page. The download and full screen buttons of `sphinx-book-theme`
+  are kept, {pr}`309`.
+
+## 0.6.2 (2026-11-01)
+
+### Fixed
+
+- Fix {meth}`scib_metrics.benchmark.Benchmarker.get_results` raising
+  `TypeError'` with `min_max_scale=True` on `pandas` 3, {pr}`305`.
+
+## 0.6.1 (2026-09-10)
+
+### Fixed
+
+- Fix {func}`scib_metrics.silhouette_batch` (and {func}`scib_metrics.bras`, which relies on it) raising an
+  uninformative `pandas` concatenation error when every label group contains only a single batch; it now
+  raises a clear `ValueError`, {pr}`287`.
+- Fix {func}`scib_metrics.kbet` silently returning a misleading zero acceptance rate for single-batch input;
+  it now raises a `ValueError` instead, {pr}`287`.
+- Fix {func}`scib_metrics.utils.principal_component_regression` (and {func}`scib_metrics.pcr_comparison`)
+  producing an unstable, effectively meaningless score for a constant (e.g. single-batch) covariate, due to
+  dividing by near-zero floating-point noise from a rank-deficient regression; it now raises a `ValueError`
+  on the constant covariate directly, {pr}`287`.
+- Fix aggregate score labels in {func}`scib_metrics.benchmark.Benchmarker.plot_results_table` staying black
+  on dark bar backgrounds: `plottable`'s `autoset_fontcolors` cannot see the color of bar-plot cells, so the
+  font color for those columns is now computed explicitly from the same colormap used to draw the bars, {pr}`287`.
+
+## 0.6.0 (2026-07-28)
+
+### Added
+
+- Add sBEE (single-cell Batch Effect Evaluator) metric {cite:p}`myradov2026systematic`.
 
 ### Added
 
@@ -25,11 +89,9 @@ and this project adheres to [Semantic Versioning][].
 
 [scverse cookiecutter template]: https://github.com/scverse/cookiecutter-scverse
 
-## 0.5.10 (2025-06-13)
+## 0.5.10 (2025-07-13)
 
 ### Added
-
-- Added spatial metrics scores for benchmarker as well as RAPIDS singlecell support for PCA calculation, {pr}`259`.
 
 ### Change
 

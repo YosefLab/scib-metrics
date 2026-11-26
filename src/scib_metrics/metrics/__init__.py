@@ -4,6 +4,7 @@ from ._kbet import kbet, kbet_per_label
 from ._lisi import clisi_knn, ilisi_knn, lisi_knn
 from ._nmi_ari import nmi_ari_cluster_labels_kmeans, nmi_ari_cluster_labels_leiden
 from ._pcr_comparison import pcr_comparison
+from ._sbee import sbee
 from ._silhouette import bras, silhouette_batch, silhouette_label
 from ._spatial import (
     spatial_chaos,
@@ -38,4 +39,5 @@ __all__ = [
     "spatial_neighbor_knn_overlap",
     "spatial_pas",
     "spatial_chaos",
+    "sbee",
 ]

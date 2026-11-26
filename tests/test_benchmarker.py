@@ -54,6 +54,16 @@ def test_benchmarker_custom_metric_booleans():
     assert "graph_connectivity" not in results.columns
     assert "ilisi_knn" in results.columns
     assert "bras" in results.columns
+    assert "sbee" not in results.columns
+
+
+def test_benchmarker_sbee_disabled():
+    bc = BatchCorrection(sbee=False)
+    ad, emb_keys, batch_key, labels_key = dummy_benchmarker_adata()
+    bm = Benchmarker(ad, batch_key, labels_key, emb_keys, batch_correction_metrics=bc, bio_conservation_metrics=None)
+    bm.benchmark()
+    results = bm.get_results(clean_names=False)
+    assert "sbee" not in results.columns
 
 
 def test_benchmarker_custom_metric_callable():
@@ -92,3 +102,20 @@ def test_benchmarker_different_solvers(solver):
     results = bm.get_results()
     assert isinstance(results, pd.DataFrame)
     bm.plot_results_table()
+
+
+def test_benchmarker_min_max_scale():
+    ad, emb_keys, batch_key, labels_key = dummy_benchmarker_adata()
+    bm = Benchmarker(
+        ad,
+        batch_key,
+        labels_key,
+        emb_keys,
+        batch_correction_metrics=BatchCorrection(),
+        bio_conservation_metrics=BioConservation(),
+    )
+    bm.benchmark()
+    results = bm.get_results(min_max_scale=True)
+    assert isinstance(results, pd.DataFrame)
+    assert (results.loc["Metric Type", ["Batch correction", "Bio conservation", "Total"]] == "Aggregate score").all()
+    bm.plot_results_table(min_max_scale=True, show=False)

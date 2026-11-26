@@ -4,11 +4,11 @@ requires = [ "hatchling" ]
 
 [project]
 name = "scib-metrics"
-version = "0.6.0"
+version = "0.6.3"
 description = "Accelerated and Python-only scIB metrics"
 readme = "README.md"
 license = { file = "LICENSE" }
-maintainers = [ { name = "Adam Gayoso", email = "adamgayoso@berkeley.edu" } ]
+maintainers = [ { name = "Ori Kronfeld", email = "ori.kronfeld@weizmann.ac.il" } ]
 authors = [ { name = "Adam Gayoso" } ]
 requires-python = ">=3.12"
 classifiers = [
@@ -16,6 +16,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
 ]
 dependencies = [
   "anndata",
@@ -68,15 +69,12 @@ doc = [
   "ipykernel",
   # For notebooks
   "ipython",
-  "myst-nb",
   "numba>=0.57.1",
   "pybtex-docutils>=1",
-  "scanpydoc[typehints]>=0.7.4",
-  "sphinx>=4",
-  "sphinx-book-theme>=1",
-  "sphinx-copybutton",
+  "scverse-doc[full]>=0.4",
+  "sphinx>=9.1",
+  "sphinx-autodoc-typehints",
   "sphinxcontrib-bibtex>=2.6",
-  "sphinxext-opengraph",
 ]
 
 [tool.hatch]
@@ -162,9 +160,9 @@ ini_options.testpaths = [ "tests" ]
 ini_options.xfail_strict = true
 
 [tool.coverage]
+run.source = [ "scib_metrics" ]
 run.omit = [ "**/test_*.py" ]
 run.patch = [ "subprocess" ]
-run.source = [ "scib_metrics" ]
 
 [tool.jupytext]
 formats = "ipynb,md"

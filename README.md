@@ -71,7 +71,9 @@ If you found a bug, please use the [issue tracker][issue-tracker].
 Please cite:
 
 ```
-Adam Gayoso, Martin Kim, Ori Kronfeld, Justin Hong, & Yosef, N. (2026). YosefLab/scib-metrics: scib-metrics 0.5.8 (v0.5.8). Zenodo. https://doi.org/10.5281/zenodo.18504367
+Adam Gayoso, Martin Kim, Ori Kronfeld, Justin Hong, & Yosef, N. (2026).
+YosefLab/scib-metrics: scib-metrics 0.5.8 (v0.5.8). Zenodo.
+https://doi.org/10.5281/zenodo.18504367
 ```
 
 In addition, please cite the original single-cell integration benchmarking work:

@@ -15,6 +15,7 @@ import scanpy as sc
 from anndata import AnnData
 from plottable import ColumnDefinition, Table
 from plottable.cmap import normed_cmap
+from plottable.font import contrasting_font_color
 from plottable.plots import bar
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
@@ -66,6 +67,7 @@ metric_name_cleaner = {
     # Domain boundary
     "spatial_pas": "PAS",
     "spatial_chaos": "CHAOS",
+    "sbee": "sBEE",
 }
 
 
@@ -99,6 +101,7 @@ class BatchCorrection:
     kbet_per_label: MetricType = True
     graph_connectivity: MetricType = True
     pcr_comparison: MetricType = True
+    sbee: MetricType = False
 
 
 @dataclass(frozen=True)
@@ -121,13 +124,13 @@ class CoordinatePreservation:
     Metrics (all higher = better):
 
     * ``spatial_mrre`` — 1 minus normalised mean relative rank error of
-      spatial neighbours in the latent space.
+      spatial neighbours in the latent space, chance-corrected.
     * ``spatial_knn_overlap`` — chance-normalised overlap of spatial vs.
       latent k-NN sets per spot.
     * ``spatial_distance_correlation`` — Spearman correlation of pairwise
-      spatial vs. latent distances, rescaled to ``[0, 1]``.
+      spatial vs. latent distances, clipped to ``[0, 1]``.
     * ``spatial_morans_i`` — mean Moran's I of latent dimensions using the
-      spatial weight graph, rescaled to ``[0, 1]``.
+      spatial weight graph, clipped to ``[0, 1]``.
     """
 
     spatial_mrre: MetricType = True
@@ -217,6 +220,7 @@ class MetricAnnDataAPI(Enum):
     # Domain boundary — derived from k-means clustering of latent embedding
     spatial_pas = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE))
     spatial_chaos = lambda ad, fn: fn(ad.X, ad.obsm[_SPATIAL], sample_labels=ad.obs.get(_SPATIAL_SAMPLE))
+    sbee = lambda ad, fn: fn(ad.uns["90_neighbor_res"], ad.X, ad.obs[_BATCH], ad.obs[_LABELS])
 
 
 class Benchmarker:
@@ -428,7 +432,7 @@ class Benchmarker:
                 rsc.tl.pca(self._adata, svd_solver=self._solver)
             except ImportError:
                 sc.tl.pca(self._adata, svd_solver=self._solver, mask_var=None)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - any RAPIDS failure falls back to scanpy
                 warnings.warn(
                     f"RAPIDS PCA failed ({type(exc).__name__}: {exc}); falling back to scanpy PCA.",
                     UserWarning,
@@ -704,6 +708,7 @@ class Benchmarker:
             per_class_score["Total"] = total
 
         df = pd.concat([df.transpose(), per_class_score], axis=1)
+        df = df.astype(dict.fromkeys(per_class_score.columns, object))
         df.loc[_METRIC_TYPE, per_class_score.columns] = _AGGREGATE_SCORE
         # Region aggregate columns get their own group header in the plot
         _region_agg_cols = [c for c in per_class_score.columns if str(c).startswith("Region ")]
@@ -809,6 +814,16 @@ class Benchmarker:
                 column_border_kw={"linewidth": 1, "linestyle": "-"},
                 index_col="Method",
             ).autoset_fontcolors(colnames=plot_df.columns)
+            # `autoset_fontcolors` only recolors cells that expose a `.text` attribute. The
+            # aggregate score columns are drawn with `plot_fn=bar`, whose value label is a raw
+            # `ax.text` call inside an inset axes, so those cells are silently skipped and the
+            # label stays black even on the near-black end of the colormap. Recolor them here
+            # using the same colormap and value the bar itself was drawn with.
+            for col in score_cols:
+                for cell in tab.get_column(col).cells:
+                    text_color = contrasting_font_color(mpl.cm.YlGnBu(float(cell.content)))
+                    for text in cell.axes_inset.texts:
+                        text.set_color(text_color)
         if show:
             plt.show()
         if save_dir is not None:

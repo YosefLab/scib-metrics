@@ -13,6 +13,7 @@ from .metrics import (
     nmi_ari_cluster_labels_kmeans,
     nmi_ari_cluster_labels_leiden,
     pcr_comparison,
+    sbee,
     silhouette_batch,
     silhouette_label,
     bras,
@@ -51,6 +52,7 @@ __all__ = [
     "spatial_neighbor_knn_overlap",
     "spatial_pas",
     "spatial_chaos",
+    "sbee",
     "settings",
 ]
 

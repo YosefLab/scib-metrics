@@ -49,3 +49,11 @@ def test_pcr(n_obs, n_vars, categorical):
     _test_pcr(n_obs, n_vars, n_components=max_components - 1, categorical=categorical)
     _test_pcr(n_obs, n_vars, n_components=int(max_components / 2), categorical=categorical)
     _test_pcr(n_obs, n_vars, n_components=1, categorical=categorical)
+
+
+@pytest.mark.parametrize("categorical", [True, False])
+def test_pcr_constant_covariate_raises(categorical):
+    X = poisson_sample(100, 100, seed=0)
+    covariate = np.zeros(100)
+    with pytest.raises(ValueError, match="constant"):
+        scib_metrics.utils.principal_component_regression(X, covariate, categorical=categorical)

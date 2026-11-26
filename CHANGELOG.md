@@ -10,6 +10,23 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Added
+
+- Added spatial metrics (coordinate preservation, niche preservation and domain boundary) to the
+  {class}`scib_metrics.benchmark.Benchmarker`, as well as RAPIDS singlecell support for the PCA
+  calculation, {pr}`259`. Compared with the first version of this PR:
+  - Metrics that look at spatial neighbours ({func}`scib_metrics.spatial_mrre`,
+    {func}`scib_metrics.spatial_knn_overlap`, {func}`scib_metrics.spatial_niche_knn_overlap`,
+    {func}`scib_metrics.spatial_neighbor_knn_overlap`, {func}`scib_metrics.spatial_pas`) now
+    search neighbours among all cells and only evaluate the score at `max_cells` cells.
+    Before, cells were subsampled before the spatial graph was built, so "neighbours" were cells
+    100-200 µm apart, and the true niche descriptor scored 0.06 on the niche metric (now 1).
+  - A random embedding now scores close to 0 on every spatial metric:
+    {func}`scib_metrics.spatial_mrre` and {func}`scib_metrics.spatial_pas` are rescaled against
+    their chance values, and {func}`scib_metrics.spatial_distance_correlation` and
+    {func}`scib_metrics.spatial_morans_i` are clipped to `[0, 1]` instead of rescaled with
+    `(r + 1) / 2`.
+
 ## 0.6.3 (2026-11-10)
 
 ### Fixed

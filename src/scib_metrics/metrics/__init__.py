@@ -6,6 +6,16 @@ from ._nmi_ari import nmi_ari_cluster_labels_kmeans, nmi_ari_cluster_labels_leid
 from ._pcr_comparison import pcr_comparison
 from ._sbee import sbee
 from ._silhouette import bras, silhouette_batch, silhouette_label
+from ._spatial import (
+    spatial_chaos,
+    spatial_distance_correlation,
+    spatial_knn_overlap,
+    spatial_morans_i,
+    spatial_mrre,
+    spatial_neighbor_knn_overlap,
+    spatial_niche_knn_overlap,
+    spatial_pas,
+)
 
 __all__ = [
     "isolated_labels",
@@ -21,5 +31,13 @@ __all__ = [
     "kbet",
     "kbet_per_label",
     "graph_connectivity",
+    "spatial_mrre",
+    "spatial_knn_overlap",
+    "spatial_distance_correlation",
+    "spatial_morans_i",
+    "spatial_niche_knn_overlap",
+    "spatial_neighbor_knn_overlap",
+    "spatial_pas",
+    "spatial_chaos",
     "sbee",
 ]
